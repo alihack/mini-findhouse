@@ -1,0 +1,23 @@
+<style lang="less">
+
+</style>
+<template>
+  
+</template>
+<script>
+import wepy from 'wepy'
+
+export default class Counter extends wepy.component {
+	props = {
+	}
+
+	data = {
+	}
+
+	watch = {
+	}
+
+	methods = {
+	}
+}
+</script>

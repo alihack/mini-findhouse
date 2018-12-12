@@ -1,0 +1,81 @@
+<style lang="less">
+page {
+	width: 100%;
+	height: 100%;
+	font-size: 28rpx;
+	background: #f5f5f5;
+}
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	box-sizing: border-box;
+	background: #f5f5f5;
+	.button {
+		width: 690rpx;
+		height: 90rpx;
+		border-radius: 10rpx;
+		background: #5dacff;
+		line-height: 90rpx;
+		color:#fff;
+		font-size: 18px;
+		text-align: center;
+	}
+	.button:active {
+		background: #2d8cf0;
+	}
+}
+</style>
+
+<script>
+import wepy from 'wepy'
+import 'wepy-async-function'
+
+export default class extends wepy.app {
+	config = {
+	pages: [
+		'pages/map_detail',
+		'pages/house_detail',
+		'pages/index'
+	],
+	window: {
+		backgroundTextStyle: 'light',
+		enablePullDownRefresh: true,
+		navigationBarBackgroundColor: '#fff',
+		navigationBarTitleText: 'WeChat',
+		navigationBarTextStyle: 'black'
+	}
+	}
+
+	globalData = {
+		myUserInfo: null
+	}
+	async onShow() {
+		wx.clearStorage()  // 清除缓存
+	}
+
+	constructor() {
+		super()
+		this.use('requestfix')
+		this.use('promisify')
+		this.intercept('request', {
+			config (req) { // 这里不能用异步函数
+				req.header = {'content-type': 'application/x-www-form-urlencoded'}
+				req.method = 'POST'
+				console.log('请求开始', req.data)
+				return req
+			},
+			success (res) {
+				console.log('请求完成', res.data)
+				return res.data
+			}
+		})
+
+		// 省得每次跳转都要打'/pages/'
+		function config (req) { req.url = '/pages/' + req.url; return req }
+		this.intercept('navigateTo', {config})
+		this.intercept('redirectTo', {config})
+		this.intercept('switchTab', {config})
+	}
+}
+</script>
