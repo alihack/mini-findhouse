@@ -13,13 +13,14 @@
 		  background: #2f363d;
 		  color:#fff;
 		  font-size: 28rpx;
-		  padding-top:10rpx;
 		  .item {
-			  
+			  display: flex;
+			  flex-direction: column;
+			  align-items: center;
 		  }
-		  image {
-			  width: 50rpx;
-			  height: 50rpx;
+		  cover-image {
+			  width: 45rpx;
+			  height: 45rpx;
 		  }
 	  }
   }
@@ -28,27 +29,29 @@
 <view class="container">
 	<map
 	id="map"
-	longitude="113.324520"
-	latitude="23.099994"
-	scale="14"
+	longitude="{{locationMarker.longitude}}"
+	latitude="{{locationMarker.latitude}}"
+	scale="17"
 	bindcontroltap="controltap"
 	markers="{{markers}}"
 	bindtap="mapDetail"
 	polyline="{{polyline}}"
-	show-location
 	style="width: 100%; height: 100%;"
 	></map>
-	<view class="fixed-bar">
-		<view class="item" wx:for="{{kinds}}" wx:key="index" @tap="select({{index}})">
-			<image src="{{item.isSelected? item.blueIcon :item.whiteIcon}}"></image>
-			<view style="{{item.isSelected? 'color:#2d8cf0':''}}">{{item.title}}</view>
-		</view>
-	</view>
+	<cover-view class="fixed-bar">
+		<cover-view class="item" wx:for="{{supportArry}}" wx:key="index" @tap="select({{index}})">
+			<cover-image src="{{item.isSelected? item.blueIcon :item.whiteIcon}}"></cover-image>
+			<cover-view style="{{item.isSelected? 'color:#2d8cf0':''}}">{{item.title}}</cover-view>
+		</cover-view>
+	</cover-view>
 </view>
 </template>
 
 <script>
 import wepy from 'wepy'
+import QQMapWX from '../utils/qqmap-wx-jssdk'
+import {supportArry} from '../utils/config'
+// import {getLocation} from '../utils/util'
 
 export default class Index extends wepy.page {
 	config = {
@@ -57,97 +60,80 @@ export default class Index extends wepy.page {
 	components = {
 	}
 	data = {
-		kinds: [{
-			title: '餐饮',
-			isSelected: false,
-			whiteIcon: '../images/white-dinner.png',
-			blueIcon: '../images/blue-dinner.png'
-		},
-		{
-			title: '学校',
-			isSelected: false,
-			whiteIcon: '../images/white-school.png',
-			blueIcon: '../images/blue-school.png'
-		},
-		{
-			title: '地铁',
-			isSelected: false,
-			whiteIcon: '../images/white-subway.png',
-			blueIcon: '../images/blue-subway.png'
-		},
-		{
-			title: '公交',
-			isSelected: false,
-			whiteIcon: '../images/white-bus.png',
-			blueIcon: '../images/blue-bus.png'
-		},
-		{
-			title: '娱乐',
-			isSelected: false,
-			whiteIcon: '../images/white-game.png',
-			blueIcon: '../images/blue-game.png'
-		},
-		{
-			title: '医院',
-			isSelected: false,
-			whiteIcon: '../images/white-hospital.png',
-			blueIcon: '../images/blue-hospital.png'
-		},
-		{
-			title: '银行',
-			isSelected: false,
-			whiteIcon: '../images/white-bank.png',
-			blueIcon: '../images/blue-bank.png'
-		}
-	],
-		markers: [{
+		supportArry,
+		locationMarker: {
 			iconPath: '../images/address.png',
 			id: 0,
-			latitude: 23.099994,
-			longitude: 113.324520,
 			width: 30,
 			height: 30,
-			callout: {
-				content: '广州电视台',
-				color: 'black',
-				bgColor: '#fff',
-				fontSize: '14px',
-				padding: '5px',
-				borderRadius: '5px',
-				display: 'ALWAYS'
-			}
-		}],
-		polyline: [{
-			points: [{
-				longitude: 113.3245211,
-				latitude: 23.10229
-			}, {
-				longitude: 113.324520,
-				latitude: 23.21229
-			}],
-			color: '#FF0000DD',
-			width: 2,
-			dottedLine: true,
-		}],
+		},
+		supportMarkers: []
 	}
 
 	computed = {
+		markers() {
+			console.log('computed')
+			return [...[this.locationMarker], ...this.supportMarkers]
+		}
 	}
 
 	events = {
 	}
 
-	onLoad() {
+	async onLoad() {
+		// await getLocation()
+		// this.mapLocation = wx.getStorageSync('locationInfo').location
+		const mapLocation = {latitude: 39.919998, longitude: 116.45999}
+		this.locationMarker.latitude = mapLocation.latitude
+		this.locationMarker.longitude = mapLocation.longitude
+		console.log('locationMarker', this.locationMarker)
 		this.$apply()
 	}
 
 	methods = {
+		searchSupport: (index) => {
+			return new Promise(resolve => {
+				console.log('调用searchSupport方法')
+				// 实例化API核心类
+				const qqmapsdk = new QQMapWX({
+					key: 'KUBBZ-HYIKF-II2J3-NYSEA-IY3ZQ-KTBP3'
+				})
+				// 调用接口
+				qqmapsdk.search({
+					keyword: `${this.supportArry[index].title}`,
+					location: `${this.locationMarker.latitude},${this.locationMarker.longitude}`,
+					success: (res) => {
+						console.log('success', res)
+						this.supportMarkers = []
+						for (var i = 0; i < res.data.length; i++) {
+							this.supportMarkers.push({ // 获取返回结果，放到mks数组中
+								title: res.data[i].title,
+								id: res.data[i].id,
+								latitude: res.data[i].location.lat,
+								longitude: res.data[i].location.lng,
+								iconPath: this.supportArry[index].markerIcon,
+								width: 30,
+								height: 30
+							})
+						}
+						this.$apply()
+					},
+					fail: (res) => {
+						console.log(res)
+					},
+					complete: (res) => {
+						resolve()
+					}
+				})
+			})
+		},
 		select(index) {
-			this.kinds.forEach(ele => {
+			this.supportArry.forEach(ele => {
 				ele.isSelected = false
 			})
 			console.log('index', index)
-			this.kinds[index].isSelected = true
+			this.supportArry[index].isSelected = true
+			this.methods.searchSupport(index)
 			this.$apply()
 		}
 	}

@@ -1,8 +1,269 @@
 <style lang="less">
-  
+@import '../styles/base.less';
+	.container {
+		.banner {
+			background: green;
+			width: 100%;
+			height: 475rpx;
+		}
+		.search-bar {
+			position: absolute;
+			width: 660rpx;
+			height: 90rpx;
+			top:430rpx;
+			background: #fff;
+			border-radius: 90rpx;
+			box-shadow: 0 10rpx 5rpx #eaeaea;
+			color: #666666;
+			font-size: 26rpx;
+			.flex;
+			image {
+				margin:0 30rpx;
+				width: 40rpx;
+				height: 40rpx;
+			}
+		}
+		.header {
+			width: 100%;
+			height: 250rpx;
+			.flex;
+			padding:80rpx 30rpx 30rpx 30rpx;
+			background: #fff;
+			box-sizing: border-box;
+			font-size: 26rpx;
+			&-left {
+				padding:0rpx 80rpx 0rpx 20rpx;
+				box-sizing: border-box;
+				.title {
+					font-size: 38rpx;
+				}
+				.price {
+					color: @blue;
+					.number {
+						font-size: 52rpx;
+					}
+				}
+				.ratio {
+					.precent {
+						color: @gold;
+					}
+				}
+			}
+			&-center {
+				width:2rpx;
+				height: 80rpx;
+				background: #b3b3b3;
+				margin-right:20rpx;
+			}
+			&-right {
+				padding-left: 130rpx;
+				box-sizing: border-box;
+				.calc {
+					width: 90rpx;
+					height: 90rpx;
+					background: #fff;
+					border:4rpx solid #2d8cf0;
+					border-radius: 90rpx;
+					line-height: 90rpx;
+					text-align: center;
+					margin-bottom: 10rpx;
+				}
+				image {
+					margin-top: 5rpx;
+					width: 80rpx;
+					height: 80rpx;
+				}
+				text {
+					color: @gray;
+				}
+			}
+		}
+		.sort-bar {
+			width: 100%;
+			height: 90rpx;
+			margin-top:20rpx;
+			background: #fff;
+			.flex;
+			justify-content: space-around;
+			.item {
+				width: 80rpx;
+				height: 40rpx;
+				.flex;
+				justify-content: space-between;
+				image {
+					width: 20rpx;
+					height: 20rpx;
+					display: inline-block;
+				}
+			}
+		}
+		.main {
+			margin-top:4rpx;
+			background: #fff;
+			width: 100%;
+			padding:0 30rpx;
+			box-sizing: border-box;
+			.item {
+				width: 690rpx;
+				height: 230rpx;
+				border-top:4rpx solid #f5f5f5;
+				.flex;
+				.image {
+					width: 220rpx;
+					height: 165rpx;
+					background: #2d8cf0;
+					margin-right: 30rpx;
+				}
+				.detail {
+					display: flex;
+					text-align: left;
+					flex-direction: column;
+					.title1 {
+						font-size: 32rpx;
+					}
+					.title2, .price-unit{
+						color: @gray;
+					}
+					.label {
+						.btn(90rpx,30rpx);
+						background: #d9edf9;
+						color:@blue;
+						line-height: 30rpx;
+						font-size: 22rpx;
+					}
+					.price-total {
+						color:@gold;
+						font-size: 50rpx;
+					}
+					.unit {
+						color: @gold;
+						margin-right:10rpx;
+					}
+				}
+			}
+			.item:first-child{
+				border:none;
+			}
+		}
+		.footer {
+			color:@gray;
+			width: 100%;
+			height: 210rpx;
+			padding:40rpx 0rpx;
+			box-sizing: border-box;
+			.flex;
+			flex-direction: column;
+			.tip {
+				font-size: 24rpx;
+				letter-spacing: 10rpx;
+			}
+			.item-wrap {
+				.flex;
+				width:100%;
+				justify-content: space-around;
+				font-size: 30rpx;
+				margin-bottom: 20rpx;
+				padding:0rpx 20rpx;
+				.item {
+					.flex;
+					.img-wrap {
+						width: 70rpx;
+						height: 70rpx;
+						border-radius: 70rpx;
+						background: #e3e3e3;
+						display: inline-block;
+						text-align: center;
+						margin-right: 10rpx;
+						image {
+							margin-top:10rpx;
+							width: 50rpx;
+							height: 50rpx;
+						}
+					}
+				}
+			}
+		}
+	}
 </style>
 <template>
-  
+	<view class="container">
+		<view class="banner"></view>
+		<view class="search-bar">
+			<image src="../images/search.png"></image>
+			<text>搜索小区或地址</text>
+		</view>
+		<view class="header">
+			<view class="header-left">
+				<view class="title">厦门市场行情</view>
+				<view class="price"><text class="number">36682</text><text class="unit">元/平米</text></view>
+				<view class="ratio"><text class="word">环比上个月</text><text class="precent">-1.2%</text></view>
+			</view>
+			<view class="header-center"></view>
+			<view class="header-right">
+				<view class="calc"><image src="../images/calc.png"></image></view>
+				<text>房屋估价</text>
+			</view>
+		</view>
+		<view class="sort-bar">
+			<view class="item">
+				<text>区域</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+			<view class="item">
+				<text>总价</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+			<view class="item">
+				<text>户型</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+			<view class="item">
+				<text>更多</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+		</view>
+		<view class="main">
+			<view class="item">
+				<view class="image"></view>
+				<view class="detail">
+					<view class="title1">莲花地铁口 湖里 中间层</view>
+					<view class="title2">瑞景公园|4室2厅</view>
+					<view class="label">满两年</view>
+					<view class="price">
+						<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+					</view>
+				</view>
+			</view>
+			<view class="item">
+				<view class="image"></view>
+				<view class="detail">
+					<view class="title1">莲花地铁口 湖里 中间层</view>
+					<view class="title2">瑞景公园|4室2厅</view>
+					<view class="label">满两年</view>
+					<view class="price">
+						<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+					</view>
+				</view>
+			</view>
+		</view>
+		<view class="footer">
+			<view class="item-wrap">
+				<view class="item">
+					<view class="img-wrap"><image src="../images/true-img.png"></image></view>
+					<text>真图片</text>
+				</view>
+				<view class="item">
+					<view class="img-wrap"><image src="../images/true-price.png"></image></view>
+					<text>真价格</text>
+				</view>
+				<view class="item">
+					<view class="img-wrap"><image src="../images/true-home.png"></image></view>
+					<text>真房源</text>
+				</view>
+			</view>
+			<view class="tip">房牛真房源·省钱省时间</view>
+		</view>
+	</view>
 </template>
 
 <script>
@@ -10,7 +271,7 @@ import wepy from 'wepy'
 
 export default class Index extends wepy.page {
 	config = {
-		navigationBarTitleText: 'test'
+		navigationBarTitleText: '房牛估价'
 	}
 	components = {
 	}
