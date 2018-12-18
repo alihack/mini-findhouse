@@ -1,0 +1,96 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	.bar {
+		width: 100%;
+		height: 100rpx;
+		background:#fff;
+		.flex;
+		justify-content: center;
+		.item-wrap {
+			.flex;
+			width: 280rpx;
+			height: 100%;
+			font-size: 32rpx;
+			color: @gray;
+			font-weight: bold;
+			.item {
+				width: 100%;
+				height: 100%;
+				.flex;
+				flex-direction: column;
+				justify-content: flex-end;
+				.under-line {
+					width: 30rpx;
+					height: 6rpx;
+					margin-top:20rpx;
+					background: @blue;
+					visibility: hidden;
+				}
+			}
+			.choosed {
+				.title {
+					color:black;
+				}
+				.under-line {
+					visibility: visible;
+				}
+			}
+		}
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<view class="bar">
+			<view class="item-wrap">
+				<view class="item {{houseIsChoosed? 'choosed': ''}}" @tap="isChoosedHouse({{true}})">
+					<view class="title">二手房</view>
+					<view class="under-line"></view>
+				</view>
+				<view class="item  {{houseIsChoosed? '': 'choosed'}}" @tap="isChoosedHouse({{false}})">
+					<view class="title">小区</view>
+					<view class="under-line"></view>
+				</view>
+			</view>
+		</view>
+		<houseList></houseList>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import houseList from '../components/house_list'
+export default class myMark extends wepy.page {
+	config = {
+		navigationBarTitleText: '我关注的',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+		houseList
+	}
+
+	data = {
+		houseIsChoosed: true
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+
+	onLoad() {
+	}
+
+	methods = {
+		isChoosedHouse(type) {
+			if (type) {
+				this.houseIsChoosed = true
+			} else {
+				this.houseIsChoosed = false
+			}
+		}
+	}
+}
+</script>

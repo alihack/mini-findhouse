@@ -1,0 +1,93 @@
+<style lang="less">
+@import '../styles/base.less';
+.main {
+	margin-top:4rpx;
+	background: #fff;
+	width: 100%;
+	padding:0 30rpx;
+	box-sizing: border-box;
+	.item {
+		width: 690rpx;
+		height: 230rpx;
+		border-top:4rpx solid #f5f5f5;
+		.flex;
+		.image {
+			width: 220rpx;
+			height: 165rpx;
+			background: #2d8cf0;
+			margin-right: 30rpx;
+		}
+		.detail {
+			display: flex;
+			text-align: left;
+			flex-direction: column;
+			.title1 {
+				font-size: 32rpx;
+			}
+			.title2, .price-unit{
+				color: @gray;
+			}
+			.label {
+				.label-auto(90rpx,30rpx);
+				background: #d9edf9;
+				color:@blue;
+				line-height: 30rpx;
+				font-size: 22rpx;
+			}
+			.price-total {
+				color:@gold;
+				font-size: 50rpx;
+			}
+			.unit {
+				color: @gold;
+				margin-right:10rpx;
+			}
+		}
+	}
+	.item:first-child{
+		border:none;
+	}
+}
+</style>
+<template>
+	<view class="main">
+		<view class="item">
+			<view class="image"></view>
+			<view class="detail">
+				<view class="title1">莲花地铁口 湖里 中间层</view>
+				<view class="title2">瑞景公园|4室2厅</view>
+				<view class="label">满两年</view>
+				<view class="price">
+					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+				</view>
+			</view>
+		</view>
+		<view class="item">
+			<view class="image"></view>
+			<view class="detail">
+				<view class="title1">莲花地铁口 湖里 中间层</view>
+				<view class="title2">瑞景公园|4室2厅</view>
+				<view class="label">满两年</view>
+				<view class="price">
+					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+				</view>
+			</view>
+		</view>
+	</view>	
+</template>
+<script>
+import wepy from 'wepy'
+export default class houseList extends wepy.component {
+	props = {
+	}
+
+	data = {
+	}
+
+	watch = {
+	}
+
+	methods = {
+	}
+}
+</script>

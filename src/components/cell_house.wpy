@@ -1,0 +1,224 @@
+<style lang="less">
+@import '../styles/base.less';
+.cell-house {
+	.panel;
+	.cell1 {
+		width: 100%;
+		height: 170rpx;
+		.flex;
+		&-text {
+			width: 620rpx;
+			font-size: 38rpx;
+		}
+		&-mark {
+			.flex;
+			flex-direction: column;
+			image {
+				width: 40rpx;
+				height: 35rpx;
+				margin-bottom: 10rpx;
+			}
+		}
+	}
+	.cell2 {
+		.flex;
+		justify-content: space-between;
+		width: 100%;
+		height: 150rpx;
+		padding: 30rpx 0;
+		box-sizing: border-box;
+		border-top: 2rpx solid #f5f5f5;
+		border-bottom: 2rpx solid #f5f5f5;
+		&-title {
+			font-size: 26rpx;
+			color:@gray;
+		}
+		&-text {
+			color:@gold;
+			font-size: 30rpx;
+		}
+		&-left {
+			width: 220rpx;
+		}
+		&-center {
+			width: 250rpx;
+			padding-left:30rpx;
+			box-sizing: border-box;
+			border-left:2rpx solid #f5f5f5;
+			border-right:2rpx solid #f5f5f5;
+		}
+		&-right {
+			width: 220rpx;
+			padding-left:30rpx;
+			box-sizing: border-box;
+		}
+	}
+	.cell3 {
+		width: 100%;
+		height: 420rpx;
+		&-title {
+			font-size: 30rpx;
+			color:@gray;
+			margin-right: 10rpx;
+		}
+		.label {
+			margin-top:20rpx;
+			.label-auto(90rpx, 30rpx);
+			background: #d9edf9;
+			color:@blue;
+			line-height: 30rpx;
+			font-size: 22rpx;
+		}
+		.kinds {
+			.flex;
+			justify-content: space-between;
+			.item {
+				.flex;
+				margin-top:30rpx;
+			}
+			&-right {
+				margin-right: 10rpx;
+			}
+		}
+		.budget {
+			.flex;
+			justify-content: space-between;
+			margin-top:30rpx;
+			&-main {
+				color:@blue;
+			}
+		}
+	}
+	.cell4 {
+		width: 100%;
+		min-height: 300rpx;
+		padding:40rpx 0;
+		box-sizing: border-box;
+		border-top: 2rpx solid #f5f5f5;
+		&-title {
+			.flex;
+			justify-content: space-between;
+			&-head {
+				font-size: 38rpx;
+			}
+			&-foot {
+				.flex;
+				.code {
+					margin-right: 20rpx;
+				}
+			}
+		}
+		&-main {
+			font-size: 26rpx;
+			&-title {
+				margin:45rpx 0rpx 25rpx;
+			}
+			&-text {
+				color:@gray;
+			}
+		}
+	}
+}
+</style>
+<template>
+	<view class="cell-house">
+		<view class="cell1">
+			<view class="cell1-text">瑞景公园自主精装4房，看小区中庭，采光视野好</view>
+			<view class="cell1-mark">
+				<image src="../images/un-mark.png"></image>
+				<view class="">关注</view>
+			</view>
+		</view>
+		<view class="cell2">
+			<view class="cell2-left">
+				<view class="cell2-title">售价</view>
+				<view class="cell2-text">360万</view>
+			</view>
+			<view class="cell2-center">
+				<view class="cell2-title">房型</view>
+				<view class="cell2-text">360万</view>
+			</view>
+			<view class="cell2-right">
+				<view class="cell2-title">建筑面积</view>
+				<view class="cell2-text">360万</view>
+			</view>
+		</view>
+		<view class="cell3">
+			<view class="label">满五年</view>
+			<view class="kinds">
+				<view class="kinds-left">
+					<view class="item">
+						<view class="cell3-title">单价：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+					<view class="item">
+						<view class="cell3-title">楼层：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+					<view class="item">
+						<view class="cell3-title">类型：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+					<view class="item">
+						<view class="cell3-title">年代：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+				</view>
+				<view class="kinds-right">
+					<view class="item">
+						<view class="cell3-title">发布：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+					<view class="item">
+						<view class="cell3-title">朝向：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+					<view class="item">
+						<view class="cell3-title">装修：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+					<view class="item">
+						<view class="cell3-title">用途：</view>
+						<view class="cell3-answer">65837元/m2</view>
+					</view>
+				</view>
+			</view>
+			<view class="budget">
+				<view class="budget-head">
+					<text class="cell3-title">首付预算：</text>
+					<text class="budget-main">参考首付及月供请咨询经纪人</text>
+				</view>
+				<image class="next-icon" src="../images/next.png"/>
+			</view>
+		</view>
+		<view class="cell4">
+			<view class="cell4-title">
+				<view class="cell4-title-head">房源介绍</view>
+				<view class="cell4-title-foot">
+					<view class="code">编号：QJ3123131</view>
+					<image class="next-icon" src="../images/next.png"/>
+				</view>
+			</view>
+			<view class="cell4-main">
+				<view class="cell4-main-title">[周边配套]</view>
+				<view class="cell4-main-text">核心卖点：产权满五唯一，钢混结构，南北通透架空层使用权，车位一个。户型介绍：房子是厦航出资建成的主体是坐北朝南，客厅带阳台主卧</view>
+			</view>
+		</view>
+	</view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class cellHouse extends wepy.component {
+	props = {
+	}
+
+	data = {
+	}
+
+	watch = {
+	}
+
+	methods = {
+	}
+}
+</script>

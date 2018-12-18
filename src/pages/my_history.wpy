@@ -1,0 +1,35 @@
+<style lang="less">
+@import '../styles/base.less';
+</style>
+<template>
+	<houseList></houseList>
+</template>
+
+<script>
+import wepy from 'wepy'
+import houseList from '../components/house_list'
+export default class myHistory extends wepy.page {
+	config = {
+		navigationBarTitleText: '历史记录',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+		houseList
+	}
+
+	data = {
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+
+	onLoad() {
+	}
+
+	methods = {
+	}
+}
+</script>

@@ -1,8 +1,62 @@
 <style lang="less">
-  
+@import '../styles/base.less';
+.container {
+	.header {
+		.flex;
+		width: 100%;
+		height: 240rpx;
+		padding: 0 40rpx;
+		box-sizing: border-box;
+		background: #fff;
+		font-size: 32rpx;
+		.avatar {
+			.avatar-auto(100rpx);
+			background: green;
+			margin-right: 25rpx;
+		}
+	}
+	.cells {
+		margin:20rpx 0 50rpx 0;
+		width:100%;
+		.cell {
+			.flex;
+			width: 100%;
+			padding:30rpx 40rpx;
+			box-sizing: border-box;
+			background: #fff;
+			color: #101d37;
+			font-size: 32rpx;
+			margin-top:2rpx;
+			justify-content: space-between;
+			&-foot {
+				width:40rpx;
+				height:40rpx;
+			}
+		}
+	}
+}
 </style>
 <template>
-  
+	<view class="container">
+		<view class="header">
+			<view class="avatar"></view>
+			<view class="detail">
+				<view class="name">陈立</view>
+				<view class="phone">17****05</view>
+			</view>
+		</view>
+		<view class="cells">
+			<view class="cell" @tap="toMark">
+				<view class="cell-head">我关注的</view>
+				<image class="cell-foot" src="../images/next.png"/>
+			</view>
+			<view class="cell" @tap="toHistory">
+				<view class="cell-head">历史记录</view>
+				<image class="cell-foot" src="../images/next.png"/>
+			</view>
+		</view>
+		<view class="button">退出</view>
+	</view>
 </template>
 
 <script>
@@ -10,7 +64,8 @@ import wepy from 'wepy'
 
 export default class Index extends wepy.page {
 	config = {
-		navigationBarTitleText: 'test'
+		navigationBarTitleText: '我的',
+		navigationBarBackgroundColor: '#f5f5f5'
 	}
 	components = {
 	}
@@ -28,6 +83,12 @@ export default class Index extends wepy.page {
 	}
 
 	methods = {
+		toMark() {
+			wepy.navigateTo({url: 'my_mark'})
+		},
+		toHistory() {
+			wepy.navigateTo({url: 'my_history'})
+		}
 	}
 }
 </script>
