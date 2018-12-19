@@ -1,0 +1,210 @@
+<style lang="less" scoped>
+.container {
+	width: 100%;
+	height: 100%;
+	background: #fff;
+  	box-sizing: border-box;
+	align-items: center;
+	padding-top:20rpx;
+	padding-bottom: 80rpx;
+	.item {
+		margin-bottom: 30rpx;
+		&-head {
+			display: flex;
+			align-items: center;
+			margin-bottom: 25rpx;
+			font-size: 16px;
+			.title {
+				font-size: 13px;
+				color:#888888;
+				width: 100%;
+				padding-left: 40rpx;
+			}
+			.address {
+				width: 30rpx;
+				height: 30rpx;
+				margin:0 10rpx;
+			}
+		}
+		&-content {
+			display: flex;
+			flex-wrap:wrap;
+			margin: 0 auto;
+			background: #f5f5f5;
+			input {
+				width: 570rpx;
+				height: 70rpx;
+				padding: 0 20rpx;
+				box-sizing: border-box;
+				line-height: 70rpx;
+				border-radius: 5rpx;
+			}
+			.icon {
+				width: 60rpx;
+				height: 70rpx;
+				text-align: center;
+				line-height: 70rpx;
+				box-sizing: border-box;
+				image {
+					width: 35rpx;
+					height: 35rpx;
+					padding:15rpx;
+				}
+			}
+			.icon1 {
+				.icon;
+				border-top-left-radius: 60rpx;
+				border-bottom-left-radius: 60rpx;
+			}
+			.icon2 {
+				.icon;
+				border-top-right-radius: 60rpx;
+				border-bottom-right-radius: 60rpx;
+			}
+			.box {
+				width: 750rpx;
+				height: 80rpx;
+				background: #fff;
+				line-height: 80rpx;
+				padding-left:40rpx;
+				text-align: left;
+				border-bottom:1px solid #e5e5e5;
+				box-sizing: border-box;
+				text-overflow: ellipsis;
+				overflow: hidden;
+				white-space: nowrap;
+				font-size: 16px;
+			}
+			.box:last-child {
+				border:none;
+			}
+			.letter {
+				width: 100%;
+				font-size: 13px;
+				color:#888888;
+				margin-bottom: 25rpx;
+				padding-left: 10rpx;
+			}
+		}
+	}
+}
+/* 无数据  */
+.nodata {
+  padding-top: 200rpx;
+  text-align: center;
+  font-size: 32rpx;
+  color: #ddd;
+}
+</style>
+<template>
+<view class="container">
+	<view class="item">
+		<view class="item-content">
+			<view class="icon1">
+				<image src="../images/search.png"></image>
+			</view>
+			<input placeholder="输入小区名称搜索" bindinput="onInputChange" value="{{searchText}}"/>
+			<view class="icon2">
+				<image wx:if="{{isSearched}}" src="../images/clear.png" @tap="clearSearch"></image>
+			</view>
+		</view>
+	</view>
+	<view class="item" wx:if="{{historyList.length != 0 && !isSearched}}">
+		<view class="item-head">
+			<view class="title">历史记录</view>
+		</view>
+		<view class="item-content">
+			<view class="box" wx:for="{{historyList}}" wx:key="index" @tap="setCommunityName({{item}})">{{item.Name}}</view>
+		</view>
+	</view>
+	<view class="item" wx:if="{{communityList.length != 0 && !isChoosed}}">
+		<view class="item-content">
+			<view class="box" wx:for="{{communityList}}" wx:key="index" @tap="setCommunityName({{item}})">{{item.Name}}</view>
+		</view>
+	</view>
+	<block wx:if="{{isChoosed}}">
+		<view class="sort-bar">
+			<view class="item">
+				<text>区域</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+			<view class="item">
+				<text>总价</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+			<view class="item">
+				<text>户型</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+			<view class="item">
+				<text>更多</text>
+				<image src="../images/triangle.png"></image>
+			</view>
+		</view>
+		<houseList></houseList>
+	</block>
+	<!-- <view wx:else class='nodata'>没有搜索到相关的数据哦</view> -->
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import houseList from '../components/house_list'
+// import api from '../utils/api'
+export default class Search extends wepy.page {
+	config = {
+		navigationBarTitleText: '小区名称',
+		navigationBarBackgroundColor: '#f5f5f5',
+		enablePullDownRefresh: false
+	}
+	components = {
+		houseList
+	}
+    data = {
+		searchText: '',
+		isSearched: false,
+		isChoosed: false,
+		adCode: '',
+		communityList: [],
+		historyList: [],
+	}
+	async onLoad() {
+	}
+	methods = {
+		onInputChange: ({detail: {value}}) => {
+			// if (!value) {
+			// 	this.isSearched = false
+			// 	this.communityList = []
+			// 	return
+			// }
+			// this.searchText = value
+			// this.isSearched = true
+			// wx.showLoading({
+			// 	title: '搜索中',
+			// })
+			// wepy.request({
+			// 	url: api['getCommunityList'],
+			// 	data: {
+			// 		community_name: value,
+			// 		AreaCode: 350200
+			// 	}
+			// }).then(({data}) => {
+			// 	console.log(data)
+			// 	this.communityList = data
+			// 	wx.hideLoading()
+			// 	this.$apply()
+			// })
+			this.communityList = [{'Name': '测试一'}, {'Name': '测试二'}, {'Name': '测试三'}]
+		},
+		clearSearch() {
+			this.isSearched = false
+			this.searchText = ''
+			this.communityList = []
+		},
+		setCommunityName(item) {
+			console.log(item)
+			this.isChoosed = true
+		}
+	}
+}
+</script>

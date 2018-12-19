@@ -8,7 +8,7 @@
 <script>
 import wepy from 'wepy'
 import houseList from '../components/house_list'
-export default class myHistory extends wepy.page {
+export default class MyHistory extends wepy.page {
 	config = {
 		navigationBarTitleText: '历史记录',
 		navigationBarBackgroundColor: '#f5f5f5'

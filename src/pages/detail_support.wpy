@@ -53,7 +53,7 @@ import QQMapWX from '../utils/qqmap-wx-jssdk'
 import {supportArry} from '../utils/config'
 // import {getLocation} from '../utils/util'
 
-export default class Index extends wepy.page {
+export default class DetailSupport extends wepy.page {
 	config = {
 		navigationBarTitleText: '地图详情'
 	}
@@ -62,7 +62,7 @@ export default class Index extends wepy.page {
 	data = {
 		supportArry,
 		locationMarker: {
-			iconPath: '../images/address.png',
+			iconPath: '../images/red-address.png',
 			id: 0,
 			width: 30,
 			height: 30,

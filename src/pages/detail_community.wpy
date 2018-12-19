@@ -1,0 +1,240 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	.banner {
+		width: 100%;
+		height: 565rpx;
+		image {
+			width: 100%;
+			height: 100%;
+		}
+	}
+	.community {
+		width: 100%;
+		padding:35rpx 30rpx;
+		box-sizing: border-box;
+		background: #fff;
+		.header {
+			.flex;
+			justify-content: space-between;
+			&-left {
+				.name {
+					font-size: 38rpx;
+					font-weight: bold;
+					margin-bottom: 10rpx;
+				}
+				.address {
+					color: @gray;
+					.flex;
+					image {
+						width: 30rpx;
+						height: 30rpx;
+						margin-right: 10rpx;
+					}
+				}
+			}
+			&-right {
+				.flex;
+				flex-direction: column;
+				width: 80rpx;
+				height: 80rpx;
+				color:#333333;
+				image {
+					width: 40rpx;
+					height: 35rpx;
+					margin-bottom: 10rpx;
+				}
+			}
+		}
+		.side {
+			.flex;
+			width:100%;
+			height: 150rpx;
+			color:@gray;
+			font-size: 26rpx;
+			border-top:2rpx solid #f5f5f5;
+			border-bottom:2rpx solid #f5f5f5;
+			margin-top:35rpx;
+			&-center {
+				width: 2rpx;
+				height: 70rpx;
+				background: #f5f5f5;
+			}
+			&-left {
+				width: 340rpx;
+				.flex;
+				flex-direction: column;
+				.number {
+					font-size: 40rpx;
+					color:@gold;
+				}
+			}
+			&-right {
+				width: 340rpx;
+				.flex;
+				flex-direction: column;
+				.number {
+					.flex;
+					font-size: 40rpx;
+					color:#5bca39;
+				}
+				image {
+					width: 35rpx;
+					height: 35rpx;
+					margin-right: 10rpx;
+				}
+			}
+		}
+		.content {
+			padding-top:30rpx;
+			box-sizing: border-box;
+			.title {
+				font-size: 36rpx;
+				font-weight: bold;
+			}
+			.item {
+				font-size: 30rpx;
+				margin-top:20rpx;
+				.flex;
+				&-head {
+					color:@gray;
+					margin-right: 10rpx;
+				}
+			}
+		}
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<!-- 顶部banner -->
+		<swiper
+			class="banner"
+			indicator-dots="{{indicatorDots}}"
+			autoplay="{{autoplay}}"
+			interval="{{interval}}"
+			duration="{{duration}}"
+		>
+		<block wx:for="{{imgUrls}}" wx:key="index">
+			<swiper-item>
+				<image src="{{item}}" class="slide-image"/>
+			</swiper-item>
+		</block>
+		</swiper>
+		<view class="community">
+			<view class="header">
+				<view class="header-left">
+					<view class="name">瑞景公园</view>
+					<view class="address">
+						<image src="../images/address.png"></image>
+						<text>思明-瑞锦-洪文2-145号</text>
+					</view>
+				</view>
+				<view class="header-right" @tap="setMark">
+					<image src="{{isMarked ? '../images/mark.png': '../images/un-mark.png'}}"></image>
+					<view>{{markText}}</view>
+				</view>
+			</view>
+			<view class="side">
+				<view class="side-left">
+					<view class="title">参考均价(元/m2)</view>
+					<view class="number">53422</view>
+				</view>
+				<view class="side-center"></view>
+				<view class="side-right">
+					<view class="title">环比上个月变化</view>
+					<view class="number">
+						<image src="../images/decline.png"></image>
+						<text>0.11%</text>
+					</view>
+				</view>
+			</view>
+			<view class="content">
+				<view class="title">小区简介</view>
+				<view class="item">
+					<view class="item-head">建筑年代：</view>
+					<view class="item-foot">暂无数据</view>
+				</view>
+				<view class="item">
+					<view class="item-head">产权年数：</view>
+					<view class="item-foot">暂无数据</view>
+				</view>
+				<view class="item">
+					<view class="item-head">房屋结构：</view>
+					<view class="item-foot">暂无数据</view>
+				</view>
+				<view class="item">
+					<view class="item-head">房屋总数：</view>
+					<view class="item-foot">暂无数据</view>
+				</view>
+				<view class="item">
+					<view class="item-head">物业公司：</view>
+					<view class="item-foot">暂无数据</view>
+				</view>
+			</view>
+		</view>
+		<!-- 周边配套 -->
+		<cellSupport></cellSupport>
+		<!-- 同小区房源 -->
+		<communitySource type="community"></communitySource>
+		<!-- 尾部广告 -->
+		<footer></footer>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import cellSource from '../components/cell_source'
+import cellSupport from '../components/cell_support'
+import footer from '../components/footer'
+
+export default class DetailCommunity extends wepy.page {
+	config = {
+		navigationBarTitleText: '小区详情'
+	}
+	components = {
+		communitySource: cellSource,
+		cellSupport,
+		footer
+	}
+
+	data = {
+		imgUrls: [
+			'../images/lu.jpeg',
+			'../images/lu.jpeg',
+			'../images/lu.jpeg',
+		],
+		indicatorDots: false,
+		autoplay: false,
+		interval: 5000,
+		duration: 1000,
+		isMarked: false,
+		markText: '关注'
+	}
+
+	computed = {
+	}
+
+	watch = {
+		isMarked () {
+			this.markText = this.isMarked == true ? '已关注' : '关注'
+			this.$apply()
+		}
+	}
+
+	events = {
+	}
+
+	onLoad() {
+	}
+
+	methods = {
+		mapDetail() {
+			wepy.navigateTo({url: 'detail_support'})
+		},
+		setMark () {
+			this.isMarked = !this.isMarked
+		}
+	}
+}
+</script>

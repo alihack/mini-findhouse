@@ -20,6 +20,7 @@
 		font-size: 30rpx;
 		margin-bottom: 20rpx;
 		padding:0rpx 20rpx;
+		box-sizing: border-box;
 		.item {
 			.flex;
 			.img-wrap {

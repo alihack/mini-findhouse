@@ -2,9 +2,36 @@
 @import '../styles/base.less';
 	.container {
 		.banner {
-			background: green;
 			width: 100%;
 			height: 475rpx;
+		}
+		.banner-txt {
+			position: absolute;
+			top:180rpx;
+			left:60rpx;
+			color:#fff;
+			.txt1 {
+				font-size: 66rpx;
+			}
+			.txt2 {
+				font-size: 30rpx;
+			}
+		}
+		.address {
+			position: absolute;
+			top:40rpx;
+			left:30rpx;
+			width: 140rpx;
+			height: 60rpx;
+			background: #1b140e;
+			color:#fff;
+			border-radius: 60rpx;
+			.flex;
+			image {
+				width: 30rpx;
+				height: 30rpx;
+				margin: 0 10rpx 0 20rpx;
+			}
 		}
 		.search-bar {
 			position: absolute;
@@ -13,7 +40,7 @@
 			top:430rpx;
 			background: #fff;
 			border-radius: 90rpx;
-			box-shadow: 0 10rpx 5rpx #eaeaea;
+			box-shadow: 0 5rpx 5rpx #eaeaea;
 			color: #666666;
 			font-size: 26rpx;
 			.flex;
@@ -78,31 +105,20 @@
 				}
 			}
 		}
-		.sort-bar {
-			width: 100%;
-			height: 90rpx;
-			margin-top:20rpx;
-			background: #fff;
-			.flex;
-			justify-content: space-around;
-			.item {
-				width: 80rpx;
-				height: 40rpx;
-				.flex;
-				justify-content: space-between;
-				image {
-					width: 20rpx;
-					height: 20rpx;
-					display: inline-block;
-				}
-			}
-		}
 	}
 </style>
 <template>
 	<view class="container">
-		<view class="banner"></view>
-		<view class="search-bar">
+		<image class="banner" src="../images/banner.jpg"></image>
+		<view class="banner-txt">
+			<view class="txt1">真房源·找房牛</view>
+			<view class="txt2">找房真平台，省钱省时间</view>
+		</view>
+		<view class="address" @tap="address">
+			<image src="../images/white-address.png"></image>
+			<text>厦门</text>
+		</view>
+		<view class="search-bar" @tap="toSearch">
 			<image src="../images/search.png"></image>
 			<text>搜索小区或地址</text>
 		</view>
@@ -110,7 +126,7 @@
 			<view class="header-left">
 				<view class="title">厦门市场行情</view>
 				<view class="price"><text class="number">36682</text><text class="unit">元/平米</text></view>
-				<view class="ratio"><text class="word">环比上个月</text><text class="precent">-1.2%</text></view>
+				<view class="ratio"><text class="word">环比上个月</text><text class="precent"> -1.2%</text></view>
 			</view>
 			<view class="header-center"></view>
 			<view class="header-right">
@@ -167,6 +183,15 @@ export default class Index extends wepy.page {
 	}
 
 	methods = {
+		address() {
+			wepy.showToast({
+				title: '当前只支持厦门地区',
+				icon: 'none'
+			})
+		},
+		toSearch () {
+			wepy.navigateTo({url: 'search'})
+		}
 	}
 }
 </script>

@@ -1,0 +1,215 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	padding-bottom: 120rpx;
+	.banner {
+		width: 100%;
+		height: 565rpx;
+		image {
+			width: 100%;
+			height: 100%;
+		}
+	}
+	.cell-community {
+		background: #fff;
+		margin-top: 15rpx;
+		.cell {
+			width: 100%;
+			height: 310rpx;
+			padding: 40rpx 30rpx;
+			box-sizing: border-box;
+			&-main {
+				width: 690rpx;
+				margin-top:30rpx;
+				.flex;
+				image {
+					width: 220rpx;
+					height: 165rpx;
+					background: #2d8cf0;
+					margin-right: 30rpx;
+				}
+				.detail {
+					.title {
+						.flex;
+						font-size: 32rpx;
+						&-left {
+						}
+						&-right {
+							color:@gold;
+						}
+					}
+					&-text {
+						color: @gray;
+					}
+				}
+			}
+		}
+	}
+	.fixed-bottom {
+		.flex;
+		width: 100%;
+		height: 135rpx;
+		position: fixed;
+		bottom: 0;
+		background: #fff;
+		padding:0 30rpx;
+		box-sizing: border-box;
+		box-shadow: 0 -0rpx 5rpx #eaeaea;
+		.avatar {
+			.avatar-auto(80rpx);
+			background: #2d8cf0;
+			margin-right: 20rpx;
+		}
+		.detail {
+			margin-right: 80rpx;
+			.name {
+				.flex;
+				text {
+					font-size: 32rpx;
+					margin-right: 13rpx;
+					color:@gray;
+					max-width: 156rpx;
+					.ellipsis;
+				}
+				.label {
+					.label-auto(50rpx, 20rpx);
+					font-size: 16rpx;
+					background: #2d8cf0;
+					color:#fff;
+				}
+			}
+			.company {
+				font-size: 26rpx;
+			}
+		}
+		.online-label {
+			.label-auto(180rpx, 100rpx);
+			color:#fff;
+			background: #ff9c00;
+			font-size: 30rpx;
+			margin-right: 20rpx;
+			border-radius: 15rpx;
+		}
+		.phone-label {
+			.online-label;
+			background: #5dacff;
+			margin-right: 0rpx;
+		}
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<!-- 顶部banner -->
+		<swiper
+			class="banner"
+			indicator-dots="{{indicatorDots}}"
+			autoplay="{{autoplay}}"
+			interval="{{interval}}"
+			duration="{{duration}}"
+		>
+		<block wx:for="{{imgUrls}}" wx:key="index">
+			<swiper-item>
+				<image src="{{item}}" class="slide-image"/>
+			</swiper-item>
+		</block>
+		</swiper>
+		<!-- 房屋详情 -->
+		<cellHouse></cellHouse>
+		<view class="cell-community">
+			<view class="cell" @tap="communityDetail">
+				<view class="cell-head">
+					<view class="cell-head-left">莲花三村</view>
+					<view class="cell-head-right">
+						<text>小区详情</text>
+						<image class="next-icon" src="../images/next.png"/>
+					</view>
+				</view>
+				<view class="cell-main">
+					<image src="../images/lu.jpeg"></image>
+					<view class="detail">
+						<view class="title">
+							<view class="title-left">参考均价：</view>
+							<view class="title-right">25813元/m2</view>
+						</view>
+						<view class="detail-text">建筑年代：2008年建</view>
+						<view class="detail-text">产权年数：70年</view>
+						<view class="detail-text">房屋总数：1000户</view>
+					</view>
+				</view>
+			</view>
+		</view>
+		<!-- 同小区房源 -->
+		<communitySource type="community"></communitySource>
+		<!-- 周边配套 -->
+		<cellSupport></cellSupport>
+		<!-- 推荐房源 -->
+		<recommendSource type="recommend"></recommendSource>
+		<!-- 尾部广告 -->
+		<footer></footer>
+		<!-- 固定尾部 -->
+		<view class="fixed-bottom">
+			<view class="avatar"></view>
+			<view class="detail">
+				<view class="name">
+					<text>陈立</text>
+					<view class="label">经纪人</view>
+				</view>
+				<view class="company">小鱼房产</view>
+			</view>
+			<view class="online-label">在线咨询</view>
+			<view class="phone-label">电话咨询</view>
+		</view>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import cellHouse from '../components/cell_house'
+import cellSource from '../components/cell_source'
+import cellSupport from '../components/cell_support'
+import footer from '../components/footer'
+
+export default class Detail extends wepy.page {
+	config = {
+		navigationBarTitleText: '房源详情'
+	}
+	components = {
+		cellHouse,
+		recommendSource: cellSource,
+		communitySource: cellSource,
+		cellSupport,
+		footer
+	}
+
+	data = {
+		imgUrls: [
+			'../images/lu.jpeg',
+			'../images/lu.jpeg',
+			'../images/lu.jpeg',
+		],
+		indicatorDots: false,
+		autoplay: false,
+		interval: 5000,
+		duration: 1000,
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+
+	onLoad() {
+	}
+
+	methods = {
+		mapDetail() {
+			wepy.navigateTo({url: 'detail_support'})
+		},
+		communityDetail() {
+			wepy.navigateTo({url: 'detail_community'})
+		},
+	}
+}
+</script>

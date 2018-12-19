@@ -7,12 +7,15 @@
 		height: 170rpx;
 		.flex;
 		&-text {
-			width: 620rpx;
+			width: 610rpx;
 			font-size: 38rpx;
 		}
 		&-mark {
 			.flex;
+			width: 80rpx;
+			height: 80rpx;
 			flex-direction: column;
+			color:#333333;
 			image {
 				width: 40rpx;
 				height: 35rpx;
@@ -123,10 +126,10 @@
 <template>
 	<view class="cell-house">
 		<view class="cell1">
-			<view class="cell1-text">瑞景公园自主精装4房，看小区中庭，采光视野好</view>
-			<view class="cell1-mark">
-				<image src="../images/un-mark.png"></image>
-				<view class="">关注</view>
+			<view class="cell1-text">瑞景公园自主精装4房，看小区中庭 采光视野好</view>
+			<view class="cell1-mark" @tap="setMark">
+				<image src="{{isMarked ? '../images/mark.png': '../images/un-mark.png'}}"></image>
+				<view>{{markText}}</view>
 			</view>
 		</view>
 		<view class="cell2">
@@ -191,7 +194,7 @@
 				<image class="next-icon" src="../images/next.png"/>
 			</view>
 		</view>
-		<view class="cell4">
+		<view class="cell4" @tap="detailIntroduce">
 			<view class="cell4-title">
 				<view class="cell4-title-head">房源介绍</view>
 				<view class="cell4-title-foot">
@@ -213,12 +216,24 @@ export default class cellHouse extends wepy.component {
 	}
 
 	data = {
+		isMarked: false,
+		markText: '关注'
 	}
 
 	watch = {
+		isMarked () {
+			this.markText = this.isMarked == true ? '已关注' : '关注'
+			this.$apply()
+		}
 	}
 
 	methods = {
+		detailIntroduce () {
+			wepy.navigateTo({url: 'detail_introduce'})
+		},
+		setMark () {
+			this.isMarked = !this.isMarked
+		}
 	}
 }
 </script>
