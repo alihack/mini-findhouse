@@ -70,6 +70,39 @@
 				</view>
 			</view>
 		</view>
+		<view class="item">
+			<image src="../images/lu.jpeg"></image>
+			<view class="detail">
+				<view class="title1">莲花地铁口 湖里 中间层</view>
+				<view class="title2">瑞景公园|4室2厅</view>
+				<view class="label">满两年</view>
+				<view class="price">
+					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+				</view>
+			</view>
+		</view>
+		<view class="item">
+			<image src="../images/lu.jpeg"></image>
+			<view class="detail">
+				<view class="title1">莲花地铁口 湖里 中间层</view>
+				<view class="title2">瑞景公园|4室2厅</view>
+				<view class="label">满两年</view>
+				<view class="price">
+					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+				</view>
+			</view>
+		</view>
+		<view class="item">
+			<image src="../images/lu.jpeg"></image>
+			<view class="detail">
+				<view class="title1">莲花地铁口 湖里 中间层</view>
+				<view class="title2">瑞景公园|4室2厅</view>
+				<view class="label">满两年</view>
+				<view class="price">
+					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+				</view>
+			</view>
+		</view>
 	</view>	
 </template>
 <script>

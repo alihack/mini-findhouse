@@ -149,7 +149,7 @@
 		<footer></footer>
 		<!-- 固定尾部 -->
 		<view class="fixed-bottom">
-			<view class="avatar"></view>
+			<image src="../images/lu.jpeg" class="avatar"></image>
 			<view class="detail">
 				<view class="name">
 					<text>陈立</text>

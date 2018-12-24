@@ -1,0 +1,191 @@
+<style lang="less">
+@import '../styles/base.less';
+// 排序工具栏
+.sort-bar {
+	width: 100%;
+	margin-top:20rpx;
+	background: #fff;
+	z-index: 2000;
+	&-drop {
+		height: 90rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-around;
+		.item {
+			width: 80rpx;
+			height: 40rpx;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-size: 30rpx;
+			margin-right: 5rpx;
+			image {
+				width: 20rpx;
+				height: 20rpx;
+				display: inline-block;
+			}
+		}
+	}
+	&-kinds {
+		padding:0 30rpx;
+		box-sizing: border-box;
+		.box-wrap {
+			.flex;
+			flex-wrap: wrap;
+			width: 720rpx;
+			margin-top: 10rpx;
+			.box {
+				.label-auto(156rpx, 70rpx);
+				background: #f8f8f9;
+				margin-right: 23rpx;
+				margin-top:25rpx;
+			}
+			.box:active,.box:hover {
+				border: 2rpx solid @blue;
+				background: #fff;
+				box-sizing: border-box;
+				line-height: 66rpx;
+			}
+		}
+		.button {
+			margin: 45rpx 0;
+		}
+		.title {
+			font-size: 36rpx;
+			font-weight: bold;
+			margin-top:40rpx;
+		}
+		.input {
+			.flex;
+			justify-content: space-between;
+			width: 690rpx;
+			margin-top:30rpx;
+				input {
+					width: 320rpx;
+					height: 70rpx;
+					border: 2rpx solid #f5f5f5;
+					display: inline-block;
+					text-align: center;
+			}
+		}
+	}
+}
+.shade {
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: #000;
+	opacity: 0.2;
+	overflow: hidden;
+	z-index: 1000;
+	color: #fff;
+}
+</style>
+<template>
+<view class="sort-bar">
+	<view class="sort-bar-drop">
+		<view class="item" wx:for="{{sortData}}" wx:key="index" @tap="sortBy({{index}})">
+			<text style="color:{{item.isSelected? '#2d8cf0': ''}}">{{item.title}}</text>
+			<image src="{{item.isSelected?'../images/blue-triangle.png':'../images/gray-triangle.png'}}"></image>
+		</view>
+	</view>
+	<view class="sort-bar-kinds" wx:if="{{showSortBarPanel}}">
+		<!-- 区域下拉 -->
+		<block wx:if="{{sortData[0].isSelected}}">
+			<view class="box-wrap">
+				<view class="box" wx:for="{{sortData[0].kinds}}" wx:key="index">{{item}}</view>
+			</view>
+			<view class="button">确认</view>
+		</block>
+		<!-- 总价下拉 -->
+		<block wx:if="{{sortData[1].isSelected}}">
+			<view class="title">价格区间（万）</view>
+			<view class="input">
+				<input placeholder="最低价格" type="number"/><input placeholder="最高价格" type="number"/>
+			</view>
+			<view class="box-wrap">
+				<view class="box" wx:for="{{sortData[1].kinds}}" wx:key="index">{{item}}</view>
+			</view>
+			<view class="button">确认</view>
+		</block>
+		<!-- 户型下拉 -->
+		<block wx:if="{{sortData[2].isSelected}}">
+			<view class="box-wrap">
+				<view class="box" wx:for="{{sortData[2].kinds}}" wx:key="index">{{item}}</view>
+			</view>
+			<view class="button">确认</view>
+		</block>
+		<!-- 更多下拉 -->
+		<block wx:if="{{sortData[3].isSelected}}">
+			<view class="type" wx:for="{{sortData[3].type}}" wx:for-index="typeIndex" wx:for-item="type" wx:key="typeIndex">
+				<view class="title">{{type.title}}</view>
+				<view class="box-wrap">
+					<view class="box" wx:for="{{sortData[3].type[typeIndex].kinds}}" wx:for-item="kind" wx:for-index="kindIndex" wx:key="kindIndex">
+						{{kindIndex}}
+					</view>
+				</view>
+			</view>
+			<view class="button">确认</view>
+		</block>
+	</view>
+</view>
+<view class="shade" wx:if="{{showSortBarPanel}}" @tap="hideSortBarPanel"></view>
+</template>
+<script>
+import wepy from 'wepy'
+import {sortData} from '../utils/config'
+export default class sortBar extends wepy.component {
+	props = {
+	}
+
+	data = {
+		sortData,
+		sortBarTop: 0,
+		showSortBarPanel: false
+	}
+
+	watch = {
+	}
+
+	onLoad() {
+		this.getTop()
+	}
+	getTop () {
+		return new Promise(resolve => {
+			// 获取排序栏高度
+			const query = wx.createSelectorQuery()
+			query.select('.sort-bar').boundingClientRect()
+			query.selectViewport().scrollOffset()
+			query.exec(res => {
+				if (res[0]) {
+					this.sortBarTop = res[0].top
+				}
+				resolve()
+				this.$apply()
+			})
+		})
+	}
+	methods = {
+		async sortBy (index) {
+			console.log('type', index)
+			this.sortData.forEach(ele => {
+				ele.isSelected = false
+			})
+			this.sortData[index].isSelected = true
+			this.showSortBarPanel = true
+			if (this.sortBarTop == 0) {
+				await this.getTop()
+			}
+			wepy.pageScrollTo({
+				scrollTop: this.sortBarTop,
+				duration: 300
+			})
+		},
+		hideSortBarPanel() {
+			this.showSortBarPanel = false
+		}
+	}
+}
+</script>

@@ -134,24 +134,7 @@
 				<text>房屋估价</text>
 			</view>
 		</view>
-		<view class="sort-bar">
-			<view class="item">
-				<text>区域</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-			<view class="item">
-				<text>总价</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-			<view class="item">
-				<text>户型</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-			<view class="item">
-				<text>更多</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-		</view>
+		<sortBar></sortBar>
 		<houseList></houseList>
 		<footer></footer>
 	</view>
@@ -161,13 +144,15 @@
 import wepy from 'wepy'
 import footer from '../components/footer'
 import houseList from '../components/house_list'
+import sortBar from '../components/sort_bar'
 export default class Index extends wepy.page {
 	config = {
 		navigationBarTitleText: '房牛估价'
 	}
 	components = {
 		footer,
-		houseList
+		houseList,
+		sortBar
 	}
 
 	data = {
@@ -191,7 +176,7 @@ export default class Index extends wepy.page {
 		},
 		toSearch () {
 			wepy.navigateTo({url: 'search'})
-		}
+		},
 	}
 }
 </script>

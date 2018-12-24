@@ -123,24 +123,7 @@
 		</view>
 	</view>
 	<block wx:if="{{isChoosed}}">
-		<view class="sort-bar">
-			<view class="item">
-				<text>区域</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-			<view class="item">
-				<text>总价</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-			<view class="item">
-				<text>户型</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-			<view class="item">
-				<text>更多</text>
-				<image src="../images/triangle.png"></image>
-			</view>
-		</view>
+		<sortBar></sortBar>
 		<houseList></houseList>
 	</block>
 	<!-- <view wx:else class='nodata'>没有搜索到相关的数据哦</view> -->
@@ -150,6 +133,7 @@
 <script>
 import wepy from 'wepy'
 import houseList from '../components/house_list'
+import sortBar from '../components/sort_bar'
 // import api from '../utils/api'
 export default class Search extends wepy.page {
 	config = {
@@ -158,7 +142,8 @@ export default class Search extends wepy.page {
 		enablePullDownRefresh: false
 	}
 	components = {
-		houseList
+		houseList,
+		sortBar
 	}
     data = {
 		searchText: '',
