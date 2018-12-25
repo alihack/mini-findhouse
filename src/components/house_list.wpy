@@ -48,58 +48,14 @@
 </style>
 <template>
 	<view class="main">
-		<view class="item" @tap="toHouseDetail">
+		<view class="item" @tap="toHouseDetail" wx:for="{{dataList}}" wx:key="index">
 			<image src="../images/lu.jpeg"></image>
 			<view class="detail">
 				<view class="title1">莲花地铁口 湖里 中间层</view>
-				<view class="title2">瑞景公园|4室2厅</view>
+				<view class="title2">{{item.estateName}}|{{item.countF}}室{{item.countT}}厅</view>
 				<view class="label">满两年</view>
 				<view class="price">
-					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
-				</view>
-			</view>
-		</view>
-		<view class="item">
-			<image src="../images/lu.jpeg"></image>
-			<view class="detail">
-				<view class="title1">莲花地铁口 湖里 中间层</view>
-				<view class="title2">瑞景公园|4室2厅</view>
-				<view class="label">满两年</view>
-				<view class="price">
-					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
-				</view>
-			</view>
-		</view>
-		<view class="item">
-			<image src="../images/lu.jpeg"></image>
-			<view class="detail">
-				<view class="title1">莲花地铁口 湖里 中间层</view>
-				<view class="title2">瑞景公园|4室2厅</view>
-				<view class="label">满两年</view>
-				<view class="price">
-					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
-				</view>
-			</view>
-		</view>
-		<view class="item">
-			<image src="../images/lu.jpeg"></image>
-			<view class="detail">
-				<view class="title1">莲花地铁口 湖里 中间层</view>
-				<view class="title2">瑞景公园|4室2厅</view>
-				<view class="label">满两年</view>
-				<view class="price">
-					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
-				</view>
-			</view>
-		</view>
-		<view class="item">
-			<image src="../images/lu.jpeg"></image>
-			<view class="detail">
-				<view class="title1">莲花地铁口 湖里 中间层</view>
-				<view class="title2">瑞景公园|4室2厅</view>
-				<view class="label">满两年</view>
-				<view class="price">
-					<text class="price-total">365</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+					<text class="price-total">{{item.sellPrice}}</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
 				</view>
 			</view>
 		</view>
@@ -109,12 +65,16 @@
 import wepy from 'wepy'
 export default class houseList extends wepy.component {
 	props = {
+		dataList: Array
 	}
 
 	data = {
 	}
 
 	watch = {
+	}
+
+	onLoad () {
 	}
 
 	methods = {

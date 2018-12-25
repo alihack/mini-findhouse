@@ -54,12 +54,18 @@
 				</view>
 			</view>
 		</view>
-		<houseList></houseList>
+		<block wx:if="{{houseIsChoosed}}">
+			<houseSourceList :dataList.sync="houseSourceList"></houseSourceList>
+		</block>
+		<block wx:else>
+			<communityList :dataList.sync="communityList"></communityList>
+		</block>
 	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
+import api from '../utils/api'
 import houseList from '../components/house_list'
 export default class UserMark extends wepy.page {
 	config = {
@@ -67,11 +73,14 @@ export default class UserMark extends wepy.page {
 		navigationBarBackgroundColor: '#f5f5f5'
 	}
 	components = {
-		houseList
+		houseSourceList: houseList,
+		communityList: houseList,
 	}
 
 	data = {
-		houseIsChoosed: true
+		houseIsChoosed: true,
+		houseSourceList: [],
+		communityList: []
 	}
 
 	computed = {
@@ -80,7 +89,31 @@ export default class UserMark extends wepy.page {
 	events = {
 	}
 
-	onLoad() {
+	async onShow() {
+		await this.getHouseSourceList()
+		await this.getCommunityList()
+	}
+	getCommunityList() {
+		return new Promise(async resolve => {
+			const {data} = await wepy.request({
+				url: api['followList'] + '?uid=2&type=2',
+			})
+			console.log('data', data)
+			this.communityList = data
+			this.$apply()
+			resolve()
+		})
+	}
+	getHouseSourceList() {
+		return new Promise(async resolve => {
+			const {data} = await wepy.request({
+				url: api['followList'] + '?uid=2&type=1',
+			})
+			console.log('data', data)
+			this.houseSourceList = data
+			this.$apply()
+			resolve()
+		})
 	}
 
 	methods = {

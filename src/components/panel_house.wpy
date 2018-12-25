@@ -1,6 +1,6 @@
 <style lang="less">
 @import '../styles/base.less';
-.cell-house {
+.panel-house {
 	.panel;
 	.cell1 {
 		width: 100%;
@@ -124,7 +124,7 @@
 }
 </style>
 <template>
-	<view class="cell-house">
+	<view class="panel-house">
 		<view class="cell1">
 			<view class="cell1-text">瑞景公园自主精装4房，看小区中庭 采光视野好</view>
 			<view class="cell1-mark" @tap="setMark">
@@ -211,7 +211,7 @@
 </template>
 <script>
 import wepy from 'wepy'
-export default class cellHouse extends wepy.component {
+export default class panelHouse extends wepy.component {
 	props = {
 	}
 

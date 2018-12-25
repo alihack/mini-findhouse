@@ -10,10 +10,10 @@
 			height: 100%;
 		}
 	}
-	.cell-community {
+	.panel-community {
 		background: #fff;
 		margin-top: 15rpx;
-		.cell {
+		.panel {
 			width: 100%;
 			height: 310rpx;
 			padding: 40rpx 30rpx;
@@ -115,17 +115,17 @@
 		</block>
 		</swiper>
 		<!-- 房屋详情 -->
-		<cellHouse></cellHouse>
-		<view class="cell-community">
-			<view class="cell" @tap="communityDetail">
-				<view class="cell-head">
-					<view class="cell-head-left">莲花三村</view>
-					<view class="cell-head-right">
+		<panelHouse></panelHouse>
+		<view class="panel-community">
+			<view class="panel" @tap="communityDetail">
+				<view class="panel-head">
+					<view class="panel-head-left">莲花三村</view>
+					<view class="panel-head-right">
 						<text>小区详情</text>
 						<image class="next-icon" src="../images/next.png"/>
 					</view>
 				</view>
-				<view class="cell-main">
+				<view class="panel-main">
 					<image src="../images/lu.jpeg"></image>
 					<view class="detail">
 						<view class="title">
@@ -142,7 +142,7 @@
 		<!-- 同小区房源 -->
 		<communitySource type="community"></communitySource>
 		<!-- 周边配套 -->
-		<cellSupport></cellSupport>
+		<panelSupport></panelSupport>
 		<!-- 推荐房源 -->
 		<recommendSource type="recommend"></recommendSource>
 		<!-- 尾部广告 -->
@@ -165,9 +165,9 @@
 
 <script>
 import wepy from 'wepy'
-import cellHouse from '../components/cell_house'
-import cellSource from '../components/cell_source'
-import cellSupport from '../components/cell_support'
+import panelHouse from '../components/panel_house'
+import panelSource from '../components/panel_source'
+import panelSupport from '../components/panel_support'
 import footer from '../components/footer'
 
 export default class Detail extends wepy.page {
@@ -175,10 +175,10 @@ export default class Detail extends wepy.page {
 		navigationBarTitleText: '房源详情'
 	}
 	components = {
-		cellHouse,
-		recommendSource: cellSource,
-		communitySource: cellSource,
-		cellSupport,
+		panelHouse,
+		recommendSource: panelSource,
+		communitySource: panelSource,
+		panelSupport,
 		footer
 	}
 

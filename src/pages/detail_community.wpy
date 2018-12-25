@@ -174,7 +174,7 @@
 			</view>
 		</view>
 		<!-- 周边配套 -->
-		<cellSupport></cellSupport>
+		<panelSupport></panelSupport>
 		<!-- 同小区房源 -->
 		<communitySource type="community"></communitySource>
 		<!-- 尾部广告 -->
@@ -184,8 +184,8 @@
 
 <script>
 import wepy from 'wepy'
-import cellSource from '../components/cell_source'
-import cellSupport from '../components/cell_support'
+import panelSource from '../components/panel_source'
+import panelSupport from '../components/panel_support'
 import footer from '../components/footer'
 
 export default class DetailCommunity extends wepy.page {
@@ -193,8 +193,8 @@ export default class DetailCommunity extends wepy.page {
 		navigationBarTitleText: '小区详情'
 	}
 	components = {
-		communitySource: cellSource,
-		cellSupport,
+		communitySource: panelSource,
+		panelSupport,
 		footer
 	}
 

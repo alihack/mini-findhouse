@@ -1,0 +1,181 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	.quit {
+		.label-auto(124rpx, 50rpx);
+		position: absolute;
+		top: 40rpx;
+		right:40rpx;
+		background: #f5f5f5;
+		color:@gray;
+		font-size: 30rpx;
+		border-radius: 50rpx;
+	}
+	.header {
+		.flex;
+		width: 100%;
+		height: 240rpx;
+		padding: 0 40rpx;
+		box-sizing: border-box;
+		background: #fff;
+		font-size: 32rpx;
+		.avatar {
+			.avatar-auto(100rpx);
+			background: green;
+			margin-right: 25rpx;
+		}
+	}
+	.main {
+		margin-top: 20rpx;
+		background: #fff;
+		font-size: 30rpx;
+		width: 100%;
+		padding:0 30rpx;
+		box-sizing: border-box;
+		.row {
+			.flex;
+			border-top:2rpx solid #f5f5f5;
+			.title {
+				color: @gray;
+			}
+			.number {
+				color:@gold;
+			}
+			.right {
+				padding-left:50rpx;
+			}
+			&-side {
+				width: 344rpx;
+				height: 155rpx;
+				padding: 35rpx;
+				box-sizing: border-box;
+			}
+			&-center {
+				width: 2rpx;
+				background: #f5f5f5;
+				height: 60rpx;
+			}
+		}
+		.row:first-child {border:none}
+	}
+	.cells {
+		margin:20rpx 0 50rpx 0;
+		width:100%;
+		position: relative;
+		.cell {
+			.flex;
+			width: 100%;
+			padding:30rpx 40rpx;
+			box-sizing: border-box;
+			background: #fff;
+			color: #101d37;
+			font-size: 32rpx;
+			margin-top:2rpx;
+			justify-content: space-between;
+			&-foot {
+				.flex;
+				image {
+					width:40rpx;
+					height:40rpx;
+				}
+				.round {
+					width: 20rpx;
+					height: 20rpx;
+					border-radius: 20rpx;
+					background: red;
+					margin-right: 20rpx;
+				}
+			}
+		}
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<view class="quit" @tap="quit">退出</view>
+		<view class="header">
+			<image src="../images/lu.jpeg" class="avatar"></image>
+			<view class="detail">
+				<view class="name">陈立</view>
+				<view class="phone">17****05</view>
+			</view>
+		</view>
+		<view class="main">
+			<view class="row">
+				<view class="row-side">
+					<view class="title">本月主页打开次数</view>
+					<view class="number">253242</view>
+				</view>
+				<view class="row-center"></view>
+				<view class="row-side right">
+					<view class="title">本月咨询</view>
+					<view class="number">2532</view>
+				</view>
+			</view>
+			<view class="row">
+				<view class="row-side">
+					<view class="title">总计主页打开次数</view>
+					<view class="number">253242</view>
+				</view>
+				<view class="row-center"></view>
+				<view class="row-side right">
+					<view class="title">总计咨询</view>
+					<view class="number">812532</view>
+				</view>
+			</view>
+		</view>
+		<view class="cells">
+			<view class="cell" @tap="toMessage">
+				<view class="cell-head">我的消息</view>
+				<view class="cell-foot">
+					<view class="round"></view>
+					<image src="../images/next.png"/>
+				</view>
+			</view>
+			<view class="round"></view>
+			<view class="cell" @tap="toHome">
+				<view class="cell-head">我的主页</view>
+				<view class="cell-foot">
+					<image src="../images/next.png"/>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class Agent extends wepy.page {
+	config = {
+		navigationBarTitleText: '经纪人中心',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+	}
+
+	data = {
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+
+	onLoad() {
+	}
+
+	methods = {
+		toMessage() {
+			wepy.navigateTo({url: 'agent_message'})
+		},
+		toHome() {
+			wepy.navigateTo({url: 'agent_home'})
+		},
+		quit () {
+			wepy.navigateTo({url: 'login'})
+		}
+	}
+}
+</script>

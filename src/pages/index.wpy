@@ -125,8 +125,8 @@
 		<view class="header">
 			<view class="header-left">
 				<view class="title">厦门市场行情</view>
-				<view class="price"><text class="number">36682</text><text class="unit">元/平米</text></view>
-				<view class="ratio"><text class="word">环比上个月</text><text class="precent"> -1.2%</text></view>
+				<view class="price"><text class="number">{{market.price}}</text><text class="unit">元/平米</text></view>
+				<view class="ratio"><text class="word">环比上个月</text><text class="precent"> {{market.ratio}}</text></view>
 			</view>
 			<view class="header-center"></view>
 			<view class="header-right">
@@ -135,13 +135,14 @@
 			</view>
 		</view>
 		<sortBar></sortBar>
-		<houseList></houseList>
+		<houseList :dataList.sync="dataList"></houseList>
 		<footer></footer>
 	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
+import api from '../utils/api'
 import footer from '../components/footer'
 import houseList from '../components/house_list'
 import sortBar from '../components/sort_bar'
@@ -156,6 +157,8 @@ export default class Index extends wepy.page {
 	}
 
 	data = {
+		dataList: [],
+		market: {}
 	}
 
 	computed = {
@@ -164,7 +167,22 @@ export default class Index extends wepy.page {
 	events = {
 	}
 
-	onLoad() {
+	async onLoad() {
+		await this.getHouseList()
+	}
+
+	getHouseList() {
+		return new Promise(async resolve => {
+			const {data} = await wepy.request({
+				url: api['houseList'],
+			})
+			console.log('data', data)
+			this.dataList = data.list
+			this.market.price = data.total_price
+			this.market.ratio = data.ratio
+			this.$apply()
+			resolve()
+		})
 	}
 
 	methods = {

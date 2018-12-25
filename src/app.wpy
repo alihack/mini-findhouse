@@ -13,7 +13,7 @@ page {
 	background: #f5f5f5;
 }
 // 面板头部
-.cell-head {
+.panel-head {
 	display: flex;
 	align-items: center;
     justify-content: space-between;
@@ -59,14 +59,18 @@ import 'wepy-async-function'
 export default class extends wepy.app {
 	config = {
 	pages: [
+		'pages/agent_home',
+		'pages/agent',
+		'pages/chat',
 		'pages/index',
+		'pages/agent_message',
+		'pages/user',
 		'pages/search',
 		'pages/detail_comSource',
 		'pages/detail',
 		'pages/detail_introduce',
 		'pages/detail_community',
 		'pages/login',
-		'pages/user',
 		'pages/user_mark',
 		'pages/user_history',
 		'pages/detail_support',
@@ -109,7 +113,6 @@ export default class extends wepy.app {
 		this.intercept('request', {
 			config (req) { // 这里不能用异步函数
 				req.header = {'content-type': 'application/x-www-form-urlencoded'}
-				req.method = 'POST'
 				console.log('请求开始', req.data)
 				return req
 			},

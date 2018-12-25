@@ -1,0 +1,134 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	.cells {
+		margin:20rpx 0 50rpx 0;
+		width:100%;
+		.cell {
+			.flex;
+			width: 100%;
+			padding:30rpx 40rpx;
+			box-sizing: border-box;
+			background: #fff;
+			color: #101d37;
+			margin-top:2rpx;
+			justify-content: space-between;
+			&-head {
+				.top {
+					.name {
+						font-size: 32rpx;
+						font-weight: bold;
+						margin-right: 20rpx;
+					}
+					.code {
+						font-size: 24rpx;
+						color: @gray;
+					}
+				}
+				.bottom {
+					font-size: 26rpx;
+				}
+			}
+			&-foot {
+				.flex;
+				image {
+					width:40rpx;
+					height:40rpx;
+				}
+				.round {
+					width: 20rpx;
+					height: 20rpx;
+					border-radius: 20rpx;
+					background: red;
+					margin-right: 20rpx;
+				}
+			}
+		}
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<view class="cells">
+			<view class="cell" @tap="toChat">
+				<view class="cell-head">
+					<view class="top">
+						<text class="name">莫莫</text><text class="code">编号： QH213213213</text>
+					</view>
+					<view class="bottom">
+						<text>未来城堡/2室2厅</text>
+					</view>
+				</view>
+				<view class="cell-foot">
+					<view class="round"></view>
+					<image src="../images/next.png"/>
+				</view>
+			</view>
+			<view class="cell" @tap="toChat">
+				<view class="cell-head">
+					<view class="top">
+						<text class="name">莫莫</text><text class="code">编号： QH213213213</text>
+					</view>
+					<view class="bottom">
+						<text>未来城堡/2室2厅</text>
+					</view>
+				</view>
+				<view class="cell-foot">
+					<view class="round"></view>
+					<image src="../images/next.png"/>
+				</view>
+			</view>
+			<view class="cell" @tap="toChat">
+				<view class="cell-head">
+					<view class="top">
+						<text class="name">莫莫</text><text class="code">编号： QH213213213</text>
+					</view>
+					<view class="bottom">
+						<text>未来城堡/2室2厅</text>
+					</view>
+				</view>
+				<view class="cell-foot">
+					<view class="round"></view>
+					<image src="../images/next.png"/>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class AgentMessage extends wepy.page {
+	config = {
+		navigationBarTitleText: '我的消息',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+	}
+
+	data = {
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+
+	onLoad() {
+	}
+
+	methods = {
+		toChat() {
+			wepy.navigateTo({url: 'chat'})
+		},
+		toHome() {
+			wepy.navigateTo({url: 'agent_home'})
+		},
+		quit () {
+			wepy.navigateTo({url: 'login'})
+		}
+	}
+}
+</script>
