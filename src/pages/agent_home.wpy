@@ -53,29 +53,58 @@
 	.cells {
 		margin:20rpx 0 50rpx 0;
 		width:100%;
-		position: relative;
+		height: 190rpx;
 		.cell {
+			.flex;
+			justify-content: space-between;
 			width: 100%;
 			height: 190rpx;
-			padding:30rpx;
-			box-sizing: border-box;
 			background: #fff;
 			border-top:2rpx solid #f5f5f5;
 			color:@gray;
-			.title {
-				.label {
-					.label-auto(80rpx, 35rpx);
-					background: #5dacff;
-					color:#fff;
-					margin-right: 15rpx;
-					font-size: 24rpx;
+			overflow:hidden; 
+			.content {
+				width: 100%;
+				height: 190rpx;
+				padding:30rpx;
+				box-sizing: border-box;
+				transition: all 0.4s;
+				transform: translateX(90px);
+				margin-left: -90px;
+				.title {
+					.label {
+						.label-auto(80rpx, 35rpx);
+						background: #5dacff;
+						color:#fff;
+						margin-right: 15rpx;
+						font-size: 24rpx;
+					}
+					.name {
+						font-size: 32rpx;
+						color:black;
+					}
 				}
-				.name {
-					font-size: 32rpx;
-					color:black;
+				.code {margin: 10rpx 0}
+			}
+			.del {
+				.flex;
+				flex-direction: column;
+				justify-content: center;
+				width: 170rpx;
+				height: 190rpx;
+				text-align: center;
+				color: #fff;
+				background: red;
+				transform: translateX(170px);
+				transition: all 0.4s;
+				image {
+					width: 60rpx;
+					height: 65rpx;
 				}
 			}
-			.code {margin: 10rpx 0}
+		}
+		.touch-move-active .content,.touch-move-active .del {
+			transform: translateX(0);
 		}
 		.cell:first-child {border:none}
 	}
@@ -99,13 +128,19 @@
 			</view>
 		</view>
 		<view class="cells">
-			<view class="cell">
-				<view class="title">
-					<text class="label">归属人</text>
-					<text class="name">一片光房产 小立</text>
+			<view class="cell {{item.isTouchMove ? 'touch-move-active' : ''}}" wx:for="{{list}}" wx:key="index">
+				<view class="content" bindtouchstart="touchS" bindtouchmove="touchM" data-index="{{index}}">
+					<view class="title">
+						<text class="label">{{item.label}}</text>
+						<text class="name">{{item.name}}</text>
+					</view>
+					<view class="code">编号： {{item.code}}</view>
+					<view class="detail">{{item.detail}}</view>
 				</view>
-				<view class="code">编号： DS24243243</view>
-				<view class="detail">未来城堡/2室2厅</view>
+				<view class="del" bindtap= "delItem({{index}})">
+					<image src="../images/del.png"></image>
+					<text>删除</text>
+				</view>
 			</view>
 		</view>
 	</view>
@@ -123,6 +158,28 @@ export default class AgentHome extends wepy.page {
 	}
 
 	data = {
+		delBtnWidth: 170,
+		startX: 0,
+		startY: 0,
+		list: [{
+			laber: '归属人',
+			name: '一片光房产 小立',
+			code: 'DS234234',
+			detail: '未来城堡/2室2厅',
+			isTouchMove: false
+		}, {
+			laber: '归属人',
+			name: '一片光房产 小发',
+			code: 'DS234234',
+			detail: '未来城堡/2室2厅',
+			isTouchMove: false
+		}, {
+			laber: '归属人',
+			name: '一片光房产 小饿',
+			code: 'DS234234',
+			detail: '未来城堡/2室2厅',
+			isTouchMove: false
+		}]
 	}
 
 	computed = {
@@ -134,15 +191,50 @@ export default class AgentHome extends wepy.page {
 	onLoad() {
 	}
 
+	angle (start, end) {
+		const X = end.X - start.X
+		const Y = end.Y - start.Y
+		// 返回角度 /Math.atan()返回数字的反正切值
+		return 360 * Math.atan(Y / X) / (2 * Math.PI)
+	}
+
 	methods = {
-		toMessage() {
-			wepy.navigateTo({url: 'agent_message'})
-		},
-		toHome() {
-			wepy.navigateTo({url: 'agent_home'})
-		},
 		quit () {
 			wepy.navigateTo({url: 'login'})
+		},
+		delItem (index) {
+			this.list.splice(index, 1)
+			this.$apply()
+		},
+		touchS (e) {
+			// 重置所有删除
+			this.list.forEach(ele => {
+				ele.isTouchMove = false
+			})
+			if (e.touches.length == 1) {
+				this.startX = e.touches[0].clientX
+				this.startY = e.touches[0].clientY
+			}
+			this.$apply()
+		},
+		touchM (e) {
+			const index = e.currentTarget.dataset.index
+			const touchMoveX = e.changedTouches[0].clientX
+			const touchMoveY = e.changedTouches[0].clientY
+			// 获取滑动角度
+			const angle = this.angle({ X: this.startX, Y: this.startY }, { X: touchMoveX, Y: touchMoveY })
+			this.list.forEach((ele, i) => {
+				if (Math.abs(angle) > 30) return
+				if (i == index) {
+					if (touchMoveX > this.startX) {
+						ele.isTouchMove = false
+					} else {
+						console.log('11111')
+						ele.isTouchMove = true
+					}
+				}
+			})
+			this.$apply()
 		}
 	}
 }

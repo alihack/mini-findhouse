@@ -60,9 +60,6 @@ export default class Login extends wepy.page {
 
 	methods = {
 		login() {
-			wepy.switchTab({
-				url: 'my'
-			})
 		}
 	}
 }

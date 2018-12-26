@@ -54,56 +54,58 @@ page {
 
 <script>
 import wepy from 'wepy'
+import {getUserId} from './utils/util'
 import 'wepy-async-function'
 
 export default class extends wepy.app {
 	config = {
-	pages: [
-		'pages/agent_home',
-		'pages/agent',
-		'pages/chat',
-		'pages/index',
-		'pages/agent_message',
-		'pages/user',
-		'pages/search',
-		'pages/detail_comSource',
-		'pages/detail',
-		'pages/detail_introduce',
-		'pages/detail_community',
-		'pages/login',
-		'pages/user_mark',
-		'pages/user_history',
-		'pages/detail_support',
-	],
-	tabBar: {
-		'selectedColor': '#2d8cf0',
-		'list': [{
-			'pagePath': 'pages/index',
-			'text': '首页',
-			'iconPath':	'./images/home-gray.png',
-			'selectedIconPath': './images/home-blue.png',
+		pages: [
+			'pages/index',
+			'pages/chat',
+			'pages/login',
+			'pages/agent_home',
+			'pages/agent',
+			'pages/agent_message',
+			'pages/user',
+			'pages/search',
+			'pages/detail_comSource',
+			'pages/detail',
+			'pages/detail_introduce',
+			'pages/detail_community',
+			'pages/user_mark',
+			'pages/user_history',
+			'pages/detail_support',
+		],
+		tabBar: {
+			'selectedColor': '#2d8cf0',
+			'list': [{
+				'pagePath': 'pages/index',
+				'text': '首页',
+				'iconPath':	'./images/home-gray.png',
+				'selectedIconPath': './images/home-blue.png',
+			},
+			{
+				'pagePath': 'pages/user',
+				'text': '我的',
+				'iconPath':	'./images/my-gray.png',
+				'selectedIconPath': './images/my-blue.png',
+			}]
 		},
-		{
-			'pagePath': 'pages/user',
-			'text': '我的',
-			'iconPath':	'./images/my-gray.png',
-			'selectedIconPath': './images/my-blue.png',
-		}]
-	},
-	window: {
-		backgroundTextStyle: 'light',
-		enablePullDownRefresh: false,
-		navigationBarBackgroundColor: '#fff',
-		navigationBarTitleText: 'WeChat',
-		navigationBarTextStyle: 'black'
-	}
+		window: {
+			backgroundTextStyle: 'light',
+			enablePullDownRefresh: false,
+			navigationBarBackgroundColor: '#fff',
+			navigationBarTitleText: 'WeChat',
+			navigationBarTextStyle: 'black'
+		}
 	}
 
 	globalData = {
 		myUserInfo: null
 	}
-	async onShow() {
+	async onLaunch() {
 		wx.clearStorage()  // 清除缓存
+		await getUserId()
 	}
 
 	constructor() {

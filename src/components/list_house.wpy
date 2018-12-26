@@ -63,7 +63,7 @@
 </template>
 <script>
 import wepy from 'wepy'
-export default class houseList extends wepy.component {
+export default class ListHouse extends wepy.component {
 	props = {
 		dataList: Array
 	}

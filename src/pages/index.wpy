@@ -137,15 +137,19 @@
 		<sortBar></sortBar>
 		<houseList :dataList.sync="dataList"></houseList>
 		<footer></footer>
+		<!-- 授权弹窗 -->
+		<authorModal :showAuthorModal.sync="showAuthorModal"></authorModal>
 	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
+import {getUserInfo} from '../utils/util'
 import footer from '../components/footer'
-import houseList from '../components/house_list'
-import sortBar from '../components/sort_bar'
+import houseList from '../components/list_house'
+import sortBar from '../components/bar_sort'
+import authorModal from '../components/modal_author'
 export default class Index extends wepy.page {
 	config = {
 		navigationBarTitleText: '房牛估价'
@@ -153,22 +157,32 @@ export default class Index extends wepy.page {
 	components = {
 		footer,
 		houseList,
-		sortBar
+		sortBar,
+		authorModal
 	}
 
 	data = {
 		dataList: [],
-		market: {}
+		market: {},
+		showAuthorModal: false
 	}
 
 	computed = {
 	}
 
 	events = {
+		// closeModal() {
+		// 	this.showAuthorModal = false
+		// 	this.$apply()
+		// }
 	}
 
 	async onLoad() {
 		await this.getHouseList()
+		const uid = wx.getStorageSync('uid')
+		if (!uid) this.showAuthorModal = true
+		await getUserInfo()
+		this.$apply()
 	}
 
 	getHouseList() {

@@ -132,8 +132,8 @@
 
 <script>
 import wepy from 'wepy'
-import houseList from '../components/house_list'
-import sortBar from '../components/sort_bar'
+import houseList from '../components/list_house'
+import sortBar from '../components/bar_sort'
 // import api from '../utils/api'
 export default class Search extends wepy.page {
 	config = {

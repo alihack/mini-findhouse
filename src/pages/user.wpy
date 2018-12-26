@@ -39,9 +39,9 @@
 <template>
 	<view class="container">
 		<view class="header">
-			<image src="../images/lu.jpeg" class="avatar"></image>
+			<image src="{{userInfo.headimg}}" class="avatar"></image>
 			<view class="detail">
-				<view class="name">陈立</view>
+				<view class="name">{{userInfo.nickname}}</view>
 				<view class="phone">17****05</view>
 			</view>
 		</view>
@@ -71,6 +71,7 @@ export default class User extends wepy.page {
 	}
 
 	data = {
+		userInfo: wepy.$instance.globalData.myUserInfo
 	}
 
 	computed = {
@@ -80,6 +81,7 @@ export default class User extends wepy.page {
 	}
 
 	onLoad() {
+
 	}
 
 	methods = {

@@ -8,7 +8,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import houseList from '../components/house_list'
+import houseList from '../components/list_house'
 export default class UserHistory extends wepy.page {
 	config = {
 		navigationBarTitleText: '历史记录',

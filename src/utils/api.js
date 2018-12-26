@@ -6,7 +6,10 @@ const roots = {
 const apis = [
 	'followList',
 	'history',
-	'houseList'
+	'houseList',
+	'userId',
+	'userInfo',
+	'saveUser'
 ]
 
 const env = 'test' // dev: 本地测试服务器， prod：线上服务器, test：测试服务器

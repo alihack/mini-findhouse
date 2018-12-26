@@ -17,10 +17,7 @@ const getUserId = (isForced) => {
 				if (res.code) {
 					console.log(res)
 					const {data} = await wepy.request({
-						url: api['getUserId'],
-						data: {
-							code: res.code
-						}
+						url: api['userId'] + `?code=${res.code}`,
 					})
 					if (!data.uid) {
 						resolve('')
@@ -36,18 +33,33 @@ const getUserId = (isForced) => {
 	})
 }
 
+const checkSession = () => {
+	return new Promise(resolve => {
+		wx.checkSession({
+			success: async () => {
+				console.log('session_key未过期，并且在本生命周期一直有效')
+				resolve()
+			},
+			fail: async () => {
+				console.log('session_key 已经失效，需要重新执行登录流程')
+				await this.getUserId(true) // 强制获取
+				resolve()
+			}
+		})
+	})
+}
+
 const getUserInfo = () => {
 	return new Promise(async resolve => {
 		console.log('调用getUserInfo方法')
 		const uid = wx.getStorageSync('uid')
-		// 有myUserInfo则不重新获取
 		if (!uid) {
 			console.log('没有uid不重新获取UserInfo')
 			resolve()
 			return
 		}
 		const {data: {userInfo}} = await wepy.request({
-			url: api['getUserInfo'],
+			url: api['userInfo'] + `?uid=${uid}`,
 			data: {
 				uid
 			}
@@ -110,5 +122,6 @@ module.exports = {
 	getUserId,
 	getUserInfo,
 	getLocation,
-	dataController
+	dataController,
+	checkSession
 }

@@ -31,7 +31,7 @@
 
 <script>
 import wepy from 'wepy'
-import houseList from '../components/house_list'
+import houseList from '../components/list_house'
 // import api from '../utils/api'
 export default class DetailComSource extends wepy.page {
 	config = {

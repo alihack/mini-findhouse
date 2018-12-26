@@ -5,7 +5,7 @@
 	width: 100%;
 	margin-top:20rpx;
 	background: #fff;
-	z-index: 2000;
+	z-index: 200;
 	&-drop {
 		height: 90rpx;
 		display: flex;
@@ -79,7 +79,7 @@
 	background: #000;
 	opacity: 0.2;
 	overflow: hidden;
-	z-index: 1000;
+	z-index: 100;
 	color: #fff;
 }
 </style>
@@ -136,7 +136,7 @@
 <script>
 import wepy from 'wepy'
 import {sortData} from '../utils/config'
-export default class sortBar extends wepy.component {
+export default class barSort extends wepy.component {
 	props = {
 	}
 
