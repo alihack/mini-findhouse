@@ -9,7 +9,16 @@ const apis = [
 	'houseList',
 	'userId',
 	'userInfo',
-	'saveUser'
+	'userMobile',
+	'mobileLogin',
+	'saveUser',
+	'sendCode',
+	'sendAgentCode',
+	'agentLogin',
+	'searchHouses',
+	'houseInfo',
+	'estateInfo',
+	'estateList',
 ]
 
 const env = 'test' // dev: 本地测试服务器， prod：线上服务器, test：测试服务器

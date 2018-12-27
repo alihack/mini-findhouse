@@ -127,7 +127,7 @@ export default class AgentMessage extends wepy.page {
 			wepy.navigateTo({url: 'agent_home'})
 		},
 		quit () {
-			wepy.navigateTo({url: 'login'})
+			wepy.navigateTo({url: 'login_wx'})
 		}
 	}
 }

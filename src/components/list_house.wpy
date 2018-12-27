@@ -48,10 +48,10 @@
 </style>
 <template>
 	<view class="main">
-		<view class="item" @tap="toHouseDetail" wx:for="{{dataList}}" wx:key="index">
+		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})">
 			<image src="../images/lu.jpeg"></image>
 			<view class="detail">
-				<view class="title1">莲花地铁口 湖里 中间层</view>
+				<view class="title1">{{item.title}}</view>
 				<view class="title2">{{item.estateName}}|{{item.countF}}室{{item.countT}}厅</view>
 				<view class="label">满两年</view>
 				<view class="price">
@@ -78,8 +78,8 @@ export default class ListHouse extends wepy.component {
 	}
 
 	methods = {
-		toHouseDetail() {
-			wepy.navigateTo({url: 'detail'})
+		toHouseDetail(id) {
+			wepy.navigateTo({url: `detail?id=${id}`})
 		}
 	}
 }

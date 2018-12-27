@@ -124,10 +124,10 @@
 		<view class="community">
 			<view class="header">
 				<view class="header-left">
-					<view class="name">瑞景公园</view>
+					<view class="name">{{currentEstate.estate_name}}</view>
 					<view class="address">
 						<image src="../images/address.png"></image>
-						<text>思明-瑞锦-洪文2-145号</text>
+						<text>{{currentEstate.full_address}}</text>
 					</view>
 				</view>
 				<view class="header-right" @tap="setMark">
@@ -138,14 +138,14 @@
 			<view class="side">
 				<view class="side-left">
 					<view class="title">参考均价(元/m2)</view>
-					<view class="number">53422</view>
+					<view class="number">{{currentEstate.estate_price}}</view>
 				</view>
 				<view class="side-center"></view>
 				<view class="side-right">
 					<view class="title">环比上个月变化</view>
 					<view class="number">
 						<image src="../images/decline.png"></image>
-						<text>0.11%</text>
+						<text>{{currentEstate.ratio}}</text>
 					</view>
 				</view>
 			</view>
@@ -153,11 +153,11 @@
 				<view class="title">小区简介</view>
 				<view class="item">
 					<view class="item-head">建筑年代：</view>
-					<view class="item-foot">暂无数据</view>
+					<view class="item-foot">{{currentEstate.estate_age}}</view>
 				</view>
 				<view class="item">
 					<view class="item-head">产权年数：</view>
-					<view class="item-foot">暂无数据</view>
+					<view class="item-foot">{{currentEstate.own_year}}</view>
 				</view>
 				<view class="item">
 					<view class="item-head">房屋结构：</view>
@@ -165,11 +165,11 @@
 				</view>
 				<view class="item">
 					<view class="item-head">房屋总数：</view>
-					<view class="item-foot">暂无数据</view>
+					<view class="item-foot">{{currentEstate.total_house}}</view>
 				</view>
 				<view class="item">
 					<view class="item-head">物业公司：</view>
-					<view class="item-foot">暂无数据</view>
+					<view class="item-foot">{{currentEstate.management_company}}</view>
 				</view>
 			</view>
 		</view>
@@ -184,11 +184,12 @@
 
 <script>
 import wepy from 'wepy'
+import api from '../utils/api'
 import panelSource from '../components/panel_source'
 import panelSupport from '../components/panel_support'
 import footer from '../components/footer'
 
-export default class DetailCommunity extends wepy.page {
+export default class DetailEstate extends wepy.page {
 	config = {
 		navigationBarTitleText: '小区详情'
 	}
@@ -209,7 +210,8 @@ export default class DetailCommunity extends wepy.page {
 		interval: 5000,
 		duration: 1000,
 		isMarked: false,
-		markText: '关注'
+		markText: '关注',
+		currentEstate: {}
 	}
 
 	computed = {
@@ -225,7 +227,16 @@ export default class DetailCommunity extends wepy.page {
 	events = {
 	}
 
-	onLoad() {
+	async onLoad({id}) {
+		console.log('id', id)
+		const {data} = await wepy.request({
+			url: api['estateInfo'],
+			data: {
+				estateUuid: id,
+			}
+		})
+		this.currentEstate = data
+		this.$apply()
 	}
 
 	methods = {

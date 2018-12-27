@@ -45,15 +45,15 @@
 }
 </style>
 <template>
-<view class="authorModal animation-1s" wx:if="{{showAuthorModal}}">
-			<view class="authorModal-main">
-				<view class="txt">精确价格评估</view>
-				<view class="txt">买卖心中有数</view>
-				<view class="tip">房牛估价将对您的授权信息严格保密</view>
-				<button class="button" open-type="getUserInfo" @getuserinfo="getUserInfo">马上计算房屋价格</button>
-			</view>
+	<view class="authorModal animation-1s" wx:if="{{showAuthorModal}}">
+		<view class="authorModal-main">
+			<view class="txt">真房源 找房牛</view>
+			<view class="txt">省钱省时间</view>
+			<view class="tip">房牛找房将对您的授权信息严格保密</view>
+			<button class="button" open-type="getUserInfo" @getuserinfo="getUserInfo">马上寻找真房源</button>
 		</view>
-		<view class="author_screen" wx:if="{{showAuthorModal}}"></view>
+	</view>
+	<view class="author_screen" wx:if="{{showAuthorModal}}"></view>
 </template>
 <script>
 import wepy from 'wepy'
@@ -81,7 +81,7 @@ export default class modalAuthor extends wepy.component {
 					success: async (res) => {
 						if (res.code) {
 							wx.showLoading({title: '授权中'})
-							await wepy.request({
+							const {data: {uid}} = await wepy.request({
 								url: api['saveUser'],
 								method: 'POST',
 								data: {
@@ -91,6 +91,8 @@ export default class modalAuthor extends wepy.component {
 								}
 							})
 							wx.hideLoading()
+							wx.setStorageSync('uid', uid)
+							this.$emit('refresh')
 							this.showAuthorModal = false
 							this.$apply()
 						} else {

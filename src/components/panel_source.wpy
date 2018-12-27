@@ -49,7 +49,7 @@
 		<view class="panel">
 			<view class="panel-head">
 				<view class="panel-head-left">{{title}}</view>
-				<view class="panel-head-right" wx:if="{{type == 'community'}}" @tap="detailComSource">
+				<view class="panel-head-right" wx:if="{{type == 'community'}}" @tap="allSource">
 					<text>查看全部</text>
 					<image class="next-icon" src="../images/next.png"/>
 				</view>
@@ -60,12 +60,12 @@
 				display-multiple-items="2"
 				circular
 			>
-			<block wx:for="{{imgUrls}}" wx:key="index">
+			<block wx:for="{{sourceList}}" wx:key="index">
 				<swiper-item class="item">
-					<image src="{{item}}"/>
-					<view class="txt1">南北通透 满5年  中间层南大 三房满屋唯一...</view>
-					<view class="txt2">南北朝向 | 4室两厅/158.14m2</view>
-					<view class="txt3"><text class="price">365万</text><text class="unit">63626元/m2</text></view>
+					<image src="../images/lu.jpeg"/>
+					<view class="txt1">{{item.title}}</view>
+					<view class="txt2">南北朝向 | {{item.countF}}室{{item.countT}}厅/{{item.square}}m2</view>
+					<view class="txt3"><text class="price">{{item.sellPrice}}万</text><text class="unit">63626元/m2</text></view>
 				</swiper-item>
 			</block>
 			</swiper>
@@ -76,16 +76,12 @@
 import wepy from 'wepy'
 export default class panelSource extends wepy.component {
 	props = {
-		type: String
+		type: String,
+		sourceList: Array
 	}
 
 	data = {
 		title: '同小区房源',
-		imgUrls: [
-			'../images/lu.jpeg',
-			'../images/lu.jpeg',
-			'../images/lu.jpeg',
-		],
 		duration: 1000,
 	}
 
@@ -98,8 +94,8 @@ export default class panelSource extends wepy.component {
 	}
 
 	methods = {
-		detailComSource() {
-			wepy.navigateTo({url: 'detail_comSource'})
+		allSource() {
+			wepy.navigateTo({url: 'detail_sameEstate'})
 		}
 	}
 }

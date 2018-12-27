@@ -126,7 +126,7 @@
 <template>
 	<view class="panel-house">
 		<view class="cell1">
-			<view class="cell1-text">瑞景公园自主精装4房，看小区中庭 采光视野好</view>
+			<view class="cell1-text">{{house.title}}</view>
 			<view class="cell1-mark" @tap="setMark">
 				<image src="{{isMarked ? '../images/mark.png': '../images/un-mark.png'}}"></image>
 				<view>{{markText}}</view>
@@ -135,54 +135,54 @@
 		<view class="cell2">
 			<view class="cell2-left">
 				<view class="cell2-title">售价</view>
-				<view class="cell2-text">360万</view>
+				<view class="cell2-text">{{house.sellPrice}}万</view>
 			</view>
 			<view class="cell2-center">
 				<view class="cell2-title">房型</view>
-				<view class="cell2-text">360万</view>
+				<view class="cell2-text">{{house.countF}}室/{{house.countT}}厅</view>
 			</view>
 			<view class="cell2-right">
 				<view class="cell2-title">建筑面积</view>
-				<view class="cell2-text">360万</view>
+				<view class="cell2-text">{{house.square}}m2</view>
 			</view>
 		</view>
 		<view class="cell3">
-			<view class="label">满五年</view>
+			<view class="label">满{{fullYearDesc}}年</view>
 			<view class="kinds">
 				<view class="kinds-left">
 					<view class="item">
 						<view class="cell3-title">单价：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{house.unitPrice}}元/m2</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">楼层：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{house.floor}}层</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">类型：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{tradeType}}</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">年代：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{house.completeYear}}</view>
 					</view>
 				</view>
 				<view class="kinds-right">
 					<view class="item">
 						<view class="cell3-title">发布：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{house.delegateTimeString}}</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">朝向：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{house.direction}}</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">装修：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{house.decoration}}</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">用途：</view>
-						<view class="cell3-answer">65837元/m2</view>
+						<view class="cell3-answer">{{house.usageType}}</view>
 					</view>
 				</view>
 			</view>
@@ -198,13 +198,13 @@
 			<view class="cell4-title">
 				<view class="cell4-title-head">房源介绍</view>
 				<view class="cell4-title-foot">
-					<view class="code">编号：QJ3123131</view>
+					<view class="code">编号：{{house.propertyNo}}</view>
 					<image class="next-icon" src="../images/next.png"/>
 				</view>
 			</view>
 			<view class="cell4-main">
 				<view class="cell4-main-title">[周边配套]</view>
-				<view class="cell4-main-text">核心卖点：产权满五唯一，钢混结构，南北通透架空层使用权，车位一个。户型介绍：房子是厦航出资建成的主体是坐北朝南，客厅带阳台主卧</view>
+				<view class="cell4-main-text">{{house.content}}</view>
 			</view>
 		</view>
 	</view>
@@ -213,6 +213,7 @@
 import wepy from 'wepy'
 export default class panelHouse extends wepy.component {
 	props = {
+		house: Object
 	}
 
 	data = {

@@ -1,6 +1,8 @@
 <style lang="less">
 @import '../styles/base.less';
-.container {
+.agent {
+	.flex;
+	flex-direction: column;
 	.quit {
 		.label-auto(124rpx, 50rpx);
 		position: absolute;
@@ -91,13 +93,13 @@
 }
 </style>
 <template>
-	<view class="container">
+	<view class="agent">
 		<view class="quit" @tap="quit">退出</view>
 		<view class="header">
 			<image src="../images/lu.jpeg" class="avatar"></image>
 			<view class="detail">
-				<view class="name">陈立</view>
-				<view class="phone">17****05</view>
+				<view class="name">{{userInfo.name}}</view>
+				<view class="phone">{{userInfo.mobile}}</view>
 			</view>
 		</view>
 		<view class="main">
@@ -132,7 +134,6 @@
 					<image src="../images/next.png"/>
 				</view>
 			</view>
-			<view class="round"></view>
 			<view class="cell" @tap="toHome">
 				<view class="cell-head">我的主页</view>
 				<view class="cell-foot">
@@ -142,25 +143,17 @@
 		</view>
 	</view>
 </template>
-
 <script>
 import wepy from 'wepy'
-
-export default class Agent extends wepy.page {
-	config = {
-		navigationBarTitleText: '经纪人中心',
-		navigationBarBackgroundColor: '#f5f5f5'
-	}
-	components = {
+export default class Footer extends wepy.component {
+	props = {
+		userInfo: Object
 	}
 
 	data = {
 	}
 
-	computed = {
-	}
-
-	events = {
+	watch = {
 	}
 
 	onLoad() {
@@ -174,7 +167,7 @@ export default class Agent extends wepy.page {
 			wepy.navigateTo({url: 'agent_home'})
 		},
 		quit () {
-			wepy.navigateTo({url: 'login'})
+			wepy.navigateTo({url: 'login_wx'})
 		}
 	}
 }

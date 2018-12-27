@@ -124,7 +124,7 @@
 			<view class="row">
 				<view class="row-side">专属主页</view>
 				<view class="row-center"></view>
-				<view class="row-side">添加房源</view>
+				<view class="row-side" @tap="addSource">添加房源</view>
 			</view>
 		</view>
 		<view class="cells">
@@ -200,7 +200,7 @@ export default class AgentHome extends wepy.page {
 
 	methods = {
 		quit () {
-			wepy.navigateTo({url: 'login'})
+			wepy.navigateTo({url: 'login_wx'})
 		},
 		delItem (index) {
 			this.list.splice(index, 1)
@@ -235,6 +235,9 @@ export default class AgentHome extends wepy.page {
 				}
 			})
 			this.$apply()
+		},
+		addSource() {
+			wepy.navigateTo({url: 'agent_addSource'})
 		}
 	}
 }

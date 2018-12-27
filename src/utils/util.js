@@ -23,6 +23,7 @@ const getUserId = (isForced) => {
 						resolve('')
 					} else {
 						wx.setStorageSync('uid', data.uid)
+						wx.setStorageSync('type', data.type)  // 1-普通用户 2-经纪人
 						resolve(data.uid)
 					}
 				} else {
@@ -53,11 +54,6 @@ const getUserInfo = () => {
 	return new Promise(async resolve => {
 		console.log('调用getUserInfo方法')
 		const uid = wx.getStorageSync('uid')
-		if (!uid) {
-			console.log('没有uid不重新获取UserInfo')
-			resolve()
-			return
-		}
 		const {data: {userInfo}} = await wepy.request({
 			url: api['userInfo'] + `?uid=${uid}`,
 			data: {

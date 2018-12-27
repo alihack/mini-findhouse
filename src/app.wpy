@@ -54,21 +54,21 @@ page {
 
 <script>
 import wepy from 'wepy'
-import {getUserId} from './utils/util'
 import 'wepy-async-function'
 
 export default class extends wepy.app {
 	config = {
 		pages: [
 			'pages/index',
+			'pages/agent_addSource',
+			'pages/my',
+			'pages/login_sms',
+			'pages/login_wx',
 			'pages/chat',
-			'pages/login',
 			'pages/agent_home',
-			'pages/agent',
 			'pages/agent_message',
-			'pages/user',
-			'pages/search',
-			'pages/detail_comSource',
+			'pages/index_search',
+			'pages/detail_sameEstate',
 			'pages/detail',
 			'pages/detail_introduce',
 			'pages/detail_community',
@@ -85,7 +85,7 @@ export default class extends wepy.app {
 				'selectedIconPath': './images/home-blue.png',
 			},
 			{
-				'pagePath': 'pages/user',
+				'pagePath': 'pages/my',
 				'text': '我的',
 				'iconPath':	'./images/my-gray.png',
 				'selectedIconPath': './images/my-blue.png',
@@ -105,7 +105,6 @@ export default class extends wepy.app {
 	}
 	async onLaunch() {
 		wx.clearStorage()  // 清除缓存
-		await getUserId()
 	}
 
 	constructor() {

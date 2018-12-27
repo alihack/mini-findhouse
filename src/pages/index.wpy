@@ -145,7 +145,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo} from '../utils/util'
+import {getUserInfo, getUserId} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -171,17 +171,23 @@ export default class Index extends wepy.page {
 	}
 
 	events = {
-		// closeModal() {
-		// 	this.showAuthorModal = false
-		// 	this.$apply()
-		// }
+		refresh() {
+			this.refresh()
+		}
 	}
 
-	async onLoad() {
+	async refresh() {
 		await this.getHouseList()
-		const uid = wx.getStorageSync('uid')
-		if (!uid) this.showAuthorModal = true
 		await getUserInfo()
+	}
+	async onLoad() {
+		await getUserId()
+		const uid = wx.getStorageSync('uid')
+		if (!uid) {
+			this.showAuthorModal = true
+		} else {
+			this.refresh()
+		}
 		this.$apply()
 	}
 
@@ -207,7 +213,7 @@ export default class Index extends wepy.page {
 			})
 		},
 		toSearch () {
-			wepy.navigateTo({url: 'search'})
+			wepy.navigateTo({url: 'index_search'})
 		},
 	}
 }

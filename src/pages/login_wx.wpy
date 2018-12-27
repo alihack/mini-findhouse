@@ -1,0 +1,98 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	.tip {
+		font-size: 34rpx;
+		margin-top: 70rpx;
+		color:#333333;
+	}
+	.button {
+		font-size: 36rpx;
+		margin-top:50rpx;
+		image {
+			width: 60rpx;
+			height: 60rpx;
+			vertical-align: middle;
+			margin-right: 10rpx;
+			display: inline-block;
+		}
+	}
+	.agent {
+		font-size: 30rpx;
+		margin-top:740rpx;
+		color:#bdbdbd;
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<view class="tip">点击登录 享受更多服务</view>
+		<button class="button" open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber">
+			<view @tap="login">
+				<image src="../images/wechat.png"></image><text>微信登录</text>
+			</view>
+		</button>
+		<view class="agent" @tap="loginByAgent">经纪人登录</view>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import api from '../utils/api'
+import {getUserInfo, checkSession} from '../utils/util'
+export default class LoginWX extends wepy.page {
+	config = {
+		navigationBarTitleText: '登录'
+	}
+	components = {
+	}
+
+	data = {
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+
+	onLoad() {
+	}
+
+	methods = {
+		async getPhoneNumber ({detail}) {
+			console.log(detail)
+			await checkSession()
+			if (!detail.iv) {
+				console.log('用户取消授权')
+				wx.navigateTo({url: 'login_sms'})
+				return
+			}
+			const res = await wepy.request({
+				url: api['userMobile'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					encryptedData: detail.encryptedData,
+					iv: detail.iv
+				}
+			})
+			if (res.code != 400) {
+				wx.showToast({title: '登录成功'})
+				wx.switchTab({url: 'my'})
+				await getUserInfo()
+			} else {
+				wx.showToast({
+					title: '请求失败',
+					icon: 'none'
+				})
+				wx.navigateTo({url: 'login_sms'})
+			}
+			this.$apply()
+		},
+		loginByAgent() {
+			wx.navigateTo({url: 'login_sms?type=2'})
+		}
+	}
+}
+</script>

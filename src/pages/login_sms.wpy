@@ -1,4 +1,5 @@
 <style lang="less">
+@import '../styles/base.less';
 .container {
 	height: 100%;
 	background: #fff;
@@ -56,6 +57,42 @@
 			}
 		}
 	}
+	.modal {
+		position: absolute;
+		.flex;
+		flex-direction: column;
+		justify-content: space-around;
+		width: 622rpx;
+		height: 250rpx;
+		top: 340rpx;
+		left: 64rpx;
+		z-index: 2000;
+		background: #FFFFFF;
+		border-radius: 20rpx;
+		padding: 20rpx 30rpx;
+		box-sizing: border-box;
+		.txt {
+				width: 512rpx;
+				font-size: 32rpx
+			}
+		.button {
+			.label-auto(310rpx, 84rpx);
+			background: #5dacff;
+			color:#fff;
+		}
+	}
+	.screen {
+		width: 100%;
+		height: 100%;
+		position: fixed;
+		top: 0;
+		left: 0;
+		background: #000;
+		opacity: 0.5;
+		overflow: hidden;
+		z-index: 1000;
+		color: #fff;
+	}
 }
 </style>
 <template>
@@ -73,6 +110,11 @@
 			<view class="code"></view>
 			<view class="button" @tap="login">登录</view>
 		</view>
+		<view class="modal animation-1s" wx:if="{{showModal}}">
+			<view class="txt">很抱歉，该手机号不是经纪人手机号</view>
+			<view class="button" @tap="closeModal">知道了</view>
+		</view>
+		<view class="screen" wx:if="{{showModal}}"></view>
 	</view>
 </template>
 
@@ -80,9 +122,9 @@
 import wepy from 'wepy'
 import api from '../utils/api'
 import {getUserInfo} from '../utils/util'
-export default class Index extends wepy.page {
+export default class LoginSMS extends wepy.page {
 config = {
-	navigationBarTitleText: '房牛估价',
+	navigationBarTitleText: '登录',
 	navigationBarBackgroundColor: '#f5f5f5'
 }
 components = {
@@ -93,25 +135,89 @@ data = {
 	codeNum: '',
 	isGetingCode: false,
 	remainTime: 60,
-	type: ''
+	type: '',
+	showModal: false
 }
 
 computed = {
 }
-onLoad({type}) {
+// 1-普通用户 2-经纪人
+onLoad({type = '1'}) {
 	this.type = type
+}
+async userLogin () {
+	const res = await wepy.request({
+		url: api['mobileLogin'],
+		method: 'POST',
+		data: {
+			uid: wepy.$instance.globalData.myUserInfo.uid,
+			mobile: this.phoneNum,
+			code: this.codeNum
+		}
+	})
+	if (res.code == 400) {
+		this.codeNum = ''
+		wx.showToast({
+			title: '验证码错误',
+			icon: 'none'
+		})
+		this.$apply()
+	} else {
+		wx.showToast({title: '登录成功'})
+	}
+}
+async agentLogin () {
+	const res = await wepy.request({
+		url: api['agentLogin'],
+		method: 'POST',
+		data: {
+			uid: wepy.$instance.globalData.myUserInfo.uid,
+			cellphone: this.phoneNum,
+			user_code: this.codeNum
+		}
+	})
+	if (res.code == 400) {
+		this.codeNum = ''
+		wx.showToast({
+			title: '验证码错误',
+			icon: 'none'
+		})
+		this.$apply()
+	} else {
+		wx.showToast({title: '经纪人认证成功'})
+	}
 }
 methods = {
 	close() {
 		wepy.redirectTo({url: 'index'})
+	},
+	closeModal() {
+		this.showModal = false
 	},
 	async getCode() {
 		// 验证手机号
 		if (this.phoneNum && /^1[34578]\d{9}$/.test(this.phoneNum)) {
 			console.log('验证通过')
 			this.isGetingCode = true
+			if (this.type == '2') {
+				// 经纪人发送验证码
+				const {code} = await wepy.request({
+					url: api['sendAgentCode'],
+					method: 'POST',
+					data: {
+						cellphone: this.phoneNum
+					}
+				})
+				if (code == 400) {
+					console.log('faile')
+					this.showModal = true
+					this.$apply()
+					return
+				}
+			}
 			await wepy.request({
 				url: api['sendCode'],
+				method: 'POST',
 				data: {
 					mobile: this.phoneNum
 				}
@@ -148,35 +254,16 @@ methods = {
 			})
 			return
 		}
-		console.log(typeof this.phoneNum)
-		console.log(typeof this.codeNum)
-		// 校验验证码
-		const res = await wepy.request({
-			url: api['mobileLogin'],
-			data: {
-				uid: wepy.$instance.globalData.myUserInfo.uid,
-				mobile: this.phoneNum,
-				code: this.codeNum
-			}
-		})
-		if (res.code == 400) {
-			this.codeNum = ''
-			wx.showToast({
-				title: '验证码错误',
-				icon: 'none'
-			})
-			this.$apply()
-			return
-		}
-		if (this.type == 'mark') {
-			wx.setStorageSync('isSubscribe', true)
-			wepy.redirectTo({url: 'loginSuccess'})
+		// 普通用户手机登录
+		if (this.type == '1') {
+			this.userLogin()
 		} else {
-			wx.showToast({title: '登录成功'})
-			// 更新用户信息
-			await getUserInfo()
-			wepy.navigateBack()
+			// 经纪人手机登录
+			this.agentLogin()
 		}
+		// 更新用户信息
+		await getUserInfo()
+		wx.switchTab({url: 'my'})
 	},
 	onPhoneChange ({detail: {value}}) {
 		this.phoneNum = value

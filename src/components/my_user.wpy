@@ -1,6 +1,8 @@
 <style lang="less">
 @import '../styles/base.less';
-.container {
+.user {
+	.flex;
+	flex-direction: column;
 	.header {
 		.flex;
 		width: 100%;
@@ -34,15 +36,20 @@
 			}
 		}
 	}
+	.agent {
+		font-size: 30rpx;
+		margin-top:340rpx;
+		color:#bdbdbd;
+	}
 }
 </style>
 <template>
-	<view class="container">
+	<view class="user">
 		<view class="header">
 			<image src="{{userInfo.headimg}}" class="avatar"></image>
 			<view class="detail">
 				<view class="name">{{userInfo.nickname}}</view>
-				<view class="phone">17****05</view>
+				<view class="phone">{{userInfo.mobile}}</view>
 			</view>
 		</view>
 		<view class="cells">
@@ -56,32 +63,23 @@
 			</view>
 		</view>
 		<view class="button" @tap="quit">退出</view>
+		<view class="agent" @tap="loginByAgent">经纪人登录</view>
 	</view>
 </template>
-
 <script>
 import wepy from 'wepy'
-
-export default class User extends wepy.page {
-	config = {
-		navigationBarTitleText: '我的',
-		navigationBarBackgroundColor: '#f5f5f5'
-	}
-	components = {
+export default class Footer extends wepy.component {
+	props = {
+		userInfo: Object
 	}
 
 	data = {
-		userInfo: wepy.$instance.globalData.myUserInfo
 	}
 
-	computed = {
-	}
-
-	events = {
+	watch = {
 	}
 
 	onLoad() {
-
 	}
 
 	methods = {
@@ -92,7 +90,10 @@ export default class User extends wepy.page {
 			wepy.navigateTo({url: 'user_history'})
 		},
 		quit () {
-			wepy.navigateTo({url: 'login'})
+			wepy.redirectTo({url: 'login_wx'})
+		},
+		loginByAgent() {
+			wx.navigateTo({url: 'login_sms?type=2'})
 		}
 	}
 }
