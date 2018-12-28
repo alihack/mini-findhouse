@@ -107,16 +107,19 @@
 			</view>
 		</view>
 	</view>
-	<view class="item">
-		<view class="title">
-			<view class="frame"><image src="../images/tick.png"></image></view>
-			<view class="label">归属人</view>
-			<text class="name">开州房产 莫莫</text>
+	<block wx:if="{{sourceList.length}}">
+		<view class="item" wx:for="{{sourceList}}" wx:key="index">
+			<view class="title">
+				<view class="frame"><image src="../images/tick.png"></image></view>
+				<view class="label">归属人</view>
+				<text class="name">{{item.deptName1}} {{item.employeeName1}}</text>
+			</view>
+			<view class="code">编号：{{item.propertyNo}}</view>
+			<view class="detail">{{item.estateName}}/{{item.countF}}室{{item.countT}}厅</view>
 		</view>
-		<view class="code">编号：123131</view>
-		<view class="detail">编号：123131</view>
-	</view>
-	<view class="button">添加</view>
+		<view class="button">添加</view>
+	</block>
+
 
 	<block wx:if="{{isChoosed}}">
 		
@@ -153,10 +156,12 @@ export default class addSource extends wepy.page {
 				url: api['searchHouses'],
 				data: {
 					estateName: value,
+					page: 1,
+					pagesize: 999
 				}
-			}).then(({data}) => {
-				console.log(data)
-				this.sourceList = data
+			}).then(({data: {list}}) => {
+				console.log(list)
+				this.sourceList = list
 				wx.hideLoading()
 				this.$apply()
 			})

@@ -10,41 +10,6 @@
 			height: 100%;
 		}
 	}
-	.panel-community {
-		background: #fff;
-		margin-top: 15rpx;
-		.panel {
-			width: 100%;
-			height: 310rpx;
-			padding: 40rpx 30rpx;
-			box-sizing: border-box;
-			&-main {
-				width: 690rpx;
-				margin-top:30rpx;
-				.flex;
-				image {
-					width: 220rpx;
-					height: 165rpx;
-					background: #2d8cf0;
-					margin-right: 30rpx;
-				}
-				.detail {
-					.title {
-						.flex;
-						font-size: 32rpx;
-						&-left {
-						}
-						&-right {
-							color:@gold;
-						}
-					}
-					&-text {
-						color: @gray;
-					}
-				}
-			}
-		}
-	}
 	.fixed-bottom {
 		.flex;
 		width: 100%;
@@ -115,36 +80,15 @@
 		</block>
 		</swiper>
 		<!-- 房屋详情 -->
-		<panelHouse :house.sync="currentHouse"></panelHouse>
-		<view class="panel-community">
-			<view class="panel" @tap="communityDetail({{currentHouse.estate.estateUuid}})">
-				<view class="panel-head">
-					<view class="panel-head-left">{{currentHouse.estate.estate_name}}</view>
-					<view class="panel-head-right">
-						<text>小区详情</text>
-						<image class="next-icon" src="../images/next.png"/>
-					</view>
-				</view>
-				<view class="panel-main">
-					<image src="../images/lu.jpeg"></image>
-					<view class="detail">
-						<view class="title">
-							<view class="title-left">参考均价：</view>
-							<view class="title-right">{{currentHouse.estate.estate.price}}元/m2</view>
-						</view>
-						<view class="detail-text">建筑年代：2008年建</view>
-						<view class="detail-text">产权年数：{{currentHouse.estate.ownYear}}年</view>
-						<view class="detail-text">房屋总数：1000户</view>
-					</view>
-				</view>
-			</view>
-		</view>
+		<panelHouseDetail :house.sync="currentHouse"></panelHouseDetail>
+		<!-- 小区详情 -->
+		<panelEstateDetail :estate.sync="currentHouse.currentEstate"></panelEstateDetail>
 		<!-- 同小区房源 -->
-		<communitySource  :sourceList.sync="sameEstateList" type="community"></communitySource>
+		<communitySource  :sourceList.sync="sameEstateHouses" type="community"></communitySource>
 		<!-- 周边配套 -->
 		<panelSupport></panelSupport>
 		<!-- 推荐房源 -->
-		<recommendSource  :sourceList.sync="sameEstateList" type="recommend"></recommendSource>
+		<recommendSource  :sourceList.sync="sameEstateHouses" type="recommend"></recommendSource>
 		<!-- 尾部广告 -->
 		<footer></footer>
 		<!-- 固定尾部 -->
@@ -166,7 +110,8 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import panelHouse from '../components/panel_house'
+import panelHouseDetail from '../components/panel_houseDetail'
+import panelEstateDetail from '../components/panel_estateDetail'
 import panelSource from '../components/panel_source'
 import panelSupport from '../components/panel_support'
 import footer from '../components/footer'
@@ -176,7 +121,8 @@ export default class Detail extends wepy.page {
 		navigationBarTitleText: '房源详情'
 	}
 	components = {
-		panelHouse,
+		panelHouseDetail,
+		panelEstateDetail,
 		recommendSource: panelSource,
 		communitySource: panelSource,
 		panelSupport,
@@ -194,16 +140,14 @@ export default class Detail extends wepy.page {
 		interval: 5000,
 		duration: 1000,
 		currentHouse: {},
-		sameEstateList: []
-	}
-
-	computed = {
+		currentEstate: {},
+		sameEstateHouses: []
 	}
 
 	events = {
 	}
 
-	getSameEstateList() {
+	getSameEstateHouses() {
 		return new Promise(async resolve => {
 			const {data: {list}} = await wepy.request({
 				url: api['houseList'],
@@ -211,7 +155,7 @@ export default class Detail extends wepy.page {
 					estateName: this.currentHouse.estate.estate_name
 				}
 			})
-			this.sameEstateList = list
+			this.sameEstateHouses = list
 			resolve()
 			this.$apply()
 		})
@@ -226,13 +170,14 @@ export default class Detail extends wepy.page {
 				}
 			})
 			this.currentHouse = data
+			this.currentEstate = data.estate
 			resolve()
 			this.$apply()
 		})
 	}
 	async onLoad({id}) {
 		await this.getHouseInfo(id)
-		await this.getSameEstateList()
+		await this.getsameEstateHouses()
 		this.$apply()
 	}
 
@@ -240,7 +185,7 @@ export default class Detail extends wepy.page {
 		mapDetail() {
 			wepy.navigateTo({url: 'detail_support'})
 		},
-		communityDetail(id) {
+		estateDetail(id) {
 			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
 	}

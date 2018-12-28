@@ -60,18 +60,18 @@ export default class extends wepy.app {
 	config = {
 		pages: [
 			'pages/index',
+			'pages/chat',
 			'pages/agent_addSource',
 			'pages/my',
 			'pages/login_sms',
 			'pages/login_wx',
-			'pages/chat',
 			'pages/agent_home',
 			'pages/agent_message',
 			'pages/index_search',
 			'pages/detail_sameEstate',
 			'pages/detail',
 			'pages/detail_introduce',
-			'pages/detail_community',
+			'pages/detail_estate',
 			'pages/user_mark',
 			'pages/user_history',
 			'pages/detail_support',
@@ -97,7 +97,8 @@ export default class extends wepy.app {
 			navigationBarBackgroundColor: '#fff',
 			navigationBarTitleText: 'WeChat',
 			navigationBarTextStyle: 'black'
-		}
+		},
+		navigateToMiniProgramAppIdList: ['wx0653ba0a3274d3b9']
 	}
 
 	globalData = {

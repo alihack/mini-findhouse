@@ -130,8 +130,10 @@
 			</view>
 			<view class="header-center"></view>
 			<view class="header-right">
-				<view class="calc"><image src="../images/calc.png"></image></view>
-				<text>房屋估价</text>
+				<navigator appId="wx0653ba0a3274d3b9" hover-class="active" openType="navigate" path="pages/index" target="miniProgram" version="release">
+					<view class="calc"><image src="../images/calc.png"></image></view>
+					<text>房屋估价</text>
+				</navigator>
 			</view>
 		</view>
 		<sortBar></sortBar>
@@ -215,6 +217,15 @@ export default class Index extends wepy.page {
 		toSearch () {
 			wepy.navigateTo({url: 'index_search'})
 		},
+		toGujia () {
+			wx.navigateToMiniProgram({
+				appId: 'wx0653ba0a3274d3b9',
+				path: 'pages/index',
+				success(res) {
+					// 打开成功
+				}
+			})
+		}
 	}
 }
 </script>

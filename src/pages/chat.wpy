@@ -113,8 +113,9 @@
 
 <script>
 import wepy from 'wepy'
-import webim from '../utils/webim_wx'
-import {init, onConnNotify, onMsgNotify, sdkLogin} from '../utils/webim_handler'
+import {initIM, sendMessage, getUnread, getC2CHistoryMsgs} from '../utils/util'
+// import webim from '../utils/webim_wx'
+// import {onConnNotify, onMsgNotify, sdkLogin} from '../utils/webim_handler'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -152,42 +153,11 @@ export default class Chat extends wepy.page {
 
 	events = {
 	}
-	initIM () {
-		init({
-			accountMode: 0,
-			accountType: 12345,
-			sdkAppID: 1400175041,
-			selType: webim.SESSION_TYPE.C2C,
-			selToID: 1,
-			selSess: null // 当前聊天会话
-		})
-		// 当前用户身份
-		var loginInfo = {
-			'sdkAppID': 1400175041, // 用户所属应用id,必填
-			'appIDAt3rd': 1400175041, // 用户所属应用id，必填
-			'accountType': 12345, // 用户所属应用帐号类型，必填
-			'identifier': 2, // 当前用户ID,必须是否字符串类型，选填
-			'identifierNick': '陈立', // 当前用户昵称，选填
-			'userSig': '2', // 鉴权 Token
-		}
-
-		// 监听事件
-		var listeners = {
-			'onConnNotify': onConnNotify, // 选填
-			'onMsgNotify': onMsgNotify, // 监听新消息(私聊(包括普通消息和全员推送消息)，普通群(非直播聊天室)消息)事件，必填
-		}
-
-		// 其他对象，选填
-		var options = {
-			'isAccessFormalEnv': true, // 是否访问正式环境，默认访问正式，选填
-			'isLogOn': false // 是否开启控制台打印日志,默认开启，选填
-		}
-
-		// sdk登录
-		sdkLogin(loginInfo, listeners, options)
-	}
-	onLoad() {
-		this.initIM()
+	async onLoad() {
+		await initIM()
+		// await getUnread()
+		await sendMessage('123123')
+		await getC2CHistoryMsgs()
 	}
 
 	methods = {

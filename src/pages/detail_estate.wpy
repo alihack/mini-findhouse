@@ -189,7 +189,7 @@ import panelSource from '../components/panel_source'
 import panelSupport from '../components/panel_support'
 import footer from '../components/footer'
 
-export default class DetailEstate extends wepy.page {
+export default class detailEstate extends wepy.page {
 	config = {
 		navigationBarTitleText: '小区详情'
 	}

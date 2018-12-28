@@ -128,14 +128,14 @@
 			</view>
 		</view>
 		<view class="cells">
-			<view class="cell {{item.isTouchMove ? 'touch-move-active' : ''}}" wx:for="{{list}}" wx:key="index">
+			<view class="cell {{item.isTouchMove ? 'touch-move-active' : ''}}" wx:for="{{agentHouses}}" wx:key="index">
 				<view class="content" bindtouchstart="touchS" bindtouchmove="touchM" data-index="{{index}}">
 					<view class="title">
-						<text class="label">{{item.label}}</text>
-						<text class="name">{{item.name}}</text>
+						<text class="label">{{item.info[0].deptName1}}</text>
+						<text class="name">{{item.info[0].employeeName1}}</text>
 					</view>
-					<view class="code">编号： {{item.code}}</view>
-					<view class="detail">{{item.detail}}</view>
+					<view class="code">编号： {{item.info[0].propertyNo}}</view>
+					<view class="detail">{{item.info[0].estateName}}/{{item.info[0].countF}}室{{item.info[0].countT}}厅</view>
 				</view>
 				<view class="del" bindtap= "delItem({{index}})">
 					<image src="../images/del.png"></image>
@@ -148,7 +148,7 @@
 
 <script>
 import wepy from 'wepy'
-
+import api from '../utils/api'
 export default class AgentHome extends wepy.page {
 	config = {
 		navigationBarTitleText: '经纪人中心',
@@ -161,25 +161,7 @@ export default class AgentHome extends wepy.page {
 		delBtnWidth: 170,
 		startX: 0,
 		startY: 0,
-		list: [{
-			laber: '归属人',
-			name: '一片光房产 小立',
-			code: 'DS234234',
-			detail: '未来城堡/2室2厅',
-			isTouchMove: false
-		}, {
-			laber: '归属人',
-			name: '一片光房产 小发',
-			code: 'DS234234',
-			detail: '未来城堡/2室2厅',
-			isTouchMove: false
-		}, {
-			laber: '归属人',
-			name: '一片光房产 小饿',
-			code: 'DS234234',
-			detail: '未来城堡/2室2厅',
-			isTouchMove: false
-		}]
+		agentHouses: []
 	}
 
 	computed = {
@@ -188,7 +170,22 @@ export default class AgentHome extends wepy.page {
 	events = {
 	}
 
+	getAgentHouses() {
+		return new Promise(async resolve => {
+			const {data} = await wepy.request({
+				url: api['agentHouses'],
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+				}
+			})
+			this.agentHouses = data
+			resolve()
+			this.$apply()
+		})
+	}
+
 	onLoad() {
+		this.getAgentHouses()
 	}
 
 	angle (start, end) {

@@ -1,6 +1,7 @@
 import wepy from 'wepy'
 import api from './api'
 import QQMapWX from './qqmap-wx-jssdk'
+import webim from './webim_wx'
 
 const getUserId = (isForced) => {
 	return new Promise(async resolve => {
@@ -114,10 +115,203 @@ const dataController = (ele) => {
 	})
 }
 
+// 当前用户身份
+var loginInfo = {
+	'sdkAppID': 1400175041, // 用户所属应用id
+	'appIDAt3rd': 1400175041, // 用户所属应用id
+	'accountType': 36862, // 用户所属应用帐号类型
+	'identifier': '2', // 当前用户ID
+	'identifierNick': '陈立', // 当前用户昵昵称
+	'userSig': 'eJxlj9FOgzAUhu95iobbGWkLTZl3ZJlzlmHY0IzdEEILaxgMS0WY8d2NbIkkntvv*885-5cBADAjf3efZtn5o9aJHhphggdgQvPuDzaN5EmqE1vxf1D0jVQiSXMt1AgRIQRDOHUkF7WWubwZeIJaXibj-mvWgRBRAh00VWQxws0yXqzDhauGFZrXu8e*8IIen1bPn0fnjUXWadvpbXx4YkW*ZHEzsGJ99Hxohy*V5hiVQ*a4s2pW5a*b1NuHXVBaKmKuD6P2YgXvdHJSy0rcyjhkTl1Kpz93QrXyXF*7QEQQtuHvmMa38QPxo1sU', // 鉴权Token,后端返回，必填
+	// 'Tag_Profile_Custom_avatar': '' // 用户头像
+}
+const initIM = () => {
+	return new Promise(resolve => {
+		// 监听事件
+		const onConnNotify = (resp) => {
+			// 监听连接状态回调变化事件
+			var info
+			switch (resp.ErrorCode) { // 链接状态码
+				case webim.CONNECTION_STATUS.ON:
+					webim.Log.warn('建立连接成功: ' + resp.ErrorInfo)
+					break
+				case webim.CONNECTION_STATUS.OFF:
+					info = '连接已断开，无法收到新消息，请检查下您的网络是否正常: ' + resp.ErrorInfo
+					alert(info)
+					webim.Log.warn(info)
+					break
+				case webim.CONNECTION_STATUS.RECONNECT:
+					info = '连接状态恢复正常: ' + resp.ErrorInfo
+					alert(info)
+					webim.Log.warn(info)
+					break
+				default:
+					webim.Log.error('未知连接状态: =' + resp.ErrorInfo) // 错误信息
+					break
+			}
+		}
+		const onMsgNotify = (newMsgList) => {
+			console.log('list', newMsgList)
+			// var sess, newMsg
+			// // 获取所有聊天会话
+			// var sessMap = webim.MsgStore.sessMap()
+			// for (var j in newMsgList) { // 遍历新消息
+			// 	newMsg = newMsgList[j]
+			// 	if (newMsg.getSession().id() == selToID) { // 为当前聊天对象的消息
+			// 		selSess = newMsg.getSession()
+			// 		// 在聊天窗体中新增一条消息
+			// 		// console.warn(newMsg);
+			// 		addMsg(newMsg)
+			// 	}
+			// }
+			// // 消息已读上报，以及设置会话自动已读标记
+			// webim.setAutoRead(selSess, true, true)
+			// for (var i in sessMap) {
+			// 	sess = sessMap[i]
+			// 	if (selToID != sess.id()) { // 更新其他聊天对象的未读消息数
+			// 		updateSessDiv(sess.type(), sess.id(), sess.unread())
+			// 	}
+			// }
+		}
+
+		var listeners = {
+			'onConnNotify': onConnNotify, // 监听连接状态回调变化事件,必填
+			'onMsgNotify': onMsgNotify, // 监听新消息(私聊(包括普通消息和全员推送消息)，普通群(非直播聊天室)消息)事件，必填
+		}
+
+		// 其他对象，选填
+		var options = {
+			'isAccessFormalEnv': true, // 是否访问正式环境，默认访问正式，选填
+			'isLogOn': false // 是否开启控制台打印日志,默认开启，选填
+		}
+		const cbOk = (e) => {
+			console.log('登录成功', e)
+			resolve()
+		}
+		const cbErr = (e) => {
+			console.log('登录失败', e)
+			resolve()
+		}
+		// sdk登录
+		webim.login(loginInfo, listeners, options, cbOk, cbErr)
+	})
+}
+
+const sendMessage = (msgtosend) => {
+	return new Promise(resolve => {
+		var isSend = true// 是否为自己发送
+		var seq = -1// 消息序列，-1表示 SDK 自动生成，用于去重
+		var random = Math.round(Math.random() * 4294967296)// 消息随机数，用于去重
+		var msgTime = Math.round(new Date().getTime() / 1000)// 消息时间戳
+		var subType = webim.C2C_MSG_SUB_TYPE.COMMON // 消息子类型
+		var selType = webim.SESSION_TYPE.C2C
+		var selSess = new webim.Session(selType, '2', '2', 'https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKKIlk2X056gGicdGf2E6icPRib7fAq1P6267e38QB2aBD4bhc6rpz8LU9KqOaqfHNAktmmDPibVkLJXQ/132', Math.round(new Date().getTime() / 1000))
+		var msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
+		// 解析文本和表情
+		var textObj, faceObj, tmsg, emotionIndex, emotion, restMsgIndex
+		var expr = /\[[^[\]]{1,3}\]/mg
+		var emotions = msgtosend.match(expr)
+		if (!emotions || emotions.length < 1) {
+			textObj = new webim.Msg.Elem.Text(msgtosend)
+			msg.addText(textObj)
+		} else {
+			for (var i = 0; i < emotions.length; i++) {
+				tmsg = msgtosend.substring(0, msgtosend.indexOf(emotions[i]))
+				if (tmsg) {
+					textObj = new webim.Msg.Elem.Text(tmsg)
+					msg.addText(textObj)
+				}
+				emotionIndex = webim.EmotionDataIndexs[emotions[i]]
+				emotion = webim.Emotions[emotionIndex]
+				if (emotion) {
+					faceObj = new webim.Msg.Elem.Face(emotionIndex, emotions[i])
+					msg.addFace(faceObj)
+				} else {
+					textObj = new webim.Msg.Elem.Text(emotions[i])
+					msg.addText(textObj)
+				}
+				restMsgIndex = msgtosend.indexOf(emotions[i]) + emotions[i].length
+				msgtosend = msgtosend.substring(restMsgIndex)
+			}
+			if (msgtosend) {
+				textObj = new webim.Msg.Elem.Text(msgtosend)
+				msg.addText(textObj)
+			}
+		}
+		console.log('msg', msg)
+		webim.sendMsg(msg,
+			(resp) => {
+				console.log('发送消息成功', resp)
+				resolve()
+			},
+			(err) => {
+				console.log('发送消息失败', err)
+				resolve()
+			}
+		)
+	})
+}
+
+const getUnread = () => {
+	return new Promise(resolve => {
+		//	获取全局的sessMap
+		var sessMap = webim.MsgStore.sessMap()
+		const unReadNum = sessMap['C2C2']
+		console.log('munber', unReadNum)
+		resolve()
+	})
+}
+
+const getC2CHistoryMsgs = () => {
+	return new Promise(resolve => {
+		var lastMsgTime = 0 // 第一次拉取好友历史消息时，必须传 0
+		var msgKey = ''
+		var options = {
+			'Peer_Account': '2', // 好友帐号
+			'MaxCnt': 15, // 拉取消息条数
+			'LastMsgTime': lastMsgTime, // 最近的消息时间，即从这个时间点向前拉取历史消息
+			'MsgKey': msgKey
+		}
+		webim.getC2CHistoryMsgs(
+			options,
+			(resp) => {
+				// var complete = resp.Complete// 是否还有历史消息可以拉取，1-表示没有，0-表示有
+				// var retMsgCount = resp.MsgCount// 返回的消息条数，小于或等于请求的消息条数，小于的时候，说明没有历史消息可拉取了
+				// getPrePageC2CHistroyMsgInfoMap['2'] = {// 保留服务器返回的最近消息时间和消息Key,用于下次向前拉取历史消息
+				// 	'LastMsgTime': resp.LastMsgTime,
+				// 	'MsgKey': resp.MsgKey
+				// }
+				console.log('最近历史记录', resp)
+			},
+			(err) => {
+				console.log('err', err)
+			}
+		)
+		resolve()
+	})
+}
+
+const quitIM = () => {
+	return new Promise(resolve => {
+		webim.logout(
+			(resp) => {
+				console.log('退出IM成功', resp)
+			},
+			(err) => {
+				console.log('退出IM失败', err)
+			}
+		)
+	})
+}
 module.exports = {
 	getUserId,
 	getUserInfo,
 	getLocation,
 	dataController,
-	checkSession
+	checkSession,
+	initIM,
+	quitIM,
+	sendMessage,
+	getUnread,
+	getC2CHistoryMsgs
 }
