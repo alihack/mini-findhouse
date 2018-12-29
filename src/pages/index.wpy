@@ -154,7 +154,7 @@ import sortBar from '../components/bar_sort'
 import authorModal from '../components/modal_author'
 export default class Index extends wepy.page {
 	config = {
-		navigationBarTitleText: '房牛估价'
+		navigationBarTitleText: '房牛找房'
 	}
 	components = {
 		footer,

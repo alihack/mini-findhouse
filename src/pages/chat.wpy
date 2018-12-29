@@ -113,9 +113,7 @@
 
 <script>
 import wepy from 'wepy'
-import {initIM, sendMessage, getUnread, getC2CHistoryMsgs} from '../utils/util'
-// import webim from '../utils/webim_wx'
-// import {onConnNotify, onMsgNotify, sdkLogin} from '../utils/webim_handler'
+import {initIM, sendMessage, getC2CHistoryMsgs} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -145,7 +143,8 @@ export default class Chat extends wepy.page {
 			isUserSend: true,
 			avatar: '../images/banner.jpg',
 			content: '能带我去看房吗？'
-		}]
+		}],
+		msgList: []
 	}
 
 	computed = {
@@ -154,10 +153,10 @@ export default class Chat extends wepy.page {
 	events = {
 	}
 	async onLoad() {
+		// await sendMessage('测试一条')
 		await initIM()
-		// await getUnread()
-		await sendMessage('123123')
-		await getC2CHistoryMsgs()
+		this.msgList = await getC2CHistoryMsgs()
+		this.$apply()
 	}
 
 	methods = {

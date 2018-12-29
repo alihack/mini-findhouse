@@ -130,7 +130,7 @@
 			<view class="cell" @tap="toMessage">
 				<view class="cell-head">我的消息</view>
 				<view class="cell-foot">
-					<view class="round"></view>
+					<view class="round" wx:if="{{unreadNum}}"></view>
 					<image src="../images/next.png"/>
 				</view>
 			</view>
@@ -147,7 +147,8 @@
 import wepy from 'wepy'
 export default class Footer extends wepy.component {
 	props = {
-		userInfo: Object
+		userInfo: Object,
+		unreadNum: Number
 	}
 
 	data = {
@@ -161,7 +162,7 @@ export default class Footer extends wepy.component {
 
 	methods = {
 		toMessage() {
-			wepy.navigateTo({url: 'agent_message'})
+			wepy.navigateTo({url: `my_message?type=${this.userInfo.type}`})
 		},
 		toHome() {
 			wepy.navigateTo({url: 'agent_home'})

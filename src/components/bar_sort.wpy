@@ -123,7 +123,7 @@
 				<view class="title">{{type.title}}</view>
 				<view class="box-wrap">
 					<view class="box" wx:for="{{sortData[3].type[typeIndex].kinds}}" wx:for-item="kind" wx:for-index="kindIndex" wx:key="kindIndex">
-						{{kindIndex}}
+						{{kind}}
 					</view>
 				</view>
 			</view>

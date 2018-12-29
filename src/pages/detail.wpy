@@ -96,10 +96,10 @@
 			<image src="../images/lu.jpeg" class="avatar"></image>
 			<view class="detail">
 				<view class="name">
-					<text>陈立</text>
+					<text>{{currentHouse.employeeName1}}</text>
 					<view class="label">经纪人</view>
 				</view>
-				<view class="company">小鱼房产</view>
+				<view class="company">{{currentHouse.deptName1}}</view>
 			</view>
 			<view class="online-label">在线咨询</view>
 			<view class="phone-label">电话咨询</view>
@@ -177,7 +177,7 @@ export default class Detail extends wepy.page {
 	}
 	async onLoad({id}) {
 		await this.getHouseInfo(id)
-		await this.getsameEstateHouses()
+		await this.getSameEstateHouses()
 		this.$apply()
 	}
 

@@ -3,10 +3,10 @@
 </style>
 <template>
 <block wx:if="{{isAgent}}">
-	<myAgent :userInfo.sync="userInfo"></myAgent>
+	<myAgent :userInfo.sync="userInfo" :unreadNum.sync="unreadNum"></myAgent>
 </block>
 <block wx:else>
-	<myUser  :userInfo.sync="userInfo"></myUser>
+	<myUser  :userInfo.sync="userInfo" :unreadNum.sync="unreadNum"></myUser>
 </block>
 </template>
 
@@ -14,6 +14,7 @@
 import wepy from 'wepy'
 import myAgent from '../components/my_agent'
 import myUser from '../components/my_user'
+import {initIM, getUnread} from '../utils/util'
 export default class My extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的',
@@ -26,7 +27,8 @@ export default class My extends wepy.page {
 
 	data = {
 		userInfo: {},
-		isAgent: false
+		isAgent: false,
+		unreadNum: 0
 	}
 
 	computed = {
@@ -35,10 +37,17 @@ export default class My extends wepy.page {
 	events = {
 	}
 
-	onShow() {
+	async onShow() {
 		this.userInfo = wepy.$instance.globalData.myUserInfo
-		if (!this.userInfo.mobile) wepy.navigateTo({url: 'login_wx'})
+		if (!this.userInfo.mobile) {
+			wepy.navigateTo({url: 'login_wx'})
+			return
+		}
 		if (this.userInfo.deptName) this.isAgent = true
+		await initIM()
+		this.unreadNum = await getUnread()
+		// await getRecentContactList()
+		this.$apply()
 	}
 
 	methods = {

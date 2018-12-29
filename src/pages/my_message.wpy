@@ -98,8 +98,8 @@
 
 <script>
 import wepy from 'wepy'
-
-export default class AgentMessage extends wepy.page {
+import {getRecentContactList} from '../utils/util'
+export default class MyMessage extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
 		navigationBarBackgroundColor: '#f5f5f5'
@@ -116,19 +116,16 @@ export default class AgentMessage extends wepy.page {
 	events = {
 	}
 
-	onLoad() {
+	async onLoad({type}) {
+		console.log('类型', type)
 	}
-
+	async onShow() {
+		await getRecentContactList()
+	}
 	methods = {
 		toChat() {
 			wepy.navigateTo({url: 'chat'})
 		},
-		toHome() {
-			wepy.navigateTo({url: 'agent_home'})
-		},
-		quit () {
-			wepy.navigateTo({url: 'login_wx'})
-		}
 	}
 }
 </script>

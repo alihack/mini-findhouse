@@ -122,6 +122,7 @@ var loginInfo = {
 	'accountType': 36862, // 用户所属应用帐号类型
 	'identifier': '2', // 当前用户ID
 	'identifierNick': '陈立', // 当前用户昵昵称
+	'identifierAvatar': 'https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKKIlk2X056gGicdGf2E6icPRib7fAq1P6267e38QB2aBD4bhc6rpz8LU9KqOaqfHNAktmmDPibVkLJXQ/132', // 用户头像
 	'userSig': 'eJxlj9FOgzAUhu95iobbGWkLTZl3ZJlzlmHY0IzdEEILaxgMS0WY8d2NbIkkntvv*885-5cBADAjf3efZtn5o9aJHhphggdgQvPuDzaN5EmqE1vxf1D0jVQiSXMt1AgRIQRDOHUkF7WWubwZeIJaXibj-mvWgRBRAh00VWQxws0yXqzDhauGFZrXu8e*8IIen1bPn0fnjUXWadvpbXx4YkW*ZHEzsGJ99Hxohy*V5hiVQ*a4s2pW5a*b1NuHXVBaKmKuD6P2YgXvdHJSy0rcyjhkTl1Kpz93QrXyXF*7QEQQtuHvmMa38QPxo1sU', // 鉴权Token,后端返回，必填
 	// 'Tag_Profile_Custom_avatar': '' // 用户头像
 }
@@ -193,7 +194,7 @@ const initIM = () => {
 			resolve()
 		}
 		// sdk登录
-		webim.login(loginInfo, listeners, options, cbOk, cbErr)
+		if (!webim.checkLogin()) webim.login(loginInfo, listeners, options, cbOk, cbErr)
 	})
 }
 
@@ -205,8 +206,8 @@ const sendMessage = (msgtosend) => {
 		var msgTime = Math.round(new Date().getTime() / 1000)// 消息时间戳
 		var subType = webim.C2C_MSG_SUB_TYPE.COMMON // 消息子类型
 		var selType = webim.SESSION_TYPE.C2C
-		var selSess = new webim.Session(selType, '2', '2', 'https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKKIlk2X056gGicdGf2E6icPRib7fAq1P6267e38QB2aBD4bhc6rpz8LU9KqOaqfHNAktmmDPibVkLJXQ/132', Math.round(new Date().getTime() / 1000))
-		var msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
+		var selSess = new webim.Session(selType, loginInfo.identifier, loginInfo.identifierNick, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
+		var msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick, loginInfo.identifierAvatar)
 		// 解析文本和表情
 		var textObj, faceObj, tmsg, emotionIndex, emotion, restMsgIndex
 		var expr = /\[[^[\]]{1,3}\]/mg
@@ -238,7 +239,8 @@ const sendMessage = (msgtosend) => {
 				msg.addText(textObj)
 			}
 		}
-		console.log('msg', msg)
+		console.log('session', selSess)
+		console.log('发送消息', msg)
 		webim.sendMsg(msg,
 			(resp) => {
 				console.log('发送消息成功', resp)
@@ -254,11 +256,15 @@ const sendMessage = (msgtosend) => {
 
 const getUnread = () => {
 	return new Promise(resolve => {
-		//	获取全局的sessMap
+		var selType = webim.SESSION_TYPE.C2C
+		var selSess = new webim.Session(selType, loginInfo.identifier, loginInfo.identifierNick, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
+		//	获取所有会话
 		var sessMap = webim.MsgStore.sessMap()
-		const unReadNum = sessMap['C2C2']
-		console.log('munber', unReadNum)
-		resolve()
+		// var session = new webim.Session()
+		// // const num = sessMap['C2C2'].
+		console.log('所有会话', sessMap)
+		console.log('未读消息数', selSess._impl.unread)
+		resolve(selSess._impl.unread)
 	})
 }
 
@@ -274,20 +280,47 @@ const getC2CHistoryMsgs = () => {
 		}
 		webim.getC2CHistoryMsgs(
 			options,
-			(resp) => {
+			async (resp) => {
 				// var complete = resp.Complete// 是否还有历史消息可以拉取，1-表示没有，0-表示有
 				// var retMsgCount = resp.MsgCount// 返回的消息条数，小于或等于请求的消息条数，小于的时候，说明没有历史消息可拉取了
 				// getPrePageC2CHistroyMsgInfoMap['2'] = {// 保留服务器返回的最近消息时间和消息Key,用于下次向前拉取历史消息
 				// 	'LastMsgTime': resp.LastMsgTime,
 				// 	'MsgKey': resp.MsgKey
 				// }
-				console.log('最近历史记录', resp)
+				console.log('最近历史记录', resp.MsgList)
+				const MsgList = resp.MsgList
+				const newMsgList = []
+				for (let i in MsgList) {
+					const item = {}
+					item.html = await convertCustomMsgToHtml(MsgList[i])
+					item.time = convertTime(MsgList[i].time * 1000)
+					item.fromAccountNick = MsgList[i].fromAccountNick
+					newMsgList.push(item)
+				}
+				console.log('新历史记录', newMsgList)
+				resolve(newMsgList)
 			},
 			(err) => {
 				console.log('err', err)
+				resolve()
 			}
 		)
-		resolve()
+	})
+}
+
+const getRecentContactList = () => {
+	return new Promise(resolve => {
+		webim.getRecentContactList(
+			{'Count': 20},
+			(resp) => {
+				console.log('最近联系人', resp)
+				resolve()
+			},
+			(err) => {
+				console.log('err', err)
+				resolve()
+			}
+		)
 	})
 }
 
@@ -303,6 +336,64 @@ const quitIM = () => {
 		)
 	})
 }
+
+const convertCustomMsgToHtml = (msg) => {
+	return new Promise(resolve => {
+		// eslint-disable-next-line one-var
+		var html = '', elems, elem, type, content
+		elems = msg.getElems()// 获取消息包含的元素数组
+		for (var i in elems) {
+			elem = elems[i]
+			type = elem.getType()// 获取元素类型
+			content = elem.getContent()// 获取元素对象
+			switch (type) {
+				case webim.MSG_ELEMENT_TYPE.TEXT:
+					html += content.getText()
+					break
+				// case webim.MSG_ELEMENT_TYPE.FACE:
+				// 	html += convertFaceMsgToHtml(content)
+				// 	break
+				// case webim.MSG_ELEMENT_TYPE.IMAGE:
+				// 	html += convertImageMsgToHtml(content)
+				// 	break
+				// case webim.MSG_ELEMENT_TYPE.SOUND:
+				// 	html += convertSoundMsgToHtml(content)
+				// 	break
+				// case webim.MSG_ELEMENT_TYPE.FILE:
+				// 	html += convertFileMsgToHtml(content)
+				// 	break
+				// case webim.MSG_ELEMENT_TYPE.LOCATION:// 暂不支持地理位置
+				// 	// html += convertLocationMsgToHtml(content);
+				// 	break
+				// case webim.MSG_ELEMENT_TYPE.CUSTOM:
+				// 	html += convertCustomMsgToHtml(content)
+				// 	break
+				// case webim.MSG_ELEMENT_TYPE.GROUP_TIP:
+				// 	html += convertGroupTipMsgToHtml(content)
+				// 	break
+				default:
+					webim.Log.error('未知消息元素类型: elemType=' + type)
+					break
+			}
+		}
+		resolve(html)
+	})
+}
+
+const convertTime = (timeStamp) => {
+	const date = new Date(timeStamp)
+	const month = formatNumber(date.getMonth() + 1)
+	const day = formatNumber(date.getDate())
+	const hour = formatNumber(date.getHours())
+	const minute = formatNumber(date.getMinutes())
+	return month + '-' + day + ' ' + hour + ':' + minute
+}
+
+const formatNumber = n => {
+	n = n.toString()
+	return n[1] ? n : '0' + n
+  }
+
 module.exports = {
 	getUserId,
 	getUserInfo,
@@ -313,5 +404,6 @@ module.exports = {
 	quitIM,
 	sendMessage,
 	getUnread,
-	getC2CHistoryMsgs
+	getC2CHistoryMsgs,
+	getRecentContactList
 }

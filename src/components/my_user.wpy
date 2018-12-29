@@ -31,8 +31,18 @@
 			margin-top:2rpx;
 			justify-content: space-between;
 			&-foot {
-				width:40rpx;
-				height:40rpx;
+				.flex;
+				image {
+					width:40rpx;
+					height:40rpx;
+				}
+				.round {
+					width: 20rpx;
+					height: 20rpx;
+					border-radius: 20rpx;
+					background: red;
+					margin-right: 20rpx;
+				}
 			}
 		}
 	}
@@ -53,13 +63,24 @@
 			</view>
 		</view>
 		<view class="cells">
+			<view class="cell" @tap="toMessage">
+				<view class="cell-head">我的消息</view>
+				<view class="cell-foot">
+					<view class="round" wx:if="{{unreadNum}}"></view>
+					<image src="../images/next.png"/>
+				</view>
+			</view>
 			<view class="cell" @tap="toMark">
 				<view class="cell-head">我关注的</view>
-				<image class="cell-foot" src="../images/next.png"/>
+				<view class="cell-foot">
+					<image src="../images/next.png"/>
+				</view>
 			</view>
 			<view class="cell" @tap="toHistory">
 				<view class="cell-head">历史记录</view>
-				<image class="cell-foot" src="../images/next.png"/>
+				<view class="cell-foot">
+					<image src="../images/next.png"/>
+				</view>
 			</view>
 		</view>
 		<view class="button" @tap="quit">退出</view>
@@ -70,7 +91,8 @@
 import wepy from 'wepy'
 export default class Footer extends wepy.component {
 	props = {
-		userInfo: Object
+		userInfo: Object,
+		unreadNum: Number
 	}
 
 	data = {
@@ -94,7 +116,10 @@ export default class Footer extends wepy.component {
 		},
 		loginByAgent() {
 			wx.navigateTo({url: 'login_sms?type=2'})
-		}
+		},
+		toMessage() {
+			wepy.navigateTo({url: `my_message?type=${this.userInfo.type}`})
+		},
 	}
 }
 </script>
