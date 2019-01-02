@@ -18,6 +18,7 @@ const apis = [
 	'houseInfo',
 	'estateInfo',
 	'estateList',
+	'sign',
 	// 经纪人
 	'agentLogin',
 	'agentHouses',

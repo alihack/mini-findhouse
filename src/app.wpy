@@ -60,13 +60,13 @@ export default class extends wepy.app {
 	config = {
 		pages: [
 			'pages/index',
+			'pages/login_wx',
 			'pages/chat',
 			'pages/agent_addSource',
 			'pages/my',
 			'pages/login_sms',
-			'pages/login_wx',
 			'pages/agent_home',
-			'pages/my_message',
+			'pages/message',
 			'pages/index_search',
 			'pages/detail_sameEstate',
 			'pages/detail',
@@ -78,11 +78,18 @@ export default class extends wepy.app {
 		],
 		tabBar: {
 			'selectedColor': '#2d8cf0',
+			'color': '#666666',
 			'list': [{
 				'pagePath': 'pages/index',
 				'text': '首页',
 				'iconPath':	'./images/home-gray.png',
 				'selectedIconPath': './images/home-blue.png',
+			},
+			{
+				'pagePath': 'pages/message',
+				'text': '消息',
+				'iconPath':	'./images/chat-gray.png',
+				'selectedIconPath': './images/chat-blue.png',
 			},
 			{
 				'pagePath': 'pages/my',

@@ -58,6 +58,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
+import {getUserInfo} from '../utils/util'
 export default class modalAuthor extends wepy.component {
 	props = {
 		showAuthorModal: {
@@ -92,7 +93,8 @@ export default class modalAuthor extends wepy.component {
 							})
 							wx.hideLoading()
 							wx.setStorageSync('uid', uid)
-							this.$emit('refresh')
+							await getUserInfo()
+							this.$emit('finishAuthor')
 							this.showAuthorModal = false
 							this.$apply()
 						} else {

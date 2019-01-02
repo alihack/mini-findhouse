@@ -58,6 +58,7 @@
 			background: #fff;
 			box-sizing: border-box;
 			font-size: 26rpx;
+			margin-bottom: 20rpx;
 			&-left {
 				padding:0rpx 80rpx 0rpx 20rpx;
 				box-sizing: border-box;
@@ -136,7 +137,7 @@
 				</navigator>
 			</view>
 		</view>
-		<sortBar></sortBar>
+		<sortBar :scrollTop.sync="scrollTop"></sortBar>
 		<houseList :dataList.sync="dataList"></houseList>
 		<footer></footer>
 		<!-- 授权弹窗 -->
@@ -147,7 +148,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo, getUserId} from '../utils/util'
+import {getUserInfo, getUserId, initIM} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -164,49 +165,72 @@ export default class Index extends wepy.page {
 	}
 
 	data = {
-		dataList: [],
+		dataList: '',
 		market: {},
-		showAuthorModal: false
+		showAuthorModal: false,
+		scrollTop: 0,
+		page: 1
 	}
 
 	computed = {
 	}
 
 	events = {
-		refresh() {
-			this.refresh()
+		finishAuthor () {
+			wx.showTabBar()
 		}
 	}
-
-	async refresh() {
-		await this.getHouseList()
-		await getUserInfo()
+	// 监听页面滚动
+	onPageScroll (e) {
+		this.scrollTop = e.scrollTop
+		this.$apply()
+	}
+	// 上拉触底事件
+	async onReachBottom() {
+		console.log('bottom')
+		await this.getHouseList(this.page + 1)
 	}
 	async onLoad() {
+		wx.showTabBarRedDot({
+			index: 1
+		})
+		await this.getHouseList(this.page)
 		await getUserId()
+		await initIM()
 		const uid = wx.getStorageSync('uid')
 		if (!uid) {
 			this.showAuthorModal = true
+			wx.hideTabBar()
 		} else {
-			this.refresh()
+			await getUserInfo()
 		}
 		this.$apply()
 	}
 
-	getHouseList() {
+	getHouseList(page) {
 		return new Promise(async resolve => {
+			if (page != 1) {
+				wx.showLoading({
+					title: '玩命加载中',
+				})
+			}
 			const {data} = await wepy.request({
 				url: api['houseList'],
+				data: {
+					page: page,
+					pagesize: 8
+				}
 			})
 			console.log('data', data)
-			this.dataList = data.list
+			this.dataList = [this.dataList, ...data.list]
+			if (!this.dataList[0]) this.dataList = this.dataList.slice(1)
+			wx.hideLoading()
 			this.market.price = data.total_price
 			this.market.ratio = data.ratio
 			this.$apply()
 			resolve()
 		})
 	}
-
 	methods = {
 		address() {
 			wepy.showToast({

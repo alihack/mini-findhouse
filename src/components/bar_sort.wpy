@@ -3,9 +3,13 @@
 // 排序工具栏
 .sort-bar {
 	width: 100%;
-	margin-top:20rpx;
 	background: #fff;
-	z-index: 200;
+	min-height: 90rpx;
+	.wrap {
+		width: 100%;
+		background: #fff;
+		z-index: 200;
+	}
 	&-drop {
 		height: 90rpx;
 		display: flex;
@@ -82,73 +86,98 @@
 	z-index: 100;
 	color: #fff;
 }
+.bar-fixed {
+	position: fixed;
+	left:0;
+	top:0;
+	box-shadow: 0 0 15rpx #999;
+}
 </style>
 <template>
 <view class="sort-bar">
-	<view class="sort-bar-drop">
-		<view class="item" wx:for="{{sortData}}" wx:key="index" @tap="sortBy({{index}})">
-			<text style="color:{{item.isSelected? '#2d8cf0': ''}}">{{item.title}}</text>
-			<image src="{{item.isSelected?'../images/blue-triangle.png':'../images/gray-triangle.png'}}"></image>
+	<view class="wrap {{isTabFixed? 'bar-fixed': ''}}">
+		<view class="sort-bar-drop">
+			<view class="item" wx:for="{{sortData}}" wx:key="index" @tap="sortBy({{index}})">
+				<text style="color:{{item.isConfirmed? '#2d8cf0': ''}}">{{item.title}}</text>
+				<image src="{{item.isConfirmed?'../images/blue-triangle.png':'../images/gray-triangle.png'}}"></image>
+			</view>
 		</view>
-	</view>
-	<view class="sort-bar-kinds" wx:if="{{showSortBarPanel}}">
-		<!-- 区域下拉 -->
-		<block wx:if="{{sortData[0].isSelected}}">
-			<view class="box-wrap">
-				<view class="box" wx:for="{{sortData[0].kinds}}" wx:key="index">{{item}}</view>
-			</view>
-			<view class="button">确认</view>
-		</block>
-		<!-- 总价下拉 -->
-		<block wx:if="{{sortData[1].isSelected}}">
-			<view class="title">价格区间（万）</view>
-			<view class="input">
-				<input placeholder="最低价格" type="number"/><input placeholder="最高价格" type="number"/>
-			</view>
-			<view class="box-wrap">
-				<view class="box" wx:for="{{sortData[1].kinds}}" wx:key="index">{{item}}</view>
-			</view>
-			<view class="button">确认</view>
-		</block>
-		<!-- 户型下拉 -->
-		<block wx:if="{{sortData[2].isSelected}}">
-			<view class="box-wrap">
-				<view class="box" wx:for="{{sortData[2].kinds}}" wx:key="index">{{item}}</view>
-			</view>
-			<view class="button">确认</view>
-		</block>
-		<!-- 更多下拉 -->
-		<block wx:if="{{sortData[3].isSelected}}">
-			<view class="type" wx:for="{{sortData[3].type}}" wx:for-index="typeIndex" wx:for-item="type" wx:key="typeIndex">
-				<view class="title">{{type.title}}</view>
+		<view class="sort-bar-kinds" wx:if="{{showSortBarPanel}}">
+			<!-- 区域下拉 -->
+			<block wx:if="{{sortData[0].isSelected}}">
 				<view class="box-wrap">
-					<view class="box" wx:for="{{sortData[3].type[typeIndex].kinds}}" wx:for-item="kind" wx:for-index="kindIndex" wx:key="kindIndex">
-						{{kind}}
+					<view class="box" wx:for="{{sortData[0].kinds}}" wx:key="index" @tap="selectRegion({{item}})">{{item}}</view>
+				</view>
+			</block>
+			<!-- 总价下拉 -->
+			<block wx:if="{{sortData[1].isSelected}}">
+				<view class="title">价格区间（万）</view>
+				<view class="input">
+					<input placeholder="最低价格" type="number"/><input placeholder="最高价格" type="number"/>
+				</view>
+				<view class="box-wrap">
+					<view class="box" wx:for="{{sortData[1].kinds}}" wx:key="index"  @tap="selectPrice({{item}})">{{item}}</view>
+				</view>
+			</block>
+			<!-- 户型下拉 -->
+			<block wx:if="{{sortData[2].isSelected}}">
+				<view class="box-wrap">
+					<view class="box" wx:for="{{sortData[2].kinds}}" wx:key="index"  @tap="selectHouseType({{item}})">{{item}}</view>
+				</view>
+			</block>
+			<!-- 更多下拉 -->
+			<block wx:if="{{sortData[3].isSelected}}">
+				<view class="type" wx:for="{{sortData[3].type}}" wx:for-index="typeIndex" wx:for-item="type" wx:key="typeIndex">
+					<view class="title">{{type.title}}</view>
+					<view class="box-wrap">
+						<view class="box" 
+							wx:for="{{sortData[3].type[typeIndex].kinds}}" 
+							wx:for-item="kind" 
+							wx:for-index="kindIndex" 
+							wx:key="kindIndex"
+							@tap="selectMore({{typeIndex}})"
+							>
+							{{kind}}
+						</view>
 					</view>
 				</view>
-			</view>
-			<view class="button">确认</view>
-		</block>
+			</block>
+			<view class="button" @tap="confirm">确认</view>
+		</view>
 	</view>
+	<view class="shade" wx:if="{{showSortBarPanel}}" @tap="hideSortBarPanel"></view>
 </view>
-<view class="shade" wx:if="{{showSortBarPanel}}" @tap="hideSortBarPanel"></view>
 </template>
 <script>
 import wepy from 'wepy'
 import {sortData} from '../utils/config'
 export default class barSort extends wepy.component {
 	props = {
+		scrollTop: Number
 	}
 
 	data = {
 		sortData,
 		sortBarTop: 0,
-		showSortBarPanel: false
+		showSortBarPanel: false,
+		isTabFixed: false,
+		region: '',
+		price: '',
+		houseType: '',
+		area: '',
+		orientation: ''
 	}
 
 	watch = {
+		scrollTop () {
+			if (this.scrollTop > this.sortBarTop) {
+				this.isTabFixed = true
+			} else {
+				if (!this.showSortBarPanel) this.isTabFixed = false
+			}
+			this.$apply()
+		}
 	}
-
 	onLoad() {
 		this.getTop()
 	}
@@ -178,12 +207,34 @@ export default class barSort extends wepy.component {
 			if (this.sortBarTop == 0) {
 				await this.getTop()
 			}
+			this.isTabFixed = true
 			wepy.pageScrollTo({
 				scrollTop: this.sortBarTop,
 				duration: 300
 			})
 		},
 		hideSortBarPanel() {
+			this.showSortBarPanel = false
+			this.isTabFixed = false
+			this.$apply()
+		},
+		selectRegion(item) {
+			this.region = item
+		},
+		selectPrice(item) {
+			this.price = item
+		},
+		selectHouseType(item) {
+			this.houseType = item
+		},
+		selectMore(typeIndex, {_relatedInfo}) {
+			if (typeIndex == 0) {
+				this.area = _relatedInfo.anchorTargetText
+			} else {
+				this.orientation = _relatedInfo.anchorTargetText
+			}
+		},
+		confirm() {
 			this.showSortBarPanel = false
 		}
 	}

@@ -99,7 +99,7 @@
 <script>
 import wepy from 'wepy'
 import {getRecentContactList} from '../utils/util'
-export default class MyMessage extends wepy.page {
+export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
 		navigationBarBackgroundColor: '#f5f5f5'
@@ -116,8 +116,8 @@ export default class MyMessage extends wepy.page {
 	events = {
 	}
 
-	async onLoad({type}) {
-		console.log('类型', type)
+	async onLoad() {
+
 	}
 	async onShow() {
 		await getRecentContactList()

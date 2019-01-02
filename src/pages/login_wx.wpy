@@ -79,8 +79,8 @@ export default class LoginWX extends wepy.page {
 			})
 			if (res.code != 400) {
 				wx.showToast({title: '登录成功'})
-				wx.switchTab({url: 'my'})
 				await getUserInfo()
+				wx.switchTab({url: 'my'})
 			} else {
 				wx.showToast({
 					title: '请求失败',

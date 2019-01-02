@@ -127,13 +127,6 @@
 			</view>
 		</view>
 		<view class="cells">
-			<view class="cell" @tap="toMessage">
-				<view class="cell-head">我的消息</view>
-				<view class="cell-foot">
-					<view class="round" wx:if="{{unreadNum}}"></view>
-					<image src="../images/next.png"/>
-				</view>
-			</view>
 			<view class="cell" @tap="toHome">
 				<view class="cell-head">我的主页</view>
 				<view class="cell-foot">
@@ -161,9 +154,6 @@ export default class Footer extends wepy.component {
 	}
 
 	methods = {
-		toMessage() {
-			wepy.navigateTo({url: `my_message?type=${this.userInfo.type}`})
-		},
 		toHome() {
 			wepy.navigateTo({url: 'agent_home'})
 		},

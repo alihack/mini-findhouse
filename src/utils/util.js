@@ -44,7 +44,7 @@ const checkSession = () => {
 			},
 			fail: async () => {
 				console.log('session_key 已经失效，需要重新执行登录流程')
-				await this.getUserId(true) // 强制获取
+				await getUserId(true) // 强制获取
 				resolve()
 			}
 		})
@@ -62,6 +62,8 @@ const getUserInfo = () => {
 			}
 		})
 		wepy.$instance.globalData.myUserInfo = userInfo
+		loginInfo.identifierNick = userInfo.nickname
+		loginInfo.identifierAvatar = userInfo.headimg
 		console.log('修改后的全局数据', wepy.$instance.globalData)
 		resolve()
 	})
@@ -115,19 +117,38 @@ const dataController = (ele) => {
 	})
 }
 
+const getSign = () => {
+	return new Promise(async resolve => {
+		const uid = wx.getStorageSync('uid')
+		loginInfo.identifier = uid
+		const {data} = await wepy.request({
+			url: api['sign'],
+			data: {
+				identifier: uid
+			},
+			method: 'POST'
+		})
+		console.log('sign', data)
+		loginInfo.userSig = data
+		resolve()
+	})
+}
 // 当前用户身份
 var loginInfo = {
 	'sdkAppID': 1400175041, // 用户所属应用id
 	'appIDAt3rd': 1400175041, // 用户所属应用id
 	'accountType': 36862, // 用户所属应用帐号类型
-	'identifier': '2', // 当前用户ID
-	'identifierNick': '陈立', // 当前用户昵昵称
-	'identifierAvatar': 'https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTKKIlk2X056gGicdGf2E6icPRib7fAq1P6267e38QB2aBD4bhc6rpz8LU9KqOaqfHNAktmmDPibVkLJXQ/132', // 用户头像
-	'userSig': 'eJxlj9FOgzAUhu95iobbGWkLTZl3ZJlzlmHY0IzdEEILaxgMS0WY8d2NbIkkntvv*885-5cBADAjf3efZtn5o9aJHhphggdgQvPuDzaN5EmqE1vxf1D0jVQiSXMt1AgRIQRDOHUkF7WWubwZeIJaXibj-mvWgRBRAh00VWQxws0yXqzDhauGFZrXu8e*8IIen1bPn0fnjUXWadvpbXx4YkW*ZHEzsGJ99Hxohy*V5hiVQ*a4s2pW5a*b1NuHXVBaKmKuD6P2YgXvdHJSy0rcyjhkTl1Kpz93QrXyXF*7QEQQtuHvmMa38QPxo1sU', // 鉴权Token,后端返回，必填
+	'identifier': '', // 当前用户ID
+	'identifierNick': '', // 当前用户昵昵称
+	'identifierAvatar': '', // 用户头像
+	// 'userSig': 'eJxlj9FOgzAUhu95iobbGWkLTZl3ZJlzlmHY0IzdEEILaxgMS0WY8d2NbIkkntvv*885-5cBADAjf3efZtn5o9aJHhphggdgQvPuDzaN5EmqE1vxf1D0jVQiSXMt1AgRIQRDOHUkF7WWubwZeIJaXibj-mvWgRBRAh00VWQxws0yXqzDhauGFZrXu8e*8IIen1bPn0fnjUXWadvpbXx4YkW*ZHEzsGJ99Hxohy*V5hiVQ*a4s2pW5a*b1NuHXVBaKmKuD6P2YgXvdHJSy0rcyjhkTl1Kpz93QrXyXF*7QEQQtuHvmMa38QPxo1sU', // 鉴权Token,后端返回，必填
 	// 'Tag_Profile_Custom_avatar': '' // 用户头像
+	'userSig': ''
 }
 const initIM = () => {
-	return new Promise(resolve => {
+	return new Promise(async resolve => {
+		// 获取sign
+		await getSign()
 		// 监听事件
 		const onConnNotify = (resp) => {
 			// 监听连接状态回调变化事件
@@ -405,5 +426,5 @@ module.exports = {
 	sendMessage,
 	getUnread,
 	getC2CHistoryMsgs,
-	getRecentContactList
+	getRecentContactList,
 }
