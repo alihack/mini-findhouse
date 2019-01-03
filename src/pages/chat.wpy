@@ -5,11 +5,12 @@
 	.chat {
 		padding:10rpx 30rpx 100rpx 30rpx;
 		width: 100%;
+		height: 1200rpx;
 		box-sizing: border-box;
 		&-item {
 			margin:40rpx 0;
 			.time {
-				width: 160rpx;
+				width: 220rpx;
 				height: 40rpx;
 				line-height: 40rpx;
 				background: #CECECE;
@@ -22,10 +23,11 @@
 			.main {
 				display: flex;
 				align-items: flex-start;
+				margin-top: 20rpx;
 				.avatar {
-					width: 100rpx;
-					height: 100rpx;
-					border-radius: 100rpx;
+					width: 80rpx;
+					height: 80rpx;
+					border-radius: 80rpx;
 				}
 				.card {
 					width: 450rpx;
@@ -66,6 +68,10 @@
 			}
 		}
 	}
+	#bottom {
+		width: 100%;
+		height: 2rpx;
+	}
 	.fixed-bottom {
 		.flex;
 		width: 100%;
@@ -78,18 +84,19 @@
 		box-shadow: 0 -0rpx 5rpx #eaeaea;
 		input {
 			width: 600rpx;
+			height: 124rpx;
 		}
 	}
 }
 </style>
 <template>
 	<view class="container">
-		<scroll-view class='chat' id="chat" scroll-y>
-			<block  wx:for="{{myMessages}}" wx:key="index">
-				<view class="chat-item" >
-					<view class='time'>{{item.time}}</view>
-					<view class="main {{item.isUserSend ? '' : 'reverse'}}">
-						<image class="avatar" src="{{item.avatar}}"></image>
+		<scroll-view class='chat' id="chat" scroll-y scroll-top='{{scrollInto}}'>
+			<block  wx:for="{{msgList}}" wx:key="index" wx:for-item="msg">
+				<view class="chat-item">
+					<view class='time'>{{msg.time}}</view>
+					<view wx:for="{{msg.data}}" class="main {{item.isSelfSend ? 'reverse' : ''}}" wx:key="index">
+						<image class="avatar" src="{{item.isSelfSend ? myAvatar: friendAvatar}}"></image>
 						<!-- 房屋卡片 -->
 						<view wx:if="{{item.houseCard}}">
 							<view class="card">
@@ -99,21 +106,22 @@
 								<view class="price">{{item.houseCard.price}}</view>
 							</view>
 						</view>
-						<view class="content" wx:if="{{item.content}}">{{item.content}}</view>
+						<view class="content" wx:if="{{item.html}}">{{item.html}}</view>
 					</view>
 				</view>
 			</block>
+			<view id="bottom"></view>
 		</scroll-view>
 		<!-- 固定尾部 -->
 		<view class="fixed-bottom">
-			<input placeholder="对Ta发送消息"/>
+			<input placeholder="对Ta发送消息" bindconfirm="onInputConfirm" placeholder-style="line-height:124rpx" value="{{msgText}}"/>
 		</view>
 	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
-import {initIM, sendMessage, getC2CHistoryMsgs} from '../utils/util'
+import {sendMessage, getC2CHistoryMsgs, convertTime} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -144,18 +152,35 @@ export default class Chat extends wepy.page {
 			avatar: '../images/banner.jpg',
 			content: '能带我去看房吗？'
 		}],
-		msgList: []
+		msgList: [],
+		friendAvatar: '',
+		friendId: '',
+		myAvatar: '',
+		msgText: '',
+		scrollInto: '',
+		msgLength: 1
 	}
 
 	computed = {
 	}
 
+	watch = {
+		msgLength() {
+			// 自动滚动到底部,只要srcollInto的值大于窗口，就能到底部
+			this.scrollInto = 60 + this.msgLength * 60
+			this.$apply()
+		}
+	}
+
 	events = {
 	}
-	async onLoad() {
-		// await sendMessage('测试一条')
-		await initIM()
-		this.msgList = await getC2CHistoryMsgs()
+	async onLoad({friendId, friendAvatar}) {
+		this.friendAvatar = friendAvatar
+		this.friendId = friendId
+		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
+		const data = await getC2CHistoryMsgs(friendId)
+		this.msgList = data.newMsgList
+		this.msgLength = data.Msglength
 		this.$apply()
 	}
 
@@ -168,6 +193,25 @@ export default class Chat extends wepy.page {
 		},
 		quit () {
 			wepy.navigateTo({url: 'login_wx'})
+		},
+		onInputConfirm: async ({detail: {value}}) => {
+			this.msgText = value
+			await sendMessage(value, this.friendId)
+			// 向窗口添加一条消息
+			const nowTime = convertTime(new Date().getTime())
+			const item = {}
+			item.html = value
+			item.time = nowTime
+			item.isSelfSend = true
+			// 如果当前时间跟最后一条时间一样，并入最后一数组
+			if (this.msgList[this.msgList.length - 1].time == nowTime) {
+				this.msgList[this.msgList.length - 1].data.push(item)
+			} else {
+				this.msgList.push({time: nowTime, data: [item]})
+			}
+			this.msgText = ''
+			this.msgLength ++
+			this.$apply()
 		}
 	}
 }

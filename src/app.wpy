@@ -50,6 +50,13 @@ page {
     vertical-align: super;
     font-size: 10px;
 }
+/* 无数据  */
+.nodata {
+  padding-top: 200rpx;
+  text-align: center;
+  font-size: 32rpx;
+  color: #ddd;
+}
 </style>
 
 <script>

@@ -7,41 +7,15 @@
 		.cell {
 			.flex;
 			width: 100%;
-			padding:30rpx 40rpx;
+			height: 80rpx;
 			box-sizing: border-box;
 			background: #fff;
 			color: #101d37;
 			margin-top:2rpx;
-			justify-content: space-between;
-			&-head {
-				.top {
-					.name {
-						font-size: 32rpx;
-						font-weight: bold;
-						margin-right: 20rpx;
-					}
-					.code {
-						font-size: 24rpx;
-						color: @gray;
-					}
-				}
-				.bottom {
-					font-size: 26rpx;
-				}
-			}
-			&-foot {
-				.flex;
-				image {
-					width:40rpx;
-					height:40rpx;
-				}
-				.round {
-					width: 20rpx;
-					height: 20rpx;
-					border-radius: 20rpx;
-					background: red;
-					margin-right: 20rpx;
-				}
+			image {
+				width: 40rpx;
+				height: 40rpx;
+				border-radius: 40rpx;
 			}
 		}
 	}
@@ -49,56 +23,31 @@
 </style>
 <template>
 	<view class="container">
-		<view class="cells">
-			<view class="cell" @tap="toChat">
+		<view class="cells" wx:if="{{!isNoData}}">
+			<view class="cell" @tap="toChat" wx:for="{{sessionList}}" wx:key="index" data-id="{{item.id}}" data-avatar="{{item.avatar}}">
 				<view class="cell-head">
-					<view class="top">
-						<text class="name">莫莫</text><text class="code">编号： QH213213213</text>
-					</view>
-					<view class="bottom">
-						<text>未来城堡/2室2厅</text>
-					</view>
+					<image src="{{item.avatar}}"></image>
+				</view>
+				<view class="cell-main">
+					<view class="top">{{item.name}}</view>
+					<view class="bottom">{{item.content}}</view>
 				</view>
 				<view class="cell-foot">
-					<view class="round"></view>
-					<image src="../images/next.png"/>
+					<view class="top">{{item.time}}</view>
+					<view class="bottom" wx:if="{{item.unread}}"></view>
 				</view>
 			</view>
-			<view class="cell" @tap="toChat">
-				<view class="cell-head">
-					<view class="top">
-						<text class="name">莫莫</text><text class="code">编号： QH213213213</text>
-					</view>
-					<view class="bottom">
-						<text>未来城堡/2室2厅</text>
-					</view>
-				</view>
-				<view class="cell-foot">
-					<view class="round"></view>
-					<image src="../images/next.png"/>
-				</view>
-			</view>
-			<view class="cell" @tap="toChat">
-				<view class="cell-head">
-					<view class="top">
-						<text class="name">莫莫</text><text class="code">编号： QH213213213</text>
-					</view>
-					<view class="bottom">
-						<text>未来城堡/2室2厅</text>
-					</view>
-				</view>
-				<view class="cell-foot">
-					<view class="round"></view>
-					<image src="../images/next.png"/>
-				</view>
-			</view>
+		</view>
+		<view wx:else class="nodata">
+			无消息记录
 		</view>
 	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
-import {getRecentContactList} from '../utils/util'
+import api from '../utils/api'
+import {getRecentContactList, getDateDiff} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
@@ -108,6 +57,8 @@ export default class Message extends wepy.page {
 	}
 
 	data = {
+		sessionList: [],
+		isNoData: false
 	}
 
 	computed = {
@@ -120,11 +71,38 @@ export default class Message extends wepy.page {
 
 	}
 	async onShow() {
-		await getRecentContactList()
+		const sessionItem = await getRecentContactList()
+		if (sessionItem.length == 0) this.isNoData = true
+		await this.dataController(sessionItem)
+		this.$apply()
+	}
+	async dataController(data) {
+		return new Promise(resolve => {
+			data.forEach(async ele => {
+				const item = {}
+				const {data: {userInfo}} = await wepy.request({
+					url: api['userInfo'],
+					data: {
+						uid: ele.To_Account
+					}
+				})
+				item.id = ele.To_Account
+				item.avatar = userInfo.headimg
+				item.name = userInfo.nickname
+				item.time = getDateDiff(ele.MsgTimeStamp * 1000)
+				item.content = ele.MsgShow
+				item.unread = ele.UnreadMsgCount
+				this.sessionList.push(item)
+				this.$apply()
+			})
+			console.log('sessionList', this.sessionList)
+			resolve()
+		})
 	}
 	methods = {
-		toChat() {
-			wepy.navigateTo({url: 'chat'})
+		toChat({currentTarget: {dataset}}) {
+			console.log('e', dataset)
+			wepy.navigateTo({url: `chat?friendId=${dataset.id}&friendAvatar=${dataset.avatar}`})
 		},
 	}
 }

@@ -101,7 +101,7 @@
 				</view>
 				<view class="company">{{currentHouse.deptName1}}</view>
 			</view>
-			<view class="online-label">在线咨询</view>
+			<view class="online-label" @tap="chatOnLine">在线咨询</view>
 			<view class="phone-label">电话咨询</view>
 		</view>
 	</view>
@@ -110,6 +110,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
+import {sendMessage} from '../utils/util'
 import panelHouseDetail from '../components/panel_houseDetail'
 import panelEstateDetail from '../components/panel_estateDetail'
 import panelSource from '../components/panel_source'
@@ -188,6 +189,9 @@ export default class Detail extends wepy.page {
 		estateDetail(id) {
 			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
+		async chatOnLine(uid) {
+			await sendMessage('你好，世界', 21, '陈立')
+		}
 	}
 }
 </script>

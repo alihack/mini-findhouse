@@ -191,12 +191,8 @@ export default class Index extends wepy.page {
 		await this.getHouseList(this.page + 1)
 	}
 	async onLoad() {
-		wx.showTabBarRedDot({
-			index: 1
-		})
 		await this.getHouseList(this.page)
 		await getUserId()
-		await initIM()
 		const uid = wx.getStorageSync('uid')
 		if (!uid) {
 			this.showAuthorModal = true
@@ -204,6 +200,7 @@ export default class Index extends wepy.page {
 		} else {
 			await getUserInfo()
 		}
+		await initIM()
 		this.$apply()
 	}
 

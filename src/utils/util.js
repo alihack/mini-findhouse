@@ -56,7 +56,7 @@ const getUserInfo = () => {
 		console.log('调用getUserInfo方法')
 		const uid = wx.getStorageSync('uid')
 		const {data: {userInfo}} = await wepy.request({
-			url: api['userInfo'] + `?uid=${uid}`,
+			url: api['userInfo'],
 			data: {
 				uid
 			}
@@ -64,6 +64,7 @@ const getUserInfo = () => {
 		wepy.$instance.globalData.myUserInfo = userInfo
 		loginInfo.identifierNick = userInfo.nickname
 		loginInfo.identifierAvatar = userInfo.headimg
+		console.log('loginInfo', loginInfo)
 		console.log('修改后的全局数据', wepy.$instance.globalData)
 		resolve()
 	})
@@ -128,7 +129,6 @@ const getSign = () => {
 			},
 			method: 'POST'
 		})
-		console.log('sign', data)
 		loginInfo.userSig = data
 		resolve()
 	})
@@ -141,7 +141,6 @@ var loginInfo = {
 	'identifier': '', // 当前用户ID
 	'identifierNick': '', // 当前用户昵昵称
 	'identifierAvatar': '', // 用户头像
-	// 'userSig': 'eJxlj9FOgzAUhu95iobbGWkLTZl3ZJlzlmHY0IzdEEILaxgMS0WY8d2NbIkkntvv*885-5cBADAjf3efZtn5o9aJHhphggdgQvPuDzaN5EmqE1vxf1D0jVQiSXMt1AgRIQRDOHUkF7WWubwZeIJaXibj-mvWgRBRAh00VWQxws0yXqzDhauGFZrXu8e*8IIen1bPn0fnjUXWadvpbXx4YkW*ZHEzsGJ99Hxohy*V5hiVQ*a4s2pW5a*b1NuHXVBaKmKuD6P2YgXvdHJSy0rcyjhkTl1Kpz93QrXyXF*7QEQQtuHvmMa38QPxo1sU', // 鉴权Token,后端返回，必填
 	// 'Tag_Profile_Custom_avatar': '' // 用户头像
 	'userSig': ''
 }
@@ -174,20 +173,19 @@ const initIM = () => {
 		}
 		const onMsgNotify = (newMsgList) => {
 			console.log('list', newMsgList)
-			// var sess, newMsg
+			// var selSess, newMsg
 			// // 获取所有聊天会话
 			// var sessMap = webim.MsgStore.sessMap()
 			// for (var j in newMsgList) { // 遍历新消息
 			// 	newMsg = newMsgList[j]
-			// 	if (newMsg.getSession().id() == selToID) { // 为当前聊天对象的消息
-			// 		selSess = newMsg.getSession()
-			// 		// 在聊天窗体中新增一条消息
-			// 		// console.warn(newMsg);
-			// 		addMsg(newMsg)
-			// 	}
+			// 	selSess = newMsg.getSession()
+			// 	// if (newMsg.getSession().id() == selToID) { // 为当前聊天对象的消息		
+			// 	// 	// 在聊天窗体中新增一条消息
+			// 	// 	// console.warn(newMsg);
+			// 	// 	addMsg(newMsg)
+			// 	// }	
 			// }
-			// // 消息已读上报，以及设置会话自动已读标记
-			// webim.setAutoRead(selSess, true, true)
+			// 消息已读上报，以及设置会话自动已读标记
 			// for (var i in sessMap) {
 			// 	sess = sessMap[i]
 			// 	if (selToID != sess.id()) { // 更新其他聊天对象的未读消息数
@@ -219,7 +217,7 @@ const initIM = () => {
 	})
 }
 
-const sendMessage = (msgtosend) => {
+const sendMessage = (msgtosend, selToID) => {
 	return new Promise(resolve => {
 		var isSend = true// 是否为自己发送
 		var seq = -1// 消息序列，-1表示 SDK 自动生成，用于去重
@@ -227,8 +225,8 @@ const sendMessage = (msgtosend) => {
 		var msgTime = Math.round(new Date().getTime() / 1000)// 消息时间戳
 		var subType = webim.C2C_MSG_SUB_TYPE.COMMON // 消息子类型
 		var selType = webim.SESSION_TYPE.C2C
-		var selSess = new webim.Session(selType, loginInfo.identifier, loginInfo.identifierNick, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
-		var msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick, loginInfo.identifierAvatar)
+		var selSess = new webim.Session(selType, selToID, selToID, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
+		var msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
 		// 解析文本和表情
 		var textObj, faceObj, tmsg, emotionIndex, emotion, restMsgIndex
 		var expr = /\[[^[\]]{1,3}\]/mg
@@ -281,20 +279,19 @@ const getUnread = () => {
 		var selSess = new webim.Session(selType, loginInfo.identifier, loginInfo.identifierNick, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
 		//	获取所有会话
 		var sessMap = webim.MsgStore.sessMap()
-		// var session = new webim.Session()
-		// // const num = sessMap['C2C2'].
-		console.log('所有会话', sessMap)
-		console.log('未读消息数', selSess._impl.unread)
-		resolve(selSess._impl.unread)
+		// const num = sessMap['C2C2'].
+		console.log('未读消息数map', sessMap)
+		console.log('未读消息数', selSess)
+		resolve()
 	})
 }
 
-const getC2CHistoryMsgs = () => {
+const getC2CHistoryMsgs = (friendID) => {
 	return new Promise(resolve => {
 		var lastMsgTime = 0 // 第一次拉取好友历史消息时，必须传 0
 		var msgKey = ''
 		var options = {
-			'Peer_Account': '2', // 好友帐号
+			'Peer_Account': friendID, // 好友帐号
 			'MaxCnt': 15, // 拉取消息条数
 			'LastMsgTime': lastMsgTime, // 最近的消息时间，即从这个时间点向前拉取历史消息
 			'MsgKey': msgKey
@@ -310,16 +307,36 @@ const getC2CHistoryMsgs = () => {
 				// }
 				console.log('最近历史记录', resp.MsgList)
 				const MsgList = resp.MsgList
-				const newMsgList = []
+				const Msglength = resp.MsgList.length
+				const data = []
 				for (let i in MsgList) {
 					const item = {}
 					item.html = await convertCustomMsgToHtml(MsgList[i])
 					item.time = convertTime(MsgList[i].time * 1000)
-					item.fromAccountNick = MsgList[i].fromAccountNick
-					newMsgList.push(item)
+					item.isSelfSend = MsgList[i].isSend
+					data.push(item)
 				}
+				// 按时间分类
+				const map = {}
+				const newMsgList = []
+				data.forEach(ele => {
+					if (!map[ele.time]) {
+						newMsgList.push({
+							time: ele.time,
+							data: [ele]
+						})
+						map[ele.time] = ele
+					} else {
+						newMsgList.forEach(des => {
+							if (des.time == ele.time) {
+								des.data.push(ele)
+								return
+							}
+						})
+					}
+				})
 				console.log('新历史记录', newMsgList)
-				resolve(newMsgList)
+				resolve({newMsgList, Msglength})
 			},
 			(err) => {
 				console.log('err', err)
@@ -333,9 +350,9 @@ const getRecentContactList = () => {
 	return new Promise(resolve => {
 		webim.getRecentContactList(
 			{'Count': 20},
-			(resp) => {
-				console.log('最近联系人', resp)
-				resolve()
+			({SessionItem}) => {
+				console.log('最近联系人', SessionItem)
+				resolve(SessionItem)
 			},
 			(err) => {
 				console.log('err', err)
@@ -403,11 +420,12 @@ const convertCustomMsgToHtml = (msg) => {
 
 const convertTime = (timeStamp) => {
 	const date = new Date(timeStamp)
+	const year = date.getFullYear()
 	const month = formatNumber(date.getMonth() + 1)
 	const day = formatNumber(date.getDate())
 	const hour = formatNumber(date.getHours())
 	const minute = formatNumber(date.getMinutes())
-	return month + '-' + day + ' ' + hour + ':' + minute
+	return year + '-' + month + '-' + day + ' ' + hour + ':' + minute
 }
 
 const formatNumber = n => {
@@ -415,6 +433,41 @@ const formatNumber = n => {
 	return n[1] ? n : '0' + n
   }
 
+const getDateDiff = (dateTimeStamp) => {
+	var result
+	var minute = 1000 * 60
+	var hour = minute * 60
+	var day = hour * 24
+	var month = day * 30
+	var now = new Date().getTime()
+	var diffValue = now - dateTimeStamp
+	if (diffValue < 0) {
+		return
+	}
+	var monthC = diffValue / month
+	var weekC = diffValue / (7 * day)
+	var dayC = diffValue / day
+	var hourC = diffValue / hour
+	var minC = diffValue / minute
+	if (monthC >= 1) {
+		if (monthC <= 12)		{
+			result = '' + parseInt(monthC) + '月前'
+		} else {
+			result = '' + parseInt(monthC / 12) + '年前'
+		}
+	} else if (weekC >= 1) {
+		result = '' + parseInt(weekC) + '周前'
+	} else if (dayC >= 1) {
+		result = '' + parseInt(dayC) + '天前'
+	} else if (hourC >= 1) {
+		result = '' + parseInt(hourC) + '小时前'
+	} else if (minC >= 1) {
+		result = '' + parseInt(minC) + '分钟前'
+	} else {
+		result = '刚刚'
+	}
+	return result
+}
 module.exports = {
 	getUserId,
 	getUserInfo,
@@ -427,4 +480,6 @@ module.exports = {
 	getUnread,
 	getC2CHistoryMsgs,
 	getRecentContactList,
+	convertTime,
+	getDateDiff
 }
