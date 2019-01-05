@@ -144,10 +144,10 @@ var loginInfo = {
 	// 'Tag_Profile_Custom_avatar': '' // 用户头像
 	'userSig': ''
 }
-const initIM = () => {
+const initIM = (onMsgNotify) => {
 	return new Promise(async resolve => {
 		// 获取sign
-		await getSign()
+		if (!loginInfo.userSig) await getSign()
 		// 监听事件
 		const onConnNotify = (resp) => {
 			// 监听连接状态回调变化事件
@@ -171,28 +171,6 @@ const initIM = () => {
 					break
 			}
 		}
-		const onMsgNotify = (newMsgList) => {
-			console.log('list', newMsgList)
-			// var selSess, newMsg
-			// // 获取所有聊天会话
-			// var sessMap = webim.MsgStore.sessMap()
-			// for (var j in newMsgList) { // 遍历新消息
-			// 	newMsg = newMsgList[j]
-			// 	selSess = newMsg.getSession()
-			// 	// if (newMsg.getSession().id() == selToID) { // 为当前聊天对象的消息		
-			// 	// 	// 在聊天窗体中新增一条消息
-			// 	// 	// console.warn(newMsg);
-			// 	// 	addMsg(newMsg)
-			// 	// }	
-			// }
-			// 消息已读上报，以及设置会话自动已读标记
-			// for (var i in sessMap) {
-			// 	sess = sessMap[i]
-			// 	if (selToID != sess.id()) { // 更新其他聊天对象的未读消息数
-			// 		updateSessDiv(sess.type(), sess.id(), sess.unread())
-			// 	}
-			// }
-		}
 
 		var listeners = {
 			'onConnNotify': onConnNotify, // 监听连接状态回调变化事件,必填
@@ -213,11 +191,11 @@ const initIM = () => {
 			resolve()
 		}
 		// sdk登录
-		if (!webim.checkLogin()) webim.login(loginInfo, listeners, options, cbOk, cbErr)
+		webim.login(loginInfo, listeners, options, cbOk, cbErr)
 	})
 }
 
-const sendMessage = (msgtosend, selToID) => {
+const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 	return new Promise(resolve => {
 		var isSend = true// 是否为自己发送
 		var seq = -1// 消息序列，-1表示 SDK 自动生成，用于去重
@@ -228,12 +206,17 @@ const sendMessage = (msgtosend, selToID) => {
 		var selSess = new webim.Session(selType, selToID, selToID, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
 		var msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
 		// 解析文本和表情
-		var textObj, faceObj, tmsg, emotionIndex, emotion, restMsgIndex
+		var textObj, faceObj, customObj, tmsg, emotionIndex, emotion, restMsgIndex
 		var expr = /\[[^[\]]{1,3}\]/mg
 		var emotions = msgtosend.match(expr)
 		if (!emotions || emotions.length < 1) {
-			textObj = new webim.Msg.Elem.Text(msgtosend)
-			msg.addText(textObj)
+			if (isCustomMsg) {
+				customObj = new webim.Msg.Elem.Custom(msgtosend)
+				msg.addCustom(customObj)
+			} else {
+				textObj = new webim.Msg.Elem.Text(msgtosend)
+				msg.addText(textObj)
+			}
 		} else {
 			for (var i = 0; i < emotions.length; i++) {
 				tmsg = msgtosend.substring(0, msgtosend.indexOf(emotions[i]))
@@ -263,11 +246,11 @@ const sendMessage = (msgtosend, selToID) => {
 		webim.sendMsg(msg,
 			(resp) => {
 				console.log('发送消息成功', resp)
-				resolve()
+				resolve('ok')
 			},
 			(err) => {
 				console.log('发送消息失败', err)
-				resolve()
+				resolve('fail')
 			}
 		)
 	})
@@ -311,7 +294,12 @@ const getC2CHistoryMsgs = (friendID) => {
 				const data = []
 				for (let i in MsgList) {
 					const item = {}
-					item.html = await convertCustomMsgToHtml(MsgList[i])
+					const html = await convertCustomMsgToHtml(MsgList[i])
+					if (html.houseCard) {
+						item.houseCard = html.houseCard
+					} else {
+						item.html = html
+					}
 					item.time = convertTime(MsgList[i].time * 1000)
 					item.isSelfSend = MsgList[i].isSend
 					data.push(item)
@@ -339,7 +327,7 @@ const getC2CHistoryMsgs = (friendID) => {
 				resolve({newMsgList, Msglength})
 			},
 			(err) => {
-				console.log('err', err)
+				console.log('获取历史记录失败', err)
 				resolve()
 			}
 		)
@@ -403,9 +391,14 @@ const convertCustomMsgToHtml = (msg) => {
 				// case webim.MSG_ELEMENT_TYPE.LOCATION:// 暂不支持地理位置
 				// 	// html += convertLocationMsgToHtml(content);
 				// 	break
-				// case webim.MSG_ELEMENT_TYPE.CUSTOM:
-				// 	html += convertCustomMsgToHtml(content)
-				// 	break
+				case webim.MSG_ELEMENT_TYPE.CUSTOM:
+					try {
+						html = {}
+						html = JSON.parse(content.getData())
+					} catch (e) {
+						console.log('e', e)
+					}
+					break
 				// case webim.MSG_ELEMENT_TYPE.GROUP_TIP:
 				// 	html += convertGroupTipMsgToHtml(content)
 				// 	break
@@ -468,6 +461,7 @@ const getDateDiff = (dateTimeStamp) => {
 	}
 	return result
 }
+
 module.exports = {
 	getUserId,
 	getUserInfo,
@@ -481,5 +475,8 @@ module.exports = {
 	getC2CHistoryMsgs,
 	getRecentContactList,
 	convertTime,
-	getDateDiff
+	getDateDiff,
+	loginInfo,
+	convertCustomMsgToHtml,
+	getSign
 }

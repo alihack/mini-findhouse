@@ -148,7 +148,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo, getUserId, initIM} from '../utils/util'
+import {getUserInfo, getUserId, getSign} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -200,7 +200,7 @@ export default class Index extends wepy.page {
 		} else {
 			await getUserInfo()
 		}
-		await initIM()
+		await getSign()
 		this.$apply()
 	}
 

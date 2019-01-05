@@ -6,16 +6,49 @@
 		width:100%;
 		.cell {
 			.flex;
+			justify-content: space-between;
 			width: 100%;
-			height: 80rpx;
+			height: 160rpx;
+			padding:30rpx;
 			box-sizing: border-box;
 			background: #fff;
 			color: #101d37;
 			margin-top:2rpx;
+			&-left {
+				.flex;
+				.main {
+					margin-left:30rpx;
+					.name {font-size: 32rpx;}
+					.content {
+						color:#b7b9bb;
+						margin-top:10rpx;
+						width: 430rpx;
+						.ellipsis
+					}
+				}
+			}
 			image {
-				width: 40rpx;
-				height: 40rpx;
-				border-radius: 40rpx;
+				width: 100rpx;
+				height: 100rpx;
+				border-radius: 100rpx;
+			}
+			&-right {
+				.flex;
+				flex-direction: column;
+				.time {color:#b7b9bb}
+				.unread-wrap {
+					width: 35rpx;
+					height: 35rpx;
+					.unread {
+						width: 35rpx;
+						height: 35rpx;
+						border-radius: 35rpx;
+						background: red;
+						color:#fff;
+						text-align: center;
+						margin-top:10rpx;
+					}
+				}
 			}
 		}
 	}
@@ -24,17 +57,20 @@
 <template>
 	<view class="container">
 		<view class="cells" wx:if="{{!isNoData}}">
-			<view class="cell" @tap="toChat" wx:for="{{sessionList}}" wx:key="index" data-id="{{item.id}}" data-avatar="{{item.avatar}}">
-				<view class="cell-head">
+			<view class="cell" 
+				@tap="toChat" 
+				wx:for="{{sessionList}}" wx:key="index" 
+				data-id="{{item.id}}" data-avatar="{{item.avatar}}" data-name="{{item.name}}">
+				<view class="cell-left">
 					<image src="{{item.avatar}}"></image>
+					<view class="main">
+						<view class="name">{{item.name}}</view>
+						<view class="content">{{item.content}}</view>
+					</view>
 				</view>
-				<view class="cell-main">
-					<view class="top">{{item.name}}</view>
-					<view class="bottom">{{item.content}}</view>
-				</view>
-				<view class="cell-foot">
-					<view class="top">{{item.time}}</view>
-					<view class="bottom" wx:if="{{item.unread}}"></view>
+				<view class="cell-right">
+					<view class="time">{{item.time}}</view>
+					<view class="unread-wrap"><view class="unread" wx:if="{{item.unread}}">{{item.unread}}</view></view>
 				</view>
 			</view>
 		</view>
@@ -47,7 +83,8 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getRecentContactList, getDateDiff} from '../utils/util'
+import webim from '../utils/webim_wx'
+import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
@@ -66,15 +103,33 @@ export default class Message extends wepy.page {
 
 	events = {
 	}
-
 	async onLoad() {
-
 	}
 	async onShow() {
+		const onMsgNotify = (newMsgs) => {
+			console.log('newMsg', newMsgs)
+			this.getUnread(newMsgs)
+		}
+		await initIM(onMsgNotify)
 		const sessionItem = await getRecentContactList()
 		if (sessionItem.length == 0) this.isNoData = true
 		await this.dataController(sessionItem)
 		this.$apply()
+	}
+	getUnread(newMsgs) {
+		const sessMap = webim.MsgStore.sessMap()
+		console.log('sessMap', sessMap)
+		this.sessionList.forEach(async ele => {
+			ele.unread = sessMap[`C2C${ele.id}`].unread()
+			ele.time = '刚刚'
+			newMsgs.forEach(async msg => {
+				if (msg.fromAccount == ele.id) {
+					ele.content = await convertCustomMsgToHtml(msg)
+					console.log('zheli', ele.content)
+				}
+				this.$apply()
+			})	
+		})
 	}
 	async dataController(data) {
 		return new Promise(resolve => {
@@ -91,7 +146,7 @@ export default class Message extends wepy.page {
 				item.name = userInfo.nickname
 				item.time = getDateDiff(ele.MsgTimeStamp * 1000)
 				item.content = ele.MsgShow
-				item.unread = ele.UnreadMsgCount
+				this.sessionList = []
 				this.sessionList.push(item)
 				this.$apply()
 			})
@@ -102,7 +157,7 @@ export default class Message extends wepy.page {
 	methods = {
 		toChat({currentTarget: {dataset}}) {
 			console.log('e', dataset)
-			wepy.navigateTo({url: `chat?friendId=${dataset.id}&friendAvatar=${dataset.avatar}`})
+			wepy.navigateTo({url: `chat?friendId=${dataset.id}&friendAvatar=${dataset.avatar}&friendName=${dataset.name}`})
 		},
 	}
 }

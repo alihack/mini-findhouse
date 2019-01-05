@@ -1,0 +1,186 @@
+<style lang="less">
+@import '../styles/base.less';
+@keyframes fadeUp {	
+	from {
+		height: 0rpx;
+	}
+	to {
+		height: 200rpx;
+	}
+}
+// 聊天工具栏
+.chat-bar {
+	width: 100%;
+	.fixed-shade {
+		width: 100%;
+		height: 100%;
+		position: fixed;
+		top: 0;
+		left: 0;
+		overflow: hidden;
+		z-index: 1000;
+	}
+	.fixed-bottom {
+		width: 100%;
+		position: fixed;
+		bottom: 0;
+		background: #fff;
+		box-sizing: border-box;
+		padding:0 30rpx;
+		box-shadow: 0 -0rpx 5rpx #eaeaea;
+		z-index: 2000;
+		.main {
+			.flex;
+			width: 100%;
+			height: 124rpx;
+			.recorder-icon, .add {
+				height: 100rpx;
+				width: 100rpx;
+				background: greenyellow;
+			}
+			.recorder-button {
+				width: 600rpx;
+				height: 124rpx;
+				text-align: center;
+				background: blue;
+			}
+			input {
+				width: 600rpx;
+				height: 124rpx;
+			}
+			.send {
+				.label-auto(200rpx, 100rpx)
+			}
+		}
+		.addMore {
+			.flex;
+			animation: fadeUp 0.5s;
+			height: 200rpx;
+			.camera, .ablum {
+				width: 200rpx;
+				height: 200rpx;
+				background: red;
+				margin:0 10rpx;
+			}
+		}
+	}
+}
+</style>
+<template>
+<view class="chat-bar">
+	<view class="fixed-shade" @tap="hideAddMore" wx:if="{{showMore}}"></view>
+	<view class="fixed-bottom">
+		<view class="main">
+			<view class="recorder-icon" @tap="toggleRecorder">语音</view>
+			<view class="recorder-button" wx:if="{{showStartRecord}}" @touchstart="recordStart" @touchend="recordEnd">按住说话</view>
+			<input 
+				wx:if="{{!showStartRecord}}"
+				placeholder="对Ta发送消息" 
+				@confirm="onConfirm"  @input="onInput"
+				placeholder-style="line-height:124rpx" 
+				value="{{msgText}}"/>
+			<view class="add" @tap="addMore">+</view>
+			<view class="send" wx:if="{{showSend}}" @tap="sendMessage">发送</view>
+		</view>
+		<view class="addMore" wx:if="{{showMore}}">
+			<view class="camera" @tap="addPhoto('camera')">拍照</view>
+			<view class="album"  @tap="addPhoto('album')">相册</view>
+		</view>
+	</view>
+</view>
+</view>
+</template>
+<script>
+import wepy from 'wepy'
+import {sendMessage} from '../utils/util'
+export default class barChat extends wepy.component {
+	props = {
+		friendId: String
+	}
+
+	data = {
+		showSend: false,
+		showMore: false,
+		showStartRecord: false,
+		innerAudio: wepy.createInnerAudioContext(), // 播放语音实例
+		recorderManager: wepy.getRecorderManager(), // 录音管理器
+		recorderOpts: {  // 录音管理器的参数
+			duration: 40000,
+			sampleRate: 44100,
+			numberOfChannels: 1,
+			encodeBitRate: 192000
+		},
+		msgText: ''
+	}
+	onLoad() {
+		let recorderManager = this.recorderManager
+		// 监听录音器开始录音
+		recorderManager.onStart(() => {
+			console.log('recorder start')
+		})
+		// 监听录音器暂停录音
+		recorderManager.onPause(() => {
+			console.log('recorder pause')
+		})
+		// 监听录音器结束录音
+		recorderManager.onStop((res) => {
+			console.log('recorder stop', res)
+		})
+		recorderManager.onError((res) => {
+			console.log('recorder fail', res.errMsg)
+		})
+	}
+	methods = {
+		sendMessage() {
+			this.$emit('addMessage', this.msgText)
+			this.msgText = ''
+			this.$apply()
+		},
+		onConfirm: async ({detail: {value}}) => {
+			const data = await sendMessage(value, this.friendId)
+			if (data != 'ok') {
+				wepy.showToast({
+					title: '发送失败',
+					icon: 'none'
+				})
+			}
+			this.msgText = ''
+			this.showSend = false
+			this.$apply()
+			this.$emit('addMessage', value)
+		},
+		onInput({detail: {value}}) {
+			this.showSend = false
+			if (value) {
+				this.msgText = value
+				this.showSend = true
+			}
+			this.$apply()
+		},
+		addMore() {
+			this.showMore = !this.showMore
+		},
+		hideAddMore () {
+			this.showMore = false
+		},
+		toggleRecorder() {
+			this.showStartRecord = !this.showStartRecord
+		},
+		recordStart () {
+			this.recorderManager.start(this.recorderOpts)
+		},
+		recordEnd () {
+			this.recorderManager.stop()
+		},
+		addPhoto(type) {
+			wx.chooseImage({
+				sourceType: [type],
+				success: (res) => {
+					const tempFilePaths = res.tempFilePaths
+					console.log('temp', tempFilePaths)
+				}
+			})
+		},
+	}
+}
+</script>

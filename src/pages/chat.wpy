@@ -5,7 +5,6 @@
 	.chat {
 		padding:10rpx 30rpx 100rpx 30rpx;
 		width: 100%;
-		height: 1200rpx;
 		box-sizing: border-box;
 		&-item {
 			margin:40rpx 0;
@@ -72,26 +71,12 @@
 		width: 100%;
 		height: 2rpx;
 	}
-	.fixed-bottom {
-		.flex;
-		width: 100%;
-		height: 124rpx;
-		position: fixed;
-		bottom: 0;
-		background: #fff;
-		padding:0 30rpx;
-		box-sizing: border-box;
-		box-shadow: 0 -0rpx 5rpx #eaeaea;
-		input {
-			width: 600rpx;
-			height: 124rpx;
-		}
-	}
+
 }
 </style>
 <template>
 	<view class="container">
-		<scroll-view class='chat' id="chat" scroll-y scroll-top='{{scrollInto}}'>
+		<scroll-view class='chat' id="chat" style="height:{{scrollHeight}}px" scroll-y scroll-top='{{scrollInto}}'>
 			<block  wx:for="{{msgList}}" wx:key="index" wx:for-item="msg">
 				<view class="chat-item">
 					<view class='time'>{{msg.time}}</view>
@@ -112,53 +97,37 @@
 			</block>
 			<view id="bottom"></view>
 		</scroll-view>
-		<!-- 固定尾部 -->
-		<view class="fixed-bottom">
-			<input placeholder="对Ta发送消息" bindconfirm="onInputConfirm" placeholder-style="line-height:124rpx" value="{{msgText}}"/>
-		</view>
+		<chatBar :friendId.sync="friendId"></chatBar>
 	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
-import {sendMessage, getC2CHistoryMsgs, convertTime} from '../utils/util'
+import chatBar from '../components/bar_chat'
+import {getC2CHistoryMsgs, convertTime, convertCustomMsgToHtml, initIM, sendMessage} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
 		navigationBarBackgroundColor: '#f5f5f5'
 	}
 	components = {
+		chatBar
 	}
 
 	data = {
-		myMessages: [{
-			time: '12-21 10:30',
-			isUserSend: true,
-			avatar: '../images/banner.jpg',
-			houseCard: {
-				img: '../images/banner.jpg',
-				title: '瑞景公园自主精装4房，采光视野好',
-				detail: '4室2厅/158.14m2/东',
-				price: '253万'
-			}
-		}, {
-			time: '12-21 10:32',
-			isUserSend: false,
-			avatar: '../images/lu.jpeg',
-			content: '您好，您发的房子还在售，有什么需要帮助的吗'
-		}, {
-			time: '12-21 10:33',
-			isUserSend: true,
-			avatar: '../images/banner.jpg',
-			content: '能带我去看房吗？'
-		}],
-		msgList: [],
+		houseCard: {
+			img: '../images/banner.jpg',
+			title: '瑞景公园自主精装4房，采光视野好',
+			detail: '4室2厅/158.14m2/东',
+			price: '253万'
+		},
 		friendAvatar: '',
 		friendId: '',
 		myAvatar: '',
-		msgText: '',
 		scrollInto: '',
-		msgLength: 1
+		scrollHeight: '',
+		msgList: [],
+		msgLength: 1,
 	}
 
 	computed = {
@@ -167,21 +136,68 @@ export default class Chat extends wepy.page {
 	watch = {
 		msgLength() {
 			// 自动滚动到底部,只要srcollInto的值大于窗口，就能到底部
-			this.scrollInto = 60 + this.msgLength * 60
+			this.scrollInto = 60 + this.msgLength * 250
 			this.$apply()
 		}
 	}
 
 	events = {
+		async addMessage(value) {
+			await this.msgController(value, true)
+		}
 	}
-	async onLoad({friendId, friendAvatar}) {
-		this.friendAvatar = friendAvatar
-		this.friendId = friendId
-		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
-		const data = await getC2CHistoryMsgs(friendId)
+	async refresh() {
+		if (!this.friendId) return
+		const onMsgNotify = (newMsgList) => {
+				console.log('新消息', newMsgList)
+				// 判断是否为当前聊天对象,是的话插入
+				newMsgList.forEach(async ele => {
+					if (ele.fromAccount == this.friendId) {
+						const value = await convertCustomMsgToHtml(ele)
+						await this.msgController(value, false)
+					}
+				})
+		}
+		await initIM(onMsgNotify)
+		const data = await getC2CHistoryMsgs(this.friendId)
+		// 首次进入,且为经纪人发送房源信息
+		if (data.length == 0 && wepy.$instance.globalData.myUserInfo.type == '2') {
+			console.log('首次进入,且为经纪人发送房源信息')
+			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
+		}
 		this.msgList = data.newMsgList
 		this.msgLength = data.Msglength
 		this.$apply()
+	}
+	async onShow() {
+		this.refresh()
+	}
+	async onLoad({friendId, friendAvatar, friendName}) {
+		this.friendAvatar = friendAvatar
+		this.friendId = friendId
+		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
+		wx.setNavigationBarTitle({title: friendName})
+		this.scrollHeight = wx.getSystemInfoSync().windowHeight
+		this.$apply()
+	}
+	msgController(value, isSelfSend) {
+		return new Promise(resolve => {
+			// 向窗口添加一条消息
+			const nowTime = convertTime(new Date().getTime())
+			const item = {}
+			item.html = value
+			item.time = nowTime
+			item.isSelfSend = isSelfSend
+			// 如果当前时间跟最后一条时间一样，并入最后一数组
+			if (this.msgList[this.msgList.length - 1].time == nowTime) {
+				this.msgList[this.msgList.length - 1].data.push(item)
+			} else {
+				this.msgList.push({time: nowTime, data: [item]})
+			}
+			this.msgLength ++
+			this.$apply()
+			resolve()
+		})
 	}
 
 	methods = {
@@ -194,25 +210,6 @@ export default class Chat extends wepy.page {
 		quit () {
 			wepy.navigateTo({url: 'login_wx'})
 		},
-		onInputConfirm: async ({detail: {value}}) => {
-			this.msgText = value
-			await sendMessage(value, this.friendId)
-			// 向窗口添加一条消息
-			const nowTime = convertTime(new Date().getTime())
-			const item = {}
-			item.html = value
-			item.time = nowTime
-			item.isSelfSend = true
-			// 如果当前时间跟最后一条时间一样，并入最后一数组
-			if (this.msgList[this.msgList.length - 1].time == nowTime) {
-				this.msgList[this.msgList.length - 1].data.push(item)
-			} else {
-				this.msgList.push({time: nowTime, data: [item]})
-			}
-			this.msgText = ''
-			this.msgLength ++
-			this.$apply()
-		}
 	}
 }
 </script>
