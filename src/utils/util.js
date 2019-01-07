@@ -2,7 +2,7 @@ import wepy from 'wepy'
 import api from './api'
 import QQMapWX from './qqmap-wx-jssdk'
 import webim from './webim_wx'
-
+var qiniuUploader = require('./qiniuUploader')
 const getUserId = (isForced) => {
 	return new Promise(async resolve => {
 		console.log('调用getUserId方法')
@@ -197,14 +197,15 @@ const initIM = (onMsgNotify) => {
 
 const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 	return new Promise(resolve => {
-		var isSend = true// 是否为自己发送
+		var msg
+		var isSend = true
 		var seq = -1// 消息序列，-1表示 SDK 自动生成，用于去重
 		var random = Math.round(Math.random() * 4294967296)// 消息随机数，用于去重
 		var msgTime = Math.round(new Date().getTime() / 1000)// 消息时间戳
 		var subType = webim.C2C_MSG_SUB_TYPE.COMMON // 消息子类型
 		var selType = webim.SESSION_TYPE.C2C
 		var selSess = new webim.Session(selType, selToID, selToID, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
-		var msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
+		msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
 		// 解析文本和表情
 		var textObj, faceObj, customObj, tmsg, emotionIndex, emotion, restMsgIndex
 		var expr = /\[[^[\]]{1,3}\]/mg
@@ -241,7 +242,6 @@ const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 				msg.addText(textObj)
 			}
 		}
-		console.log('session', selSess)
 		console.log('发送消息', msg)
 		webim.sendMsg(msg,
 			(resp) => {
@@ -296,9 +296,19 @@ const getC2CHistoryMsgs = (friendID) => {
 					const item = {}
 					const html = await convertCustomMsgToHtml(MsgList[i])
 					if (html.houseCard) {
+						// 自定义房源消息
 						item.houseCard = html.houseCard
 					} else {
-						item.html = html
+						if (html.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
+							// 图片消息
+							item.img = 'http://' + html
+						} else if (html.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
+							// 语音消息
+							item.audio = 'http://' + html
+						} else {
+							// 文字消息
+							item.html = html
+						}
 					}
 					item.time = convertTime(MsgList[i].time * 1000)
 					item.isSelfSend = MsgList[i].isSend
@@ -462,9 +472,34 @@ const getDateDiff = (dateTimeStamp) => {
 	return result
 }
 
+const uploadQiNiu = (filePath, type) => {
+	return new Promise(async (resolve) => {
+		console.log('file', filePath)
+		var key
+		if (type == 'audio') {
+			key = `audio${Date.now()}.mp3`
+		} else {
+			key = `img${Date.now()}.jpg`
+		}
+		const {data: {uptoken}} = await wepy.request({
+			url: api['uptoken'],
+		})
+		console.log('uptoken', uptoken)
+		const options = {
+			region: 'ECN', // 此为华东地区代码
+			useCdnDomain: true,
+			domain: 'qimg.fangzi.xiaoyu.com', // // bucket 域名，下载资源时用到。如果设置，会在 success callback 的 res 参数加上可以直接使用的 ImageURL 字段。否则需要自己拼接
+			key: key, // [非必须]自定义文件 key。如果不设置，默认为使用微信小程序 API 的临时文件名
+			uptoken: uptoken
+		}
+		qiniuUploader.upload(filePath, (res) => resolve(res), (err) => console.log(err), options)
+	})
+}
+
 module.exports = {
 	getUserId,
 	getUserInfo,
+	getSign,
 	getLocation,
 	dataController,
 	checkSession,
@@ -478,5 +513,5 @@ module.exports = {
 	getDateDiff,
 	loginInfo,
 	convertCustomMsgToHtml,
-	getSign
+	uploadQiNiu
 }

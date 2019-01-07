@@ -68,10 +68,8 @@ export default class extends wepy.app {
 		pages: [
 			'pages/index',
 			'pages/chat',
-			'pages/login_wx',
 			'pages/agent_addSource',
 			'pages/my',
-			'pages/login_sms',
 			'pages/agent_home',
 			'pages/message',
 			'pages/index_search',

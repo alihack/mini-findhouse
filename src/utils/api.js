@@ -19,6 +19,7 @@ const apis = [
 	'estateInfo',
 	'estateList',
 	'sign',
+	'uptoken',
 	// 经纪人
 	'agentLogin',
 	'agentHouses',

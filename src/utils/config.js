@@ -69,8 +69,29 @@ const sortData = [{
 			title: '更多',
 			isSelected: false,
 			type: [
-				{title: '面积', kinds: ['50平以下', '50-70平', '70-90平', '90-110平', '110-130平', '130-150平', '150-200平', '200平以上']},
-				{title: '朝向', kinds: ['朝东', '朝南', '朝西', '朝北', '南北']},
+				{
+					title: '面积',
+					kinds: [
+						{value: '50平以下', isKindSelected: false},
+						{value: '50-70平', isKindSelected: false},
+						{value: '70-90平', isKindSelected: false},
+						{value: '90-110平', isKindSelected: false},
+						{value: '110-130平', isKindSelected: false},
+						{value: '130-150平', isKindSelected: false},
+						{value: '150-200平', isKindSelected: false},
+						{value: '200平以上', isKindSelected: false}
+					]
+				},
+					{
+						title: '朝向',
+						kinds: [
+							{value: '朝东', isKindSelected: false},
+							{value: '朝南', isKindSelected: false},
+							{value: '朝西', isKindSelected: false},
+							{value: '朝北', isKindSelected: false},
+							{value: '南北', isKindSelected: false}
+						]
+				}
 			]
 		}
 	]

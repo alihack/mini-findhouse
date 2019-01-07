@@ -76,7 +76,6 @@
 				</view>
 			</view>
 		</view>
-		<view class="button" @tap="quit">退出</view>
 		<view class="agent" @tap="loginByAgent">经纪人登录</view>
 	</view>
 </template>
@@ -85,7 +84,6 @@ import wepy from 'wepy'
 export default class Footer extends wepy.component {
 	props = {
 		userInfo: Object,
-		unreadNum: Number
 	}
 
 	data = {
@@ -104,11 +102,8 @@ export default class Footer extends wepy.component {
 		toHistory() {
 			wepy.navigateTo({url: 'user_history'})
 		},
-		quit () {
-			wepy.redirectTo({url: 'login_wx'})
-		},
 		loginByAgent() {
-			wx.navigateTo({url: 'login_sms?type=2'})
+			this.$emit('SMSByAgent')
 		},
 	}
 }

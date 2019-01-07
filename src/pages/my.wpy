@@ -2,11 +2,25 @@
 
 </style>
 <template>
-<block wx:if="{{isAgent}}">
-	<myAgent :userInfo.sync="userInfo" :unreadNum.sync="unreadNum"></myAgent>
+<block wx:if="{{!isQuit}}">
+	<!-- 登录状态下 -->
+	<block wx:if="{{isAgent}}">
+		<!-- 经纪人页面 -->
+		<myAgent :userInfo.sync="userInfo"></myAgent>
+	</block>
+	<block wx:else>
+		<!-- 普通用户页面 -->
+		<myUser  :userInfo.sync="userInfo"></myUser>
+	</block>
 </block>
 <block wx:else>
-	<myUser  :userInfo.sync="userInfo" :unreadNum.sync="unreadNum"></myUser>
+	<!-- 退出状态下 -->
+	<block wx:if="{{isLoginBySMS}}">
+		<mySMSLogin :isSMSByAgent.sync="isSMSByAgent"></mySMSLogin>
+	</block>
+	<block wx:else>
+		<myWXLogin></myWXLogin>
+	</block>
 </block>
 </template>
 
@@ -14,7 +28,8 @@
 import wepy from 'wepy'
 import myAgent from '../components/my_agent'
 import myUser from '../components/my_user'
-import {initIM, getUnread} from '../utils/util'
+import mySMSLogin from '../components/my_login_sms'
+import myWXLogin from '../components/my_login_wx'
 export default class My extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的',
@@ -22,31 +37,50 @@ export default class My extends wepy.page {
 	}
 	components = {
 		myAgent,
-		myUser
+		myUser,
+		mySMSLogin,
+		myWXLogin
 	}
 
 	data = {
 		userInfo: {},
 		isAgent: false,
-		unreadNum: 0
+		isQuit: false,
+		isLoginBySMS: false,
+		isSMSByAgent: false
 	}
 
 	computed = {
 	}
 
 	events = {
+		quit() {
+			this.isQuit = true
+		},
+		SMSByAgent() {
+			this.isQuit = true
+			this.isLoginBySMS = true
+			this.isSMSByAgent = true
+		},
+		refresh() {
+			this.refresh()
+		}
 	}
-
-	async onShow() {
+	refresh() {
+		this.isAgent = false
+		this.isQuit = false
+		this.isLoginBySMS = false
+		this.isSMSByAgent = false
+		console.log('我的主页')
 		this.userInfo = wepy.$instance.globalData.myUserInfo
 		if (!this.userInfo.mobile) {
-			wepy.navigateTo({url: 'login_wx'})
+			this.isQuit = true
 			return
 		}
 		if (this.userInfo.deptName) this.isAgent = true
-		await initIM()
-		this.unreadNum = await getUnread()
-		// await getRecentContactList()
+	}
+	async onShow() {
+		this.refresh()
 		this.$apply()
 	}
 

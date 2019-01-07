@@ -50,6 +50,16 @@
 				box-sizing: border-box;
 				line-height: 66rpx;
 			}
+			.kindSelected {
+				.label-auto(156rpx, 70rpx);
+				background: #f8f8f9;
+				margin-right: 23rpx;
+				margin-top:25rpx;
+				border: 2rpx solid @blue;
+				background: #fff;
+				box-sizing: border-box;
+				line-height: 66rpx;
+			}
 		}
 		.button {
 			margin: 45rpx 0;
@@ -130,14 +140,17 @@
 				<view class="type" wx:for="{{sortData[3].type}}" wx:for-index="typeIndex" wx:for-item="type" wx:key="typeIndex">
 					<view class="title">{{type.title}}</view>
 					<view class="box-wrap">
-						<view class="box" 
+						<view
 							wx:for="{{sortData[3].type[typeIndex].kinds}}" 
 							wx:for-item="kind" 
 							wx:for-index="kindIndex" 
 							wx:key="kindIndex"
-							@tap="selectMore({{typeIndex}})"
+							class="{{kind.isKindSelected? 'kindSelected':'box'}}" 
+							data-kindindex="{{kindIndex}}"
+							data-typeindex="{{typeIndex}}"
+							@tap="selectMore"
 							>
-							{{kind}}
+							{{kind.value}}
 						</view>
 					</view>
 				</view>
@@ -198,7 +211,6 @@ export default class barSort extends wepy.component {
 	}
 	methods = {
 		async sortBy (index) {
-			console.log('type', index)
 			this.sortData.forEach(ele => {
 				ele.isSelected = false
 			})
@@ -207,11 +219,13 @@ export default class barSort extends wepy.component {
 			if (this.sortBarTop == 0) {
 				await this.getTop()
 			}
+			if (!this.isTabFixed) {
+				wepy.pageScrollTo({
+					scrollTop: this.sortBarTop,
+					duration: 300
+				})
+			}
 			this.isTabFixed = true
-			wepy.pageScrollTo({
-				scrollTop: this.sortBarTop,
-				duration: 300
-			})
 		},
 		hideSortBarPanel() {
 			this.showSortBarPanel = false
@@ -227,12 +241,23 @@ export default class barSort extends wepy.component {
 		selectHouseType(item) {
 			this.houseType = item
 		},
-		selectMore(typeIndex, {_relatedInfo}) {
+		selectMore({currentTarget: {dataset}}) {
+			const kindIndex = dataset.kindindex
+			const typeIndex = dataset.typeindex
+			const value = this.sortData[3].type[typeIndex].kinds[kindIndex].value
 			if (typeIndex == 0) {
-				this.area = _relatedInfo.anchorTargetText
+				this.area = value
+				this.sortData[3].type[0].kinds.forEach(kind => {
+					kind.isKindSelected = false
+				})
 			} else {
-				this.orientation = _relatedInfo.anchorTargetText
+				this.orientation = value
+				this.sortData[3].type[1].kinds.forEach(kind => {
+					kind.isKindSelected = false
+				})
 			}
+			this.sortData[3].type[typeIndex].kinds[kindIndex].isKindSelected = true
+			this.$apply()
 		},
 		confirm() {
 			this.showSortBarPanel = false

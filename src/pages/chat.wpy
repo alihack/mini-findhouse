@@ -57,12 +57,41 @@
 						margin-top:10rpx;
 					}
 				}
+				.photo {
+					width: 450rpx;
+					height: 450rpx;
+					border-radius: 10rpx;
+					margin:0 20rpx;
+				}
 				.content {
 					background: #fff;
 					max-width: 400rpx;
 					padding: 20rpx 30rpx;
 					border-radius: 10rpx;
 					margin:0 20rpx;
+				}
+				.audio {
+					height: 60rpx;
+					background: #7ED321;
+					border-radius: 5rpx;
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 10rpx 15rpx;
+					width:192rpx;
+					transition: width 1s linear;
+					margin:0 20rpx;
+					&-sound {
+						width: 30rpx;
+						height: 30rpx;
+					}
+					&-second {
+						color: #FFFFFF;
+						letter-spacing: 0.42px;
+					}
+				}
+				.audio:hover, .audio:active {
+					background:#add49d;
 				}
 			}
 		}
@@ -91,7 +120,19 @@
 								<view class="price">{{item.houseCard.price}}</view>
 							</view>
 						</view>
-						<view class="content" wx:if="{{item.html}}">{{item.html}}</view>
+						<!-- 图片 -->
+						<image wx:if="{{item.img}}" src="{{item.img}}" class="photo"></image>
+						<!-- 语音 -->
+						<view wx:if="{{item.audio && item.isSelfSend}}" class="audio" @tap="playAudio({{item.audio}})">
+							<view class="audio-second"> "</view>
+							<image class="audio-sound" src="../images/chat-sound-right.png"/>
+						</view>
+						<view wx:if="{{item.audio && !item.isSelfSend}}" class="audio" @tap="playAudio({{item.audio}})">
+							<image class="audio-sound" src="../images/chat-sound-left.png"/>
+							<view class="audio-second"> "</view>
+						</view>
+						<!-- 文字 -->
+						<view wx:if="{{item.html}}" class="content">{{item.html}}</view>
 					</view>
 				</view>
 			</block>
@@ -123,11 +164,14 @@ export default class Chat extends wepy.page {
 		},
 		friendAvatar: '',
 		friendId: '',
+		friendName: '',
 		myAvatar: '',
+		myUid: '',
 		scrollInto: '',
 		scrollHeight: '',
 		msgList: [],
 		msgLength: 1,
+		innerAudio: wepy.createInnerAudioContext(), // 播放语音实例
 	}
 
 	computed = {
@@ -142,8 +186,8 @@ export default class Chat extends wepy.page {
 	}
 
 	events = {
-		async addMessage(value) {
-			await this.msgController(value, true)
+		async addMessage(value, type) {
+			await this.msgController(value, true, type)
 		}
 	}
 	async refresh() {
@@ -152,21 +196,28 @@ export default class Chat extends wepy.page {
 				console.log('新消息', newMsgList)
 				// 判断是否为当前聊天对象,是的话插入
 				newMsgList.forEach(async ele => {
-					if (ele.fromAccount == this.friendId) {
+					if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
 						const value = await convertCustomMsgToHtml(ele)
-						await this.msgController(value, false)
+						var type
+						if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
+							type = 'img'
+						} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
+							type = 'audio'
+						}
+						await this.msgController(value, false, type)
 					}
 				})
 		}
 		await initIM(onMsgNotify)
 		const data = await getC2CHistoryMsgs(this.friendId)
-		// 首次进入,且为经纪人发送房源信息
-		if (data.length == 0 && wepy.$instance.globalData.myUserInfo.type == '2') {
-			console.log('首次进入,且为经纪人发送房源信息')
-			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
-		}
 		this.msgList = data.newMsgList
 		this.msgLength = data.Msglength
+		// 首次进入,经纪人发送房源信息
+		if (this.msgLength == 0) {
+			console.log('首次进入,向经纪人发送房源信息')
+			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
+			await this.msgController(this.houseCard, true)
+		}
 		this.$apply()
 	}
 	async onShow() {
@@ -175,22 +226,38 @@ export default class Chat extends wepy.page {
 	async onLoad({friendId, friendAvatar, friendName}) {
 		this.friendAvatar = friendAvatar
 		this.friendId = friendId
+		this.friendName = friendName
 		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
+		this.myUid = wepy.$instance.globalData.myUserInfo.uid
 		wx.setNavigationBarTitle({title: friendName})
 		this.scrollHeight = wx.getSystemInfoSync().windowHeight
 		this.$apply()
 	}
-	msgController(value, isSelfSend) {
+	msgController(value, isSelfSend, type) {
 		return new Promise(resolve => {
 			// 向窗口添加一条消息
 			const nowTime = convertTime(new Date().getTime())
 			const item = {}
-			item.html = value
+			if (typeof value == 'object') {
+				item.houseCard = value
+			} else {
+				if (type == 'img') {
+					item.img = 'http://' + value
+				} else if (type == 'audio') {
+					item.audio = 'http://' + value
+				} else {
+					item.html = value
+				}
+			}
 			item.time = nowTime
 			item.isSelfSend = isSelfSend
 			// 如果当前时间跟最后一条时间一样，并入最后一数组
-			if (this.msgList[this.msgList.length - 1].time == nowTime) {
-				this.msgList[this.msgList.length - 1].data.push(item)
+			if (this.msgList.length != 0) {
+				if (this.msgList[this.msgList.length - 1].time == nowTime) {
+					this.msgList[this.msgList.length - 1].data.push(item)
+				} else {
+					this.msgList.push({time: nowTime, data: [item]})
+				}
 			} else {
 				this.msgList.push({time: nowTime, data: [item]})
 			}
@@ -210,6 +277,11 @@ export default class Chat extends wepy.page {
 		quit () {
 			wepy.navigateTo({url: 'login_wx'})
 		},
+		playAudio(audioURL) {
+			console.log('inner', this.innerAudio)
+			this.innerAudio.src = audioURL
+			this.innerAudio.play()
+		}
 	}
 }
 </script>

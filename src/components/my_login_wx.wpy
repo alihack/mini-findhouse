@@ -1,6 +1,8 @@
 <style lang="less">
 @import '../styles/base.less';
-.container {
+.login-wx {
+	.flex;
+	flex-direction: column;
 	.tip {
 		font-size: 34rpx;
 		margin-top: 70rpx;
@@ -25,7 +27,7 @@
 }
 </style>
 <template>
-	<view class="container">
+	<view class="login-wx">
 		<view class="tip">点击登录 享受更多服务</view>
 		<button class="button" open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber">
 			<view @tap="login">
@@ -40,11 +42,9 @@
 import wepy from 'wepy'
 import api from '../utils/api'
 import {getUserInfo, checkSession} from '../utils/util'
-export default class LoginWX extends wepy.page {
-	config = {
+export default class MyLoginWX extends wepy.component {
+	props = {
 		navigationBarTitleText: '登录'
-	}
-	components = {
 	}
 
 	data = {
@@ -65,7 +65,6 @@ export default class LoginWX extends wepy.page {
 			await checkSession()
 			if (!detail.iv) {
 				console.log('用户取消授权')
-				wx.navigateTo({url: 'login_sms'})
 				return
 			}
 			const res = await wepy.request({
@@ -80,19 +79,18 @@ export default class LoginWX extends wepy.page {
 			if (res.code != 400) {
 				wx.showToast({title: '登录成功'})
 				await getUserInfo()
-				wx.switchTab({url: 'my'})
+				this.$emit('refresh')
 			} else {
 				wx.showToast({
 					title: '请求失败',
 					icon: 'none'
 				})
-				wx.navigateTo({url: 'login_sms'})
 			}
 			this.$apply()
 		},
 		loginByAgent() {
-			wx.navigateTo({url: 'login_sms?type=2'})
-		}
+			this.$emit('SMSByAgent')
+		},
 	}
 }
 </script>

@@ -112,7 +112,11 @@ export default class Message extends wepy.page {
 		}
 		await initIM(onMsgNotify)
 		const sessionItem = await getRecentContactList()
-		if (sessionItem.length == 0) this.isNoData = true
+		if (sessionItem == undefined) {
+			this.isNoData = true
+			this.$apply()
+			return
+		}
 		await this.dataController(sessionItem)
 		this.$apply()
 	}
@@ -125,10 +129,9 @@ export default class Message extends wepy.page {
 			newMsgs.forEach(async msg => {
 				if (msg.fromAccount == ele.id) {
 					ele.content = await convertCustomMsgToHtml(msg)
-					console.log('zheli', ele.content)
 				}
 				this.$apply()
-			})	
+			})
 		})
 	}
 	async dataController(data) {
@@ -145,6 +148,13 @@ export default class Message extends wepy.page {
 				item.avatar = userInfo.headimg
 				item.name = userInfo.nickname
 				item.time = getDateDiff(ele.MsgTimeStamp * 1000)
+				if (ele.MsgShow == '[其他]') {
+					ele.MsgShow = '[房源信息]'
+				} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
+					ele.MsgShow = '[图片信息]'
+				} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
+					ele.MsgShow = '[语音信息]'
+				}
 				item.content = ele.MsgShow
 				this.sessionList = []
 				this.sessionList.push(item)

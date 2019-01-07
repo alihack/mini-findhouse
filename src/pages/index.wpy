@@ -62,6 +62,10 @@
 			&-left {
 				padding:0rpx 80rpx 0rpx 20rpx;
 				box-sizing: border-box;
+				image {
+					width: 25rpx;
+					height: 22rpx;
+				}
 				.title {
 					font-size: 38rpx;
 				}
@@ -72,9 +76,9 @@
 					}
 				}
 				.ratio {
-					.precent {
-						color: @gold;
-					}
+					.flex;
+					.green{color:rgb(0, 212, 55)}
+					.red{color:rgb(255, 47, 40)}
 				}
 			}
 			&-center {
@@ -127,7 +131,11 @@
 			<view class="header-left">
 				<view class="title">厦门市场行情</view>
 				<view class="price"><text class="number">{{market.price}}</text><text class="unit">元/平米</text></view>
-				<view class="ratio"><text class="word">环比上个月</text><text class="precent"> {{market.ratio}}</text></view>
+				<view class="ratio">
+					<text class="word">环比上个月</text>
+					<image src="{{market.isDecline?'../images/decline.png':'../images/rise.png'}}"></image>
+					<text class="{{market.isDecline? 'green': 'red'}}"> {{market.ratio}}</text>
+				</view>
 			</view>
 			<view class="header-center"></view>
 			<view class="header-right">
@@ -148,7 +156,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo, getUserId, getSign} from '../utils/util'
+import {getUserInfo, getUserId} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -200,7 +208,7 @@ export default class Index extends wepy.page {
 		} else {
 			await getUserInfo()
 		}
-		await getSign()
+		// await getSign()
 		this.$apply()
 	}
 
@@ -222,8 +230,17 @@ export default class Index extends wepy.page {
 			this.dataList = [this.dataList, ...data.list]
 			if (!this.dataList[0]) this.dataList = this.dataList.slice(1)
 			wx.hideLoading()
-			this.market.price = data.total_price
-			this.market.ratio = data.ratio
+			if (page == 1) {
+				// 第一次获取时，之后翻页都无需重新赋值
+				this.market.price = data.total_price
+				if (data.ratio.indexOf('-') != -1) {
+					this.market.ratio = data.ratio.slice(1)
+					this.market.isDecline = true
+				} else {
+					this.market.ratio = data.ratio
+					this.market.isDecline = false
+				}
+			}
 			this.$apply()
 			resolve()
 		})
