@@ -20,6 +20,9 @@ const apis = [
 	'estateList',
 	'sign',
 	'uptoken',
+	'getMarket',
+	'follow',
+	'cancelFollow',
 	// 经纪人
 	'agentLogin',
 	'agentHouses',

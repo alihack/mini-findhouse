@@ -110,6 +110,19 @@
 				}
 			}
 		}
+		.quitVIP {
+			position: fixed;
+			background: #1b140e;
+			color:#fff;
+			opacity: 0.5;
+			width: 100rpx;
+			height: 60rpx;
+			line-height: 60rpx;
+			text-align: center;
+			border-radius: 20rpx;
+			bottom: 50rpx;
+			right:50rpx;
+		}
 	}
 </style>
 <template>
@@ -150,6 +163,8 @@
 		<footer></footer>
 		<!-- 授权弹窗 -->
 		<authorModal :showAuthorModal.sync="showAuthorModal"></authorModal>
+		<!-- 退出专属主页 -->
+		<view class="quitVIP" wx:if="{{indexVIP}}" @tap="quitVIP">退出</view>
 	</view>
 </template>
 
@@ -177,7 +192,8 @@ export default class Index extends wepy.page {
 		market: {},
 		showAuthorModal: false,
 		scrollTop: 0,
-		page: 1
+		page: 1,
+		indexVIP: false
 	}
 
 	computed = {
@@ -195,11 +211,14 @@ export default class Index extends wepy.page {
 	}
 	// 上拉触底事件
 	async onReachBottom() {
-		console.log('bottom')
-		await this.getHouseList(this.page + 1)
+		if (!this.indexVIP) {
+			await this.getHouseList(this.page + 1)
+		}
 	}
-	async onLoad() {
+
+	async refresh() {
 		await this.getHouseList(this.page)
+		await this.getMarket()
 		await getUserId()
 		const uid = wx.getStorageSync('uid')
 		if (!uid) {
@@ -208,8 +227,55 @@ export default class Index extends wepy.page {
 		} else {
 			await getUserInfo()
 		}
-		// await getSign()
 		this.$apply()
+	}
+	async onShow () {
+		this.indexVIP = wx.getStorageSync('indexVIP')
+		if (this.indexVIP) {
+			// 经纪人的专属主页
+			await this.getAgentHouses()
+			return
+		}
+	}
+	async onLoad() {
+		this.refresh()
+		this.$apply()
+	}
+
+	getMarket() {
+		return new Promise(async resolve => {
+			const {data} = await wepy.request({
+				url: api['getMarket'],
+			})
+			this.market.price = data.total_price
+			if (data.ratio.indexOf('-') != -1) {
+				this.market.ratio = data.ratio.slice(1)
+				this.market.isDecline = true
+			} else {
+				this.market.ratio = data.ratio
+				this.market.isDecline = false
+			}
+			resolve()
+			this.$apply()
+		})
+	}
+
+	getAgentHouses() {
+		return new Promise(async resolve => {
+			const {data: {list}} = await wepy.request({
+				url: api['agentHouses'],
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+				}
+			})
+			this.dataList = list
+			this.dataList.forEach(ele => {
+				ele.propertyUuid = ele.property_uuid
+				this.$apply()
+			})
+			resolve()
+			this.$apply()
+		})
 	}
 
 	getHouseList(page) {
@@ -230,17 +296,6 @@ export default class Index extends wepy.page {
 			this.dataList = [this.dataList, ...data.list]
 			if (!this.dataList[0]) this.dataList = this.dataList.slice(1)
 			wx.hideLoading()
-			if (page == 1) {
-				// 第一次获取时，之后翻页都无需重新赋值
-				this.market.price = data.total_price
-				if (data.ratio.indexOf('-') != -1) {
-					this.market.ratio = data.ratio.slice(1)
-					this.market.isDecline = true
-				} else {
-					this.market.ratio = data.ratio
-					this.market.isDecline = false
-				}
-			}
 			this.$apply()
 			resolve()
 		})
@@ -263,6 +318,11 @@ export default class Index extends wepy.page {
 					// 打开成功
 				}
 			})
+		},
+		quitVIP() {
+			this.indexVIP = false
+			wx.setStorageSync('indexVIP', false)
+			this.refresh()
 		}
 	}
 }

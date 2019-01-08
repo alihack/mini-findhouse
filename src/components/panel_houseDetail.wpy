@@ -152,8 +152,8 @@
 	<view class="panel-house">
 		<view class="cell1">
 			<view class="cell1-text">{{house.title}}</view>
-			<view class="cell1-mark" @tap="setMark">
-				<image src="{{isMarked ? '../images/mark.png': '../images/un-mark.png'}}"></image>
+			<view class="cell1-mark" @tap="setFollow">
+				<image src="{{house.isFollowed  ? '../images/mark.png': '../images/un-mark.png'}}"></image>
 				<view>{{markText}}</view>
 			</view>
 		</view>
@@ -237,6 +237,7 @@
 </template>
 <script>
 import wepy from 'wepy'
+import api from '../utils/api'
 export default class panelHouseDetail extends wepy.component {
 	props = {
 		house: Object
@@ -244,21 +245,19 @@ export default class panelHouseDetail extends wepy.component {
 
 	data = {
 		imgUrls: [
-			'https://image.qfstatic.com/haixifangchan_company8fee8cd09/2017/201709/20170914/csm/d1/a114/e5025/p24713/9bcf0edc710e459ab287a59168708cc4.jpg',
-			'https://image.qfstatic.com/haixifangchan_company8fee8cd09/2017/201709/20170914/csm/d1/a114/e5025/p24713/9bcf0edc710e459ab287a59168708cc4.jpg',
-			'https://image.qfstatic.com/haixifangchan_company8fee8cd09/2017/201709/20170914/csm/d1/a114/e5025/p24713/9bcf0edc710e459ab287a59168708cc4.jpg',
+			'../images/lu.jpeg'
 		],
 		indicatorDots: false,
 		autoplay: false,
 		interval: 5000,
 		duration: 1000,
-		isMarked: false,
+		isFollowed: false,
 		markText: '关注'
 	}
 
 	watch = {
-		isMarked () {
-			this.markText = this.isMarked == true ? '已关注' : '关注'
+		house () {
+			this.markText = this.house.isFollowed == true ? '已关注' : '关注'
 			this.$apply()
 		}
 	}
@@ -267,8 +266,32 @@ export default class panelHouseDetail extends wepy.component {
 		detailIntroduce () {
 			wepy.navigateTo({url: 'detail_introduce'})
 		},
-		setMark () {
-			this.isMarked = !this.isMarked
+		async setFollow () {
+			if (!this.house.isFollowed) {
+				// 关注
+				await wepy.request({
+					url: api['follow'],
+					method: 'POST',
+					data: {
+						uid: wepy.$instance.globalData.myUserInfo.uid,
+						type: 1,
+						propertyUuid: this.house.propertyUuid
+					}
+				})
+			} else {
+				// 取消关注
+				await wepy.request({
+					url: api['cancelFollow'],
+					method: 'POST',
+					data: {
+						uid: wepy.$instance.globalData.myUserInfo.uid,
+						type: 1,
+						propertyUuid: this.house.propertyUuid
+					}
+				})
+			}
+			this.house.isFollowed = !this.house.isFollowed
+			this.$apply()
 		},
 		previewImg() {
 			wx.previewImage({

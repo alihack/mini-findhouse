@@ -147,6 +147,54 @@ export default class MyLoginSMS extends wepy.component {
 
 	onLoad() {
 	}
+	async userLogin () {
+		return new Promise(async resolve => {
+			const res = await wepy.request({
+				url: api['mobileLogin'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					mobile: this.phoneNum,
+					code: this.codeNum
+				}
+			})
+			if (res.code == 400) {
+				this.codeNum = ''
+				wx.showToast({
+					title: '验证码错误',
+					icon: 'none'
+				})
+				this.$apply()
+			} else {
+				wx.showToast({title: '登录成功'})
+			}
+			resolve()
+		})
+	}
+	async agentLogin () {
+		return new Promise(async resolve => {
+			const res = await wepy.request({
+				url: api['agentLogin'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					cellphone: this.phoneNum,
+					user_code: this.codeNum
+				}
+			})
+			if (res.code == 400) {
+				this.codeNum = ''
+				wx.showToast({
+					title: '验证码错误',
+					icon: 'none'
+				})
+				this.$apply()
+			} else {
+				wx.showToast({title: '经纪人认证成功'})
+			}
+			resolve()
+		})
+	}
 
 	methods = {
 		close() {
@@ -217,10 +265,10 @@ export default class MyLoginSMS extends wepy.component {
 			}
 			if (this.isSMSByAgent) {
 				// 经纪人手机登录
-				this.agentLogin()
+				await this.agentLogin()
 			} else {
 				// 普通用户手机登录
-				this.userLogin()
+				await this.userLogin()
 			}
 			// 更新用户信息
 			await getUserInfo()

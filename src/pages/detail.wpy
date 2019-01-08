@@ -110,7 +110,8 @@ export default class Detail extends wepy.page {
 	data = {
 		currentHouse: {},
 		currentEstate: {},
-		sameEstateHouses: []
+		sameEstateHouses: [],
+		indexVIP: false
 	}
 
 	events = {
@@ -140,6 +141,15 @@ export default class Detail extends wepy.page {
 			})
 			this.currentHouse = data
 			this.currentEstate = data.estate
+			this.indexVIP = wx.getStorageSync('indexVIP')
+			// 如果是经纪人专属主页，修改底部联系人为自己
+			if (this.indexVIP) {
+				const userInfo = wepy.$instance.globalData.myUserInfo
+				console.log('userinfo', userInfo)
+				console.log('this.cur', this.currentHouse)
+				this.currentHouse.employeeName1 = userInfo.name
+				this.currentHouse.deptName1 = userInfo.deptName
+			}
 			resolve()
 			this.$apply()
 		})
@@ -158,6 +168,13 @@ export default class Detail extends wepy.page {
 			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
 		async chatOnLine(fid) {
+			if (this.indexVIP) {
+				wx.showToast({
+					title: '不能与自己聊天哦',
+					icon: 'none'
+				})
+				return
+			}
 			wepy.navigateTo({url: `chat?friendId=20&friendAvatar='../images/lu.jpeg'&friendName='陈立'`})
 		}
 	}

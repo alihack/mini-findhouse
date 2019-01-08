@@ -94,7 +94,6 @@
 </style>
 <template>
 	<view class="agent">
-		<view class="quit" @tap="quit">退出</view>
 		<view class="header">
 			<image src="../images/lu.jpeg" class="avatar"></image>
 			<view class="detail">
@@ -156,9 +155,6 @@ export default class Footer extends wepy.component {
 		toHome() {
 			wepy.navigateTo({url: 'agent_home'})
 		},
-		quit () {
-			this.$emit('quit')
-		}
 	}
 }
 </script>

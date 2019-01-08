@@ -53,7 +53,6 @@
 	.cells {
 		margin:20rpx 0 50rpx 0;
 		width:100%;
-		height: 190rpx;
 		.cell {
 			.flex;
 			justify-content: space-between;
@@ -107,28 +106,36 @@
 			transform: translateX(0);
 		}
 		.cell:first-child {border:none}
+		.movabled {
+			opacity: 0.5;
+			z-index: 999;
+		}
 	}
 }
 </style>
 <template>
 	<view class="container">
-		<view class="quit" @tap="quit">退出</view>
 		<view class="header">
 			<image src="../images/lu.jpeg" class="avatar"></image>
 			<view class="detail">
-				<view class="name">陈立</view>
-				<view class="phone">17****05</view>
+				<view class="name">{{userInfo.name}}</view>
+				<view class="phone">{{userInfo.mobile}}</view>
 			</view>
 		</view>
 		<view class="row-wrap">
 			<view class="row">
-				<view class="row-side">专属主页</view>
+				<view class="row-side" @tap="indexVIP">专属主页</view>
 				<view class="row-center"></view>
 				<view class="row-side" @tap="addSource">添加房源</view>
 			</view>
 		</view>
-		<view class="cells">
-			<view class="cell {{item.isTouchMove ? 'touch-move-active' : ''}}" wx:for="{{agentHouses}}" wx:key="index">
+		<movable-area class="cells" style="height:{{movableHeight}}">
+			<movable-view 
+				direction="vertical" 
+				class="cell {{item.isTouchMove ? 'touch-move-active' : ''}} {{item.movabled ? 'movabled': ''}}" 
+				wx:for="{{agentHouses}}" wx:key="index"
+				y="{{index * 95}}"
+				>
 				<view class="content" bindtouchstart="touchS" bindtouchmove="touchM" data-index="{{index}}">
 					<view class="title">
 						<text class="label">{{item.info[0].deptName1}}</text>
@@ -141,8 +148,8 @@
 					<image src="../images/del.png"></image>
 					<text>删除</text>
 				</view>
-			</view>
-		</view>
+			</movable-view>
+		</movable-area>
 	</view>
 </template>
 
@@ -159,9 +166,11 @@ export default class AgentHome extends wepy.page {
 
 	data = {
 		delBtnWidth: 170,
+		movableHeight: '',
 		startX: 0,
 		startY: 0,
-		agentHouses: []
+		agentHouses: [],
+		userInfo: {}
 	}
 
 	computed = {
@@ -172,20 +181,27 @@ export default class AgentHome extends wepy.page {
 
 	getAgentHouses() {
 		return new Promise(async resolve => {
-			const {data} = await wepy.request({
+			const {data: {list}} = await wepy.request({
 				url: api['agentHouses'],
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
 				}
 			})
-			this.agentHouses = data
+			this.agentHouses = list
+			this.movableHeight = list.length * 190 + 'rpx'
+			this.agentHouses.forEach(ele => {
+				ele.movabled = false
+			})
 			resolve()
 			this.$apply()
 		})
 	}
-
-	onLoad() {
-		this.getAgentHouses()
+	async refresh() {
+		await this.getAgentHouses()
+	}
+	async onShow () {
+		this.userInfo = wepy.$instance.globalData.myUserInfo
+		this.refresh()
 	}
 
 	angle (start, end) {
@@ -196,18 +212,27 @@ export default class AgentHome extends wepy.page {
 	}
 
 	methods = {
-		quit () {
-			wepy.navigateTo({url: 'login_wx'})
-		},
-		delItem (index) {
-			this.list.splice(index, 1)
+		async delItem (index) {
+			// 移除房源
+			await wepy.request({
+				url: api['deleteHouses'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					propertyUuid: this.agentHouses[index].property_uuid
+				}
+			})
+			this.agentHouses.splice(index, 1)
 			this.$apply()
 		},
 		touchS (e) {
 			// 重置所有删除
-			this.list.forEach(ele => {
+			const index = e.currentTarget.dataset.index
+			this.agentHouses.forEach(ele => {
 				ele.isTouchMove = false
+				ele.movable = false
 			})
+			this.agentHouses[index].movabled = true
 			if (e.touches.length == 1) {
 				this.startX = e.touches[0].clientX
 				this.startY = e.touches[0].clientY
@@ -220,13 +245,12 @@ export default class AgentHome extends wepy.page {
 			const touchMoveY = e.changedTouches[0].clientY
 			// 获取滑动角度
 			const angle = this.angle({ X: this.startX, Y: this.startY }, { X: touchMoveX, Y: touchMoveY })
-			this.list.forEach((ele, i) => {
+			this.agentHouses.forEach((ele, i) => {
 				if (Math.abs(angle) > 30) return
 				if (i == index) {
 					if (touchMoveX > this.startX) {
 						ele.isTouchMove = false
 					} else {
-						console.log('11111')
 						ele.isTouchMove = true
 					}
 				}
@@ -235,6 +259,18 @@ export default class AgentHome extends wepy.page {
 		},
 		addSource() {
 			wepy.navigateTo({url: 'agent_addSource'})
+		},
+		indexVIP() {
+			if (this.agentHouses.length == 0) {
+				wx.showToast({
+					title: '请添加房源',
+					icon: 'none'
+				})
+				return
+			}
+			// 路径后不能带参数
+			wx.setStorageSync('indexVIP', true)
+			wepy.switchTab({url: 'index'})
 		}
 	}
 }
