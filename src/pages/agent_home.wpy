@@ -53,6 +53,16 @@
 	.cells {
 		margin:20rpx 0 50rpx 0;
 		width:100%;
+		.tips {
+			width: 100%;
+			height: 50rpx;
+			background: #fff;
+			line-height: 50rpx;
+			padding-right: 20rpx;
+			color:@gray;
+			text-align: right;
+			box-sizing: border-box;
+		}
 		.cell {
 			.flex;
 			justify-content: space-between;
@@ -61,7 +71,7 @@
 			background: #fff;
 			border-top:2rpx solid #f5f5f5;
 			color:@gray;
-			overflow:hidden; 
+			overflow:hidden;
 			.content {
 				width: 100%;
 				height: 190rpx;
@@ -107,7 +117,6 @@
 		}
 		.cell:first-child {border:none}
 		.movabled {
-			opacity: 0.5;
 			z-index: 999;
 		}
 	}
@@ -130,13 +139,14 @@
 			</view>
 		</view>
 		<movable-area class="cells" style="height:{{movableHeight}}">
+			<view class="tips">可拖拽排序</view>
 			<movable-view 
 				direction="vertical" 
 				class="cell {{item.isTouchMove ? 'touch-move-active' : ''}} {{item.movabled ? 'movabled': ''}}" 
 				wx:for="{{agentHouses}}" wx:key="index"
-				y="{{index * 95}}"
+				y="{{index * 95 + 25}}"
 				>
-				<view class="content" bindtouchstart="touchS" bindtouchmove="touchM" data-index="{{index}}">
+				<view class="content" @touchstart="touchS" @touchmove="touchM" @touchend="touchE" data-index="{{index}}">
 					<view class="title">
 						<text class="label">{{item.info[0].deptName1}}</text>
 						<text class="name">{{item.info[0].employeeName1}}</text>
@@ -170,7 +180,9 @@ export default class AgentHome extends wepy.page {
 		startX: 0,
 		startY: 0,
 		agentHouses: [],
-		userInfo: {}
+		preAgentHouse: [],
+		userInfo: {},
+		currentIndex: ''
 	}
 
 	computed = {
@@ -194,6 +206,20 @@ export default class AgentHome extends wepy.page {
 			})
 			resolve()
 			this.$apply()
+		})
+	}
+	sortHouses(oldIndex, newIndex) {
+		return new Promise(async resolve => {
+			await wepy.request({
+				url: api['sortHouses'],
+				method: 'POST',
+				data: {
+					uid: this.userInfo.uid,
+					old_sort: oldIndex,
+					new_sort: newIndex
+				}
+			})
+			resolve()
 		})
 	}
 	async refresh() {
@@ -227,34 +253,58 @@ export default class AgentHome extends wepy.page {
 		},
 		touchS (e) {
 			// 重置所有删除
-			const index = e.currentTarget.dataset.index
+			this.currentIndex = e.currentTarget.dataset.index
 			this.agentHouses.forEach(ele => {
 				ele.isTouchMove = false
 				ele.movable = false
+				this.preAgentHouse.push(ele)
 			})
-			this.agentHouses[index].movabled = true
 			if (e.touches.length == 1) {
 				this.startX = e.touches[0].clientX
 				this.startY = e.touches[0].clientY
 			}
+			this.agentHouses[this.currentIndex].movabled = true
 			this.$apply()
 		},
 		touchM (e) {
-			const index = e.currentTarget.dataset.index
 			const touchMoveX = e.changedTouches[0].clientX
 			const touchMoveY = e.changedTouches[0].clientY
+			const diffIndex = parseInt((touchMoveY - this.startY) / 95)
+			if (diffIndex != 0) {
+				this.$apply()
+				return
+			}
 			// 获取滑动角度
-			const angle = this.angle({ X: this.startX, Y: this.startY }, { X: touchMoveX, Y: touchMoveY })
-			this.agentHouses.forEach((ele, i) => {
-				if (Math.abs(angle) > 30) return
-				if (i == index) {
-					if (touchMoveX > this.startX) {
-						ele.isTouchMove = false
-					} else {
-						ele.isTouchMove = true
-					}
-				}
-			})
+			// const angle = this.angle({ X: this.startX, Y: this.startY }, { X: touchMoveX, Y: touchMoveY })
+			// this.agentHouses.forEach((ele, i) => {
+			// 	if (Math.abs(angle) > 30) return
+			// 	if (i == this.currentIndex) {
+			// 		if (touchMoveX > this.startX) {
+			// 			ele.isTouchMove = false
+			// 		} else {
+			// 			ele.isTouchMove = true
+			// 		}
+			// 	}
+			// })
+			this.$apply()
+		},
+		async touchE(e) {
+			const currentIndex = this.currentIndex
+			const currentItem = this.agentHouses[currentIndex]
+			this.agentHouses[currentIndex].movabled = false
+			const touchEndY = e.changedTouches[0].clientY
+			const diffIndex = parseInt((touchEndY - this.startY) / 95)
+			const endIndex = currentIndex + diffIndex
+			console.log('endindex', endIndex)
+			if (diffIndex == 0) {
+				console.log('无移动')
+				this.agentHouses = this.preAgentHouse
+				this.$apply()
+				return
+			}
+			this.agentHouses.splice(currentIndex, 1)
+			this.agentHouses.splice(endIndex, 0, currentItem)
+			await this.sortHouses(currentIndex, endIndex)
 			this.$apply()
 		},
 		addSource() {
