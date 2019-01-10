@@ -1,0 +1,263 @@
+<style lang="less">
+@import '../styles/base.less';
+.canvas {
+	width:100%;
+	.poster {
+		width: 100%;
+		height: 1334rpx;
+	}
+	.canvasImg {
+		position: fixed;
+		display: flex;
+		flex-direction: column;
+		width: 500rpx;
+		height: 800rpx;
+		top: 80rpx;
+		left: 135rpx;
+		z-index: 2000;
+	}
+	.shade {
+		width: 100%;
+		height: 100%;
+		position: fixed;
+		top: 0;
+		left: 0;
+		background: #000;
+		opacity: 0.2;
+		overflow: hidden;
+		z-index: 100;
+		color: #fff;
+	}
+	.bar {
+		.flex;
+		justify-content: space-around;
+		position: fixed;
+		background: #fff;
+		bottom: 0rpx;
+		width: 100%;
+		height: 180rpx;
+		z-index: 2000;
+		.item {
+			.flex;
+			flex-direction: column;
+			justify-content: space-around;
+			width: 200rpx;
+			height: 150rpx;
+			image {
+				width: 70rpx;
+				height: 70rpx;
+			}
+		}
+		&-btn {
+			position: absolute;
+			width: 200rpx;
+			height: 150rpx;
+			top: 20rpx;
+			opacity: 0;
+		}
+	}
+}
+</style>
+<template>
+<view class="canvas">
+	<block wx:if="{{showCanvas}}" >
+		<canvas class="poster" canvas-id="poster"></canvas>
+	</block>
+	<block>
+		<view class="shade" @tap="closePoster"></view>
+		<image src="{{tempFilePath}}" class="canvasImg"></image>
+		<view class="bar">
+			<view class="item">
+				<image src="../images/wxchat.png"></image>
+				<button class='bar-btn' open-type="share"></button>
+				<text>发送给好友</text>
+			</view>
+			<view class="item" @tap="saveToAblum">
+				<image src="../images/download.png"></image>
+				<text>保存卡片</text>
+			</view>
+		</view>
+	</block>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import api from '../utils/api'
+export default class Poster extends wepy.component {
+	data = {
+		userInfo: {},
+		codeUrl: '',
+		tempFilePath: '',
+		showCanvas: true,
+		backgroundImg: 'http://qimg.fangzi.xiaoyu.com/fangniu/poster.png',
+		houseImgs: ['http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg', 'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg', 'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg', 'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg']
+	}
+	onShareAppMessage(ops) {
+		console.log('ops', ops)
+		if (ops.from == 'button') {
+			// 来自页面内转发按钮
+			console.log(ops.target)
+		}
+		return {
+			title: '分享给好友',
+			path: 'pages/detail', // 点击分享消息是打开的页面
+			imageUrl: this.tempFilePath,
+			success: (res) => {
+			// 转发成功
+			console.log('转发成功:' + JSON.stringify(res))
+			//   var shareTickets = res.shareTickets
+			},
+			fail: (err) => {
+			// 转发失败
+			console.log('转发失败:' + JSON.stringify(err))
+			}
+		}
+	}
+	async getPoster () {
+		wx.showLoading({
+			title: '急速生成中',
+		})
+		this.userInfo = wepy.$instance.globalData.myUserInfo
+		await this.getQRCode()
+		await this.getImagesInfo()
+		// await this.initCanvas()
+		wx.hideLoading()
+		this.$apply()
+	}
+	async getImagesInfo () {
+		this.userInfo.headimg = await this.getImageInfo(this.userInfo.headimg)
+		this.backgroundImg = await this.getImageInfo(this.backgroundImg)
+		this.houseImgs.forEach(async ele => {
+			ele = await this.getImageInfo(ele)
+		})
+	}
+	getImageInfo(src) {
+		// 转化网络图片，获取路径
+		return new Promise(resolve => {
+			wx.getImageInfo({
+				src: src,
+				success: (res) => {
+					console.log('src')
+					console.log('res', res.path)
+					resolve(res.path)
+				}
+			})
+		})
+	}
+	initCanvas() {
+		return new Promise(resolve => {
+			const ctx = wx.createCanvasContext('poster')
+			ctx.drawImage(this.userInfo.headimg, 132, 550, 35, 35) // 画经纪人头像
+			ctx.drawImage(this.backgroundImg, 0, 0, 375, 600)   // 画海报
+			ctx.drawImage(this.houseImgs[0], 40, 100, 142, 90) // 画房源图片1
+			ctx.drawImage(this.houseImgs[1], 193, 100, 142, 90) // 画房源图片2
+			ctx.drawImage(this.houseImgs[2], 40, 200, 142, 90) // 画房源图片3
+			ctx.drawImage(this.houseImgs[3], 193, 200, 142, 90) // 画房源图片4
+			ctx.drawImage(this.codeUrl, 155, 400, 65, 65) // 小程序二维码
+			ctx.drawImage('../images/approve.png', 285, 280, 70, 60) // 画房源认证
+			ctx.setFontSize(14)
+			ctx.setTextAlign('center')
+			ctx.fillText('瑞景公园自主精装4房，看中区采光', 187, 320, 250)
+			ctx.save()
+			// 绘制详情标题
+			ctx.setFontSize(12)
+			ctx.setFillStyle('#646371')
+			ctx.fillText('售价', 84, 362)
+			ctx.fillText('房型', 186, 362)
+			ctx.fillText('建筑面积', 280, 362)
+			ctx.restore()
+			ctx.save()
+			// 绘制详情内容
+			ctx.setFontSize(12)
+			ctx.setFillStyle('#ce864c')
+			ctx.fillText('1360万', 84, 382)
+			ctx.fillText('4室2厅2卫', 186, 382)
+			ctx.fillText('158.85m²', 280, 382)
+			ctx.restore()
+			// 绘制经纪人信息
+			ctx.save()
+			ctx.setTextAlign('left')
+			ctx.setFillStyle('#fff')
+			ctx.setFontSize(13)
+			ctx.fillText('陈立', 174, 566)
+			// ctx.fillText(this.userInfo.name, 174, 566)
+			ctx.restore()
+			ctx.save()
+			ctx.setFillStyle('#fff')
+			ctx.setTextAlign('left')
+			ctx.setFontSize(10)
+			ctx.fillText('小鱼网', 174, 580)
+			// ctx.fillText(this.userInfo.deptName, 174, 580)
+			ctx.restore()
+			// 在draw回调里才不会绘制空白
+			ctx.draw(false, async (res) => {
+				console.log('res')
+				await this.saveCanvas()
+				this.showCanvas = false
+			})
+			resolve()
+		})
+	}
+	saveCanvas () {
+		return new Promise(resolve => {
+			wx.canvasToTempFilePath({
+				canvasId: 'poster',
+				success: (res) => {
+					this.tempFilePath = res.tempFilePath
+					console.log(res.tempFilePath)
+					this.$apply()
+					resolve()
+				}
+			})
+		})
+	}
+	getQRCode() {
+		return new Promise(async resolve => {
+			const {data} = await wepy.request({
+				url: api['getQRCode'],
+				data: {
+					agentId: '25'
+				}
+			})
+			this.codeUrl = data
+			resolve()
+			this.$apply()
+		})
+	}
+
+	methods = {
+		saveToAblum () {
+			wx.saveImageToPhotosAlbum({
+				filePath: this.tempFilePath,
+				success: (res) => {
+					console.log('保存成功')
+				},
+				fail: (err) => {
+					console.log('err', err)
+					if (err.errMsg == 'saveImageToPhotosAlbum:fail cancel') {
+						wx.showToast({
+							title: '您已取消保存',
+							icon: 'none'
+						})
+					} else if (err.errMsg == 'saveImageToPhotosAlbum:fail auth deny') {
+						wx.showModal({
+							title: '提示',
+							content: '保存图片失败，您可以点击确定设置获取相册权限后再尝试保存！',
+							complete: (res) => {
+								console.log(res)
+								if (res.confirm) {
+									wx.openSetting({}) // 打开小程序设置页面，可以设置权限
+								}
+							}
+						})
+					}
+				}
+			})
+		},
+		closePoster () {
+			this.$emit('closePoster')
+		}
+	}
+}
+</script>

@@ -53,7 +53,7 @@ const supportArry = [{
 const sortData = [{
 			title: '区域',
 			isSelected: false,
-			kinds: ['不限', '湖里区', '集美区', '海沧区', '翔安区', '同安区', '周边']
+			kinds: ['不限', '湖里区', '集美区', '海沧区', '翔安区', '同安区']
 		},
 		{
 			title: '总价',
@@ -72,6 +72,7 @@ const sortData = [{
 				{
 					title: '面积',
 					kinds: [
+						{value: '不限', isKindSelected: false},
 						{value: '50平以下', isKindSelected: false},
 						{value: '50-70平', isKindSelected: false},
 						{value: '70-90平', isKindSelected: false},
@@ -85,6 +86,7 @@ const sortData = [{
 					{
 						title: '朝向',
 						kinds: [
+							{value: '不限', isKindSelected: false},
 							{value: '朝东', isKindSelected: false},
 							{value: '朝南', isKindSelected: false},
 							{value: '朝西', isKindSelected: false},

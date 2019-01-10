@@ -32,7 +32,7 @@ export default class SameEstate extends wepy.page {
 		// 获取前一页面数据
 		const pages = getCurrentPages()
 		const prevPage = pages[pages.length - 2]
-		this.sameEstateList = prevPage.data.sameEstateList
+		this.sameEstateList = prevPage.data.sameEstateHouses
 		this.$apply()
 	}
 	methods = {

@@ -8,35 +8,47 @@
 	box-sizing: border-box;
 	.item {
 		width: 690rpx;
-		height: 230rpx;
+		height: 258rpx;
 		border-top:4rpx solid #f5f5f5;
+		padding:40rpx 0;
+		box-sizing: border-box;
 		.flex;
 		image {
-			width: 220rpx;
-			height: 165rpx;
+			width: 226rpx;
+			height: 175rpx;
 			background: #2d8cf0;
 			margin-right: 30rpx;
+			border-radius: 5rpx;
 		}
 		.detail {
+			.flex;
+			flex-direction: column;
+			align-items: flex-start;
+			justify-content: center;
 			.title1 {
-				font-size: 32rpx;
+				font-size: 30rpx;
+				width: 420rpx;
+				height: 84rpx;
+				overflow: hidden;
+				font-weight: bold;
 			}
 			.title2, .price-unit{
-				color: @gray;
-			}
-			.label {
-				.label-auto(90rpx,30rpx);
-				background: #d9edf9;
-				color:@blue;
-				line-height: 30rpx;
 				font-size: 22rpx;
+				color: #707476;
 			}
+			// .label {
+			// 	.label-auto(90rpx,30rpx);
+			// 	background: #b0d3f5;
+			// 	color:#fff;
+			// 	line-height: 30rpx;
+			// 	font-size: 22rpx;
+			// }
 			.price-total {
-				color:@gold;
-				font-size: 50rpx;
+				color:#f95640;
+				font-size: 30rpx;
 			}
 			.unit {
-				color: @gold;
+				color: #f95640;
 				margin-right:10rpx;
 			}
 		}
@@ -48,14 +60,15 @@
 </style>
 <template>
 	<view class="main">
-		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})">
-			<image src="../images/lu.jpeg"></image>
+		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})" data-index="{{index}}">
+			<image src="{{item.photoList[0].photoUrl}}"></image>
 			<view class="detail">
 				<view class="title1">{{item.title}}</view>
-				<view class="title2">{{item.estateName}}|{{item.countF}}室{{item.countT}}厅</view>
-				<view class="label">满两年</view>
+				<view class="title2">{{item.estateName}}</view>
+				<view class="title2">{{item.countF}}室{{item.countT}}厅 | {{item.square}}m²</view>
+				<!-- <view class="label" wx:if="{{item.fullYearDesc}}">{{item.fullYearDesc}}</view> -->
 				<view class="price">
-					<text class="price-total">{{item.sellPrice}}</text><text class="unit">万</text><text class="price-unit">62351元/平米</text>
+					<text class="price-total">{{item.sellPrice}}</text><text class="unit">万</text><text class="price-unit">{{item.unitPrice}}万元/m²</text>
 				</view>
 			</view>
 		</view>
@@ -69,6 +82,7 @@ export default class ListHouse extends wepy.component {
 	}
 
 	data = {
+		preHouseInfo: {}
 	}
 
 	watch = {
@@ -78,7 +92,9 @@ export default class ListHouse extends wepy.component {
 	}
 
 	methods = {
-		toHouseDetail(id) {
+		toHouseDetail(id, e) {
+			const index = e.currentTarget.dataset.index
+			this.preHouseInfo = this.dataList[index]
 			wepy.navigateTo({url: `detail?id=${id}`})
 		}
 	}

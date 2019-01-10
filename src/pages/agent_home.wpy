@@ -125,7 +125,7 @@
 <template>
 	<view class="container">
 		<view class="header">
-			<image src="../images/lu.jpeg" class="avatar"></image>
+			<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg" class="avatar"></image>
 			<view class="detail">
 				<view class="name">{{userInfo.name}}</view>
 				<view class="phone">{{userInfo.mobile}}</view>
@@ -230,13 +230,6 @@ export default class AgentHome extends wepy.page {
 		this.refresh()
 	}
 
-	angle (start, end) {
-		const X = end.X - start.X
-		const Y = end.Y - start.Y
-		// 返回角度 /Math.atan()返回数字的反正切值
-		return 360 * Math.atan(Y / X) / (2 * Math.PI)
-	}
-
 	methods = {
 		async delItem (index) {
 			// 移除房源
@@ -254,6 +247,7 @@ export default class AgentHome extends wepy.page {
 		touchS (e) {
 			// 重置所有删除
 			this.currentIndex = e.currentTarget.dataset.index
+			this.preAgentHouse = []
 			this.agentHouses.forEach(ele => {
 				ele.isTouchMove = false
 				ele.movable = false
@@ -271,33 +265,42 @@ export default class AgentHome extends wepy.page {
 			const touchMoveY = e.changedTouches[0].clientY
 			const diffIndex = parseInt((touchMoveY - this.startY) / 95)
 			if (diffIndex != 0) {
+				console.log('拖拽事件')
 				this.$apply()
 				return
 			}
 			// 获取滑动角度
-			// const angle = this.angle({ X: this.startX, Y: this.startY }, { X: touchMoveX, Y: touchMoveY })
-			// this.agentHouses.forEach((ele, i) => {
-			// 	if (Math.abs(angle) > 30) return
-			// 	if (i == this.currentIndex) {
-			// 		if (touchMoveX > this.startX) {
-			// 			ele.isTouchMove = false
-			// 		} else {
-			// 			ele.isTouchMove = true
-			// 		}
-			// 	}
-			// })
+			const X = touchMoveX - this.startX
+			const Y = touchMoveY - this.startY
+			const angle = 360 * Math.atan(Y / X) / (2 * Math.PI)
+			this.agentHouses.forEach((ele, i) => {
+				if (Math.abs(angle) > 30) return
+				if (i == this.currentIndex) {
+					if (touchMoveX < this.startX - 20) {
+						// 左滑
+						ele.isTouchMove = true
+					} else {
+						// 右滑
+						ele.isTouchMove = false
+					}
+				}
+			})
 			this.$apply()
 		},
 		async touchE(e) {
 			const currentIndex = this.currentIndex
 			const currentItem = this.agentHouses[currentIndex]
+			if (currentItem.isTouchMove) {
+				console.log('左滑事件')
+				return
+			}
 			this.agentHouses[currentIndex].movabled = false
 			const touchEndY = e.changedTouches[0].clientY
 			const diffIndex = parseInt((touchEndY - this.startY) / 95)
 			const endIndex = currentIndex + diffIndex
 			console.log('endindex', endIndex)
 			if (diffIndex == 0) {
-				console.log('无移动')
+				console.log('Y轴无移动')
 				this.agentHouses = this.preAgentHouse
 				this.$apply()
 				return

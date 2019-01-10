@@ -53,6 +53,22 @@
 			margin-right: 0rpx;
 		}
 	}
+	.fixed-round {
+		.flex;
+		justify-content: center;
+		position: fixed;
+		background: #1b140e;
+		color:#fff;
+		opacity: 0.5;
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 100rpx;
+		bottom: 250rpx;
+		right:30rpx;
+		.text {
+			width: 56rpx;
+		}
+	}
 }
 </style>
 <template>
@@ -60,7 +76,7 @@
 		<!-- 房屋详情 -->
 		<panelHouseDetail :house.sync="currentHouse"></panelHouseDetail>
 		<!-- 小区详情 -->
-		<panelEstateDetail :estate.sync="currentHouse.currentEstate"></panelEstateDetail>
+		<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
 		<!-- 同小区房源 -->
 		<communitySource  :sourceList.sync="sameEstateHouses" type="community"></communitySource>
 		<!-- 周边配套 -->
@@ -71,7 +87,7 @@
 		<footer></footer>
 		<!-- 固定尾部 -->
 		<view class="fixed-bottom">
-			<image src="../images/lu.jpeg" class="avatar"></image>
+			<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg" class="avatar"></image>
 			<view class="detail">
 				<view class="name">
 					<text>{{currentHouse.employeeName1}}</text>
@@ -82,16 +98,22 @@
 			<view class="online-label" @tap="chatOnLine">在线咨询</view>
 			<view class="phone-label">电话咨询</view>
 		</view>
+		<!-- 经纪人生成海报悬浮球 -->
+		<view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view>
+		<!-- 经纪人生成海报 -->
+		<poster wx:if="{{showPoster}}"></poster>
 	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
+import {convertTime} from '../utils/util'
 import panelHouseDetail from '../components/panel_houseDetail'
 import panelEstateDetail from '../components/panel_estateDetail'
 import panelSource from '../components/panel_source'
 import panelSupport from '../components/panel_support'
+import poster from '../components/poster'
 import footer from '../components/footer'
 
 export default class Detail extends wepy.page {
@@ -104,17 +126,23 @@ export default class Detail extends wepy.page {
 		recommendSource: panelSource,
 		communitySource: panelSource,
 		panelSupport,
-		footer
+		footer,
+		poster
 	}
 
 	data = {
 		currentHouse: {},
 		currentEstate: {},
 		sameEstateHouses: [],
-		indexVIP: false
+		indexVIP: false,
+		isAgent: false,
+		showPoster: false
 	}
 
 	events = {
+		closePoster() {
+			this.showPoster = false
+		}
 	}
 
 	getSameEstateHouses() {
@@ -140,6 +168,7 @@ export default class Detail extends wepy.page {
 				}
 			})
 			this.currentHouse = data
+			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
 			this.currentEstate = data.estate
 			this.indexVIP = wx.getStorageSync('indexVIP')
 			// 如果是经纪人专属主页，修改底部联系人为自己
@@ -154,8 +183,16 @@ export default class Detail extends wepy.page {
 			this.$apply()
 		})
 	}
-	async onLoad({id}) {
-		await this.getHouseInfo(id)
+	async onLoad(option) {
+		wx.showShareMenu()
+		if (wepy.$instance.globalData.myUserInfo.type == '2') {
+			this.isAgent = true
+		}
+		await this.getHouseInfo(option.id)
+		const pages = getCurrentPages()
+		const prevPage = pages[pages.length - 2]
+		const preHouseInfo = prevPage.data.$houseList$preHouseInfo
+		Object.assign(this.currentHouse, preHouseInfo)
 		await this.getSameEstateHouses()
 		this.$apply()
 	}
@@ -175,7 +212,13 @@ export default class Detail extends wepy.page {
 				})
 				return
 			}
-			wepy.navigateTo({url: `chat?friendId=20&friendAvatar='../images/lu.jpeg'&friendName='陈立'`})
+			wepy.navigateTo({url: `chat?friendId=20&friendAvatar='http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg'&friendName=陈立`})
+		},
+		getPoster() {
+			this.showPoster = true
+			console.log('点击海报')
+			this.$invoke('poster', 'getPoster')
+			this.$apply()
 		}
 	}
 }

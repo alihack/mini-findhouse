@@ -47,15 +47,15 @@
 				</view>
 			</view>
 			<view class="panel-main">
-				<image src="../images/lu.jpeg"></image>
+				<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg"></image>
 				<view class="detail">
 					<view class="title">
 						<view class="title-left">参考均价：</view>
-						<view class="title-right">{{estate.estate.price}}元/m2</view>
+						<view class="title-right">{{estate.estate.price}}元/m²</view>
 					</view>
 					<view class="detail-text">建筑年代：2008年建</view>
 					<view class="detail-text">产权年数：{{estate.ownYear}}年</view>
-					<view class="detail-text">房屋总数：1000户</view>
+					<view class="detail-text">房屋总数：{{estate.total_house}}户</view>
 				</view>
 			</view>
 		</view>
@@ -81,8 +81,8 @@ export default class panelEstateDetail extends wepy.component {
 	}
 
 	methods = {
-		detailIntroduce () {
-			wepy.navigateTo({url: 'detail_introduce'})
+		estateDetail (id) {
+			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
 		setMark () {
 			this.isMarked = !this.isMarked

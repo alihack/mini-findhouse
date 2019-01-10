@@ -16,7 +16,7 @@
 			height: 170rpx;
 			.flex;
 			&-text {
-				width: 610rpx;
+				width: 600rpx;
 				font-size: 38rpx;
 			}
 			&-mark {
@@ -143,9 +143,9 @@
 		interval="{{interval}}"
 		duration="{{duration}}"
 	>
-	<block wx:for="{{imgUrls}}" wx:key="index">
+	<block wx:for="{{house.photoList}}" wx:key="index">
 		<swiper-item>
-			<image src="{{item}}" class="slide-image" @tap="previewImg"/>
+			<image src="{{item.photoUrl}}" class="slide-image" @tap="previewImg"/>
 		</swiper-item>
 	</block>
 	</swiper>
@@ -168,16 +168,16 @@
 			</view>
 			<view class="cell2-right">
 				<view class="cell2-title">建筑面积</view>
-				<view class="cell2-text">{{house.square}}m2</view>
+				<view class="cell2-text">{{house.square}}m²</view>
 			</view>
 		</view>
 		<view class="cell3">
-			<view class="label">满{{fullYearDesc}}年</view>
+			<view class="label" wx:if="{{house.fullYearDesc}}">满{{house.fullYearDesc}}年</view>
 			<view class="kinds">
 				<view class="kinds-left">
 					<view class="item">
 						<view class="cell3-title">单价：</view>
-						<view class="cell3-answer">{{house.unitPrice}}元/m2</view>
+						<view class="cell3-answer">{{house.unitPrice}}万元/m²</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">楼层：</view>
@@ -185,7 +185,7 @@
 					</view>
 					<view class="item">
 						<view class="cell3-title">类型：</view>
-						<view class="cell3-answer">{{tradeType}}</view>
+						<view class="cell3-answer">{{house.propertyType}}</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">年代：</view>
@@ -195,7 +195,7 @@
 				<view class="kinds-right">
 					<view class="item">
 						<view class="cell3-title">发布：</view>
-						<view class="cell3-answer">{{house.delegateTimeString}}</view>
+						<view class="cell3-answer">{{house.createdTime}}</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">朝向：</view>
@@ -219,17 +219,16 @@
 				<image class="next-icon" src="../images/next.png"/>
 			</view>
 		</view>
-		<view class="cell4" @tap="detailIntroduce">
+		<view class="cell4">
 			<view class="cell4-title">
 				<view class="cell4-title-head">房源介绍</view>
 				<view class="cell4-title-foot">
 					<view class="code">编号：{{house.propertyNo}}</view>
-					<image class="next-icon" src="../images/next.png"/>
 				</view>
 			</view>
 			<view class="cell4-main">
 				<view class="cell4-main-title">[周边配套]</view>
-				<view class="cell4-main-text">{{house.content}}</view>
+				<rich-text class="cell4-main-text" nodes="{{house.content}}"></rich-text>
 			</view>
 		</view>
 	</view>
@@ -244,9 +243,6 @@ export default class panelHouseDetail extends wepy.component {
 	}
 
 	data = {
-		imgUrls: [
-			'../images/lu.jpeg'
-		],
 		indicatorDots: false,
 		autoplay: false,
 		interval: 5000,
@@ -263,9 +259,6 @@ export default class panelHouseDetail extends wepy.component {
 	}
 
 	methods = {
-		detailIntroduce () {
-			wepy.navigateTo({url: 'detail_introduce'})
-		},
 		async setFollow () {
 			if (!this.house.isFollowed) {
 				// 关注

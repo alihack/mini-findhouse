@@ -16,17 +16,22 @@
 		align-items: center;
 		justify-content: space-around;
 		.item {
-			width: 80rpx;
+			width: 90rpx;
 			height: 40rpx;
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			font-size: 30rpx;
+			font-size: 28rpx;
 			margin-right: 5rpx;
+			text {
+				width: 80rpx;
+				.ellipsis
+			}
 			image {
 				width: 20rpx;
 				height: 20rpx;
 				display: inline-block;
+				margin-left:10rpx;
 			}
 		}
 	}
@@ -116,24 +121,27 @@
 			<!-- 区域下拉 -->
 			<block wx:if="{{sortData[0].isSelected}}">
 				<view class="box-wrap">
-					<view class="box" wx:for="{{sortData[0].kinds}}" wx:key="index" @tap="selectRegion({{item}})">{{item}}</view>
+					<view class="box" wx:for="{{sortData[0].kinds}}" wx:key="index"  @tap="selectRegion({{item}})">{{item}}</view>
 				</view>
+				<view class="button"  @tap="confirm({{0}})">确认</view>
 			</block>
 			<!-- 总价下拉 -->
 			<block wx:if="{{sortData[1].isSelected}}">
 				<view class="title">价格区间（万）</view>
 				<view class="input">
-					<input placeholder="最低价格" type="number"/><input placeholder="最高价格" type="number"/>
+					<input placeholder="最低价格" type="number" @input="onInputMin"/><input placeholder="最高价格" type="number" @input="onInputMax"/>
 				</view>
 				<view class="box-wrap">
 					<view class="box" wx:for="{{sortData[1].kinds}}" wx:key="index"  @tap="selectPrice({{item}})">{{item}}</view>
 				</view>
+				<view class="button" @tap="confirm({{1}})">确认</view>
 			</block>
 			<!-- 户型下拉 -->
 			<block wx:if="{{sortData[2].isSelected}}">
 				<view class="box-wrap">
 					<view class="box" wx:for="{{sortData[2].kinds}}" wx:key="index"  @tap="selectHouseType({{item}})">{{item}}</view>
 				</view>
+				<view class="button"  @tap="confirm({{2}})">确认</view>
 			</block>
 			<!-- 更多下拉 -->
 			<block wx:if="{{sortData[3].isSelected}}">
@@ -145,17 +153,16 @@
 							wx:for-item="kind" 
 							wx:for-index="kindIndex" 
 							wx:key="kindIndex"
-							class="{{kind.isKindSelected? 'kindSelected':'box'}}" 
-							data-kindindex="{{kindIndex}}"
-							data-typeindex="{{typeIndex}}"
+							class="{{kind.isKindSelected? 'kindSelected':'box'}}"
+							data-kindindex="{{kindIndex}}" data-typeindex="{{typeIndex}}"
 							@tap="selectMore"
 							>
 							{{kind.value}}
 						</view>
 					</view>
 				</view>
+				<view class="button"  @tap="confirm({{3}})">确认</view>
 			</block>
-			<view class="button" @tap="confirm">确认</view>
 		</view>
 	</view>
 	<view class="shade" wx:if="{{showSortBarPanel}}" @tap="hideSortBarPanel"></view>
@@ -174,11 +181,15 @@ export default class barSort extends wepy.component {
 		sortBarTop: 0,
 		showSortBarPanel: false,
 		isTabFixed: false,
-		region: '',
-		price: '',
-		houseType: '',
-		area: '',
-		orientation: ''
+		minPrice: '',
+		maxPrice: '',
+		resultObj: {
+			districtName: '',
+			sellPrice: '',
+			countF: '',
+			square: '',
+			direction: ''
+		}
 	}
 
 	watch = {
@@ -233,25 +244,29 @@ export default class barSort extends wepy.component {
 			this.$apply()
 		},
 		selectRegion(item) {
-			this.region = item
+			this.resultObj.districtName = item
+			if (item == '不限') this.sortData[0].isConfirmed = false
 		},
 		selectPrice(item) {
-			this.price = item
+			this.resultObj.sellPrice = item
+			if (item == '不限') this.sortData[1].isConfirmed = false
 		},
 		selectHouseType(item) {
-			this.houseType = item
+			this.resultObj.countF = item
+			if (item == '不限') this.sortData[2].isConfirmed = false
 		},
 		selectMore({currentTarget: {dataset}}) {
 			const kindIndex = dataset.kindindex
 			const typeIndex = dataset.typeindex
 			const value = this.sortData[3].type[typeIndex].kinds[kindIndex].value
+			if (value == '不限') this.sortData[3].isConfirmed = false
 			if (typeIndex == 0) {
-				this.area = value
+				this.resultObj.square = value
 				this.sortData[3].type[0].kinds.forEach(kind => {
 					kind.isKindSelected = false
 				})
 			} else {
-				this.orientation = value
+				this.resultObj.direction = value
 				this.sortData[3].type[1].kinds.forEach(kind => {
 					kind.isKindSelected = false
 				})
@@ -259,8 +274,99 @@ export default class barSort extends wepy.component {
 			this.sortData[3].type[typeIndex].kinds[kindIndex].isKindSelected = true
 			this.$apply()
 		},
-		confirm() {
+		onInputMin({detail: {value}}) {
+			console.log('min', value)
+			this.minPrice = value
+			this.$apply()
+		},
+		onInputMax({detail: {value}}) {
+			this.maxPrice = value
+			this.$apply()
+		},
+		confirm (index) {
+			if (this.minPrice && this.maxPrice) {
+				if (Number(this.minPrice) > Number(this.maxPrice)) {
+					wx.showToast({title: '最低价不高于最高价!', icon: 'none'})
+					return
+				} else {
+					this.resultObj.sellPrice = this.minPrice + '-' + this.maxPrice
+					this.sortData[index].title = this.resultObj.sellPrice
+				}
+			}
+			switch (index) {
+				case 0:
+					if (this.resultObj.districtName) {
+						this.resultObj.districtName = this.resultObj.districtName.slice(0, 2) // 将区字去掉
+						this.sortData[index].title = this.resultObj.districtName
+					}
+					break
+				case 1:
+					if (this.minPrice && this.maxPrice) break
+					if (this.resultObj.sellPrice) {
+						const sellPrice = this.resultObj.sellPrice
+						this.sortData[index].title = this.resultObj.sellPrice
+						if (sellPrice == '100万以下') {
+							this.resultObj.sellPrice = '0 - 100'
+						} else if (sellPrice == '800万以上') {
+							this.resultObj.sellPrice = '800'
+						} else {
+							if (sellPrice != '不限') this.resultObj.sellPrice = sellPrice.slice(0, sellPrice.length - 1)
+						}
+					}
+					break
+				case 2:
+					if (this.resultObj.countF) {
+						const countF = this.resultObj.countF
+						this.sortData[index].title = this.resultObj.countF
+						switch (countF) {
+							case '一室':
+							this.resultObj.countF = 1
+							break
+							case '二室':
+							this.resultObj.countF = 2
+							break
+							case '三室':
+							this.resultObj.countF = 3
+							break
+							case '四室':
+							this.resultObj.countF = 4
+							break
+							case '五室':
+							this.resultObj.countF = 5
+							break
+							default:
+							this.resultObj.countF = 6
+							break
+						}
+					}
+					break
+				default:
+					if (this.resultObj.square) {
+						const square = this.resultObj.square
+						if (square == '50平以下') {
+							this.resultObj.square = '0 - 50'
+						} else if (square == '200平以上') {
+							this.resultObj.square = '200'
+						} else {
+							if (square != '不限') this.resultObj.square = square.slice(0, square.length - 1)
+						}
+						this.sortData[index].title = this.resultObj.square
+					}
+					if (this.resultObj.direction) {
+						this.resultObj.direction = this.resultObj.direction.slice(1)
+						this.sortData[index].title = this.resultObj.direction
+					}
+					break
+			}
+			if (this.sortData[index].title != '不限') this.sortData[index].isConfirmed = true
 			this.showSortBarPanel = false
+			for (let i in this.resultObj) {
+				if (this.resultObj[i] == '' || this.resultObj[i] == '不限') {
+					delete this.resultObj[i]
+				}
+			}
+			this.$emit('sortHouses', this.resultObj)
+			this.$apply()
 		}
 	}
 }

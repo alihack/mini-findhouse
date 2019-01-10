@@ -201,9 +201,9 @@ export default class detailEstate extends wepy.page {
 
 	data = {
 		imgUrls: [
-			'../images/lu.jpeg',
-			'../images/lu.jpeg',
-			'../images/lu.jpeg',
+			'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg',
+			'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg',
+			'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg',
 		],
 		indicatorDots: false,
 		autoplay: false,

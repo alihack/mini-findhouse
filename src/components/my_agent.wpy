@@ -95,7 +95,7 @@
 <template>
 	<view class="agent">
 		<view class="header">
-			<image src="../images/lu.jpeg" class="avatar"></image>
+			<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg" class="avatar"></image>
 			<view class="detail">
 				<view class="name">{{userInfo.name}}</view>
 				<view class="phone">{{userInfo.mobile}}</view>

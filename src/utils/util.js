@@ -421,14 +421,18 @@ const convertCustomMsgToHtml = (msg) => {
 	})
 }
 
-const convertTime = (timeStamp) => {
+const convertTime = (timeStamp, noHour = false) => {
 	const date = new Date(timeStamp)
 	const year = date.getFullYear()
 	const month = formatNumber(date.getMonth() + 1)
 	const day = formatNumber(date.getDate())
 	const hour = formatNumber(date.getHours())
 	const minute = formatNumber(date.getMinutes())
-	return year + '-' + month + '-' + day + ' ' + hour + ':' + minute
+	if (noHour) {
+		return year + '-' + month + '-' + day
+	} else {
+		return year + '-' + month + '-' + day + ' ' + hour + ':' + minute
+	}
 }
 
 const formatNumber = n => {

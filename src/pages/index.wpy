@@ -60,50 +60,48 @@
 			font-size: 26rpx;
 			margin-bottom: 20rpx;
 			&-left {
-				padding:0rpx 80rpx 0rpx 20rpx;
+				width: 490rpx;
+				padding:0 30rpx 0 10rpx;
 				box-sizing: border-box;
+				.content {
+					.flex;
+				}
 				image {
 					width: 25rpx;
 					height: 22rpx;
 				}
 				.title {
-					font-size: 38rpx;
+					font-size: 32rpx;
 				}
 				.price {
-					color: @blue;
+					color: #3497ff;
 					.number {
-						font-size: 52rpx;
+						font-size: 50rpx;
 					}
 				}
 				.ratio {
 					.flex;
-					.green{color:rgb(0, 212, 55)}
-					.red{color:rgb(255, 47, 40)}
+					padding-left:20rpx;
+					image {
+						margin-right: 8rpx;
+					}
+					.green{color:#5bca39}
+					.red{color:#f95640}
 				}
 			}
 			&-center {
 				width:2rpx;
 				height: 80rpx;
-				background: #b3b3b3;
+				background: #e4e6f0;
 				margin-right:20rpx;
 			}
 			&-right {
-				padding-left: 130rpx;
+				padding-left: 30rpx;
 				box-sizing: border-box;
-				.calc {
-					width: 90rpx;
-					height: 90rpx;
-					background: #fff;
-					border:4rpx solid #2d8cf0;
-					border-radius: 90rpx;
-					line-height: 90rpx;
-					text-align: center;
-					margin-bottom: 10rpx;
-				}
 				image {
 					margin-top: 5rpx;
-					width: 80rpx;
-					height: 80rpx;
+					width: 90rpx;
+					height: 90rpx;
 				}
 				text {
 					color: @gray;
@@ -127,7 +125,7 @@
 </style>
 <template>
 	<view class="container">
-		<image class="banner" src="../images/banner.jpg"></image>
+		<image class="banner" src="http://qimg.fangzi.xiaoyu.com/fangniu/banner.jpg"></image>
 		<view class="banner-txt">
 			<view class="txt1">真房源·找房牛</view>
 			<view class="txt2">找房真平台，省钱省时间</view>
@@ -143,18 +141,20 @@
 		<view class="header">
 			<view class="header-left">
 				<view class="title">厦门市场行情</view>
-				<view class="price"><text class="number">{{market.price}}</text><text class="unit">元/平米</text></view>
-				<view class="ratio">
-					<text class="word">环比上个月</text>
-					<image src="{{market.isDecline?'../images/decline.png':'../images/rise.png'}}"></image>
-					<text class="{{market.isDecline? 'green': 'red'}}"> {{market.ratio}}</text>
+				<view class="content">
+					<view class="price"><text class="number">{{market.price}}</text><text class="unit">元/m²</text></view>
+					<view class="ratio">
+						<text class="word">比上月：</text>
+						<image src="{{market.isDecline?'../images/decline.png':'../images/rise.png'}}"></image>
+						<text class="{{market.isDecline? 'green': 'red'}}"> {{market.ratio}}%</text>
+					</view>
 				</view>
 			</view>
 			<view class="header-center"></view>
 			<view class="header-right">
 				<navigator appId="wx0653ba0a3274d3b9" hover-class="active" openType="navigate" path="pages/index" target="miniProgram" version="release">
-					<view class="calc"><image src="../images/calc.png"></image></view>
-					<text>房屋估价</text>
+					<image src="../images/calc.jpg"></image>
+					<view>房屋估价</view>
 				</navigator>
 			</view>
 		</view>
@@ -188,7 +188,7 @@ export default class Index extends wepy.page {
 	}
 
 	data = {
-		dataList: '',
+		dataList: [],
 		market: {},
 		showAuthorModal: false,
 		scrollTop: 0,
@@ -202,6 +202,13 @@ export default class Index extends wepy.page {
 	events = {
 		finishAuthor () {
 			wx.showTabBar()
+		},
+		sortHouses (sortObj) {
+			console.log('refda', sortObj)
+			this.page = 1
+			this.sortObj = sortObj
+			this.dataList = []
+			this.getHouseList(this.page)
 		}
 	}
 	// 监听页面滚动
@@ -212,7 +219,7 @@ export default class Index extends wepy.page {
 	// 上拉触底事件
 	async onReachBottom() {
 		if (!this.indexVIP) {
-			await this.getHouseList(this.page + 1)
+			await this.getHouseList(++this.page)
 		}
 	}
 
@@ -285,16 +292,21 @@ export default class Index extends wepy.page {
 					title: '玩命加载中',
 				})
 			}
-			const {data} = await wepy.request({
+			const form = {
+				page: page,
+				pagesize: 8
+			}
+			Object.assign(form, this.sortObj)
+			const {data: {list}} = await wepy.request({
 				url: api['houseList'],
-				data: {
-					page: page,
-					pagesize: 8
-				}
+				data: form
 			})
-			console.log('data', data)
-			this.dataList = [this.dataList, ...data.list]
-			if (!this.dataList[0]) this.dataList = this.dataList.slice(1)
+			if (list) {
+				list.forEach(ele => {
+					ele.unitPrice = (ele.sellPrice / ele.square).toFixed(2)
+					this.dataList.push(ele)
+				})
+			}
 			wx.hideLoading()
 			this.$apply()
 			resolve()
