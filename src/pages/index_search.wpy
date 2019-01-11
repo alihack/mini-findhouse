@@ -108,10 +108,9 @@
 		</view>
 	</view>
 	<block wx:if="{{isChoosed}}">
-		<sortBar></sortBar>
+		<sortBar :scrollTop.sync="scrollTop"></sortBar>
 		<houseList :dataList.sync="dataList"></houseList>
 	</block>
-	<!-- <view wx:else class='nodata'>没有搜索到相关的数据哦</view> -->
 </view>
 </template>
 
@@ -132,17 +131,70 @@ export default class IndexSearch extends wepy.page {
 	}
     data = {
 		searchText: '',
+		scrollTop: 0,
 		isSearched: false,
 		isChoosed: false,
-		adCode: '',
+		page: 1,
+		dataList: [],
 		estateList: [],
-		historyList: [],
-		dataList: []
+		sortObj: {}
+	}
+	// 监听页面滚动
+	onPageScroll (e) {
+		this.scrollTop = e.scrollTop
+		this.$apply()
+	}
+	// 上拉触底事件
+	async onReachBottom() {
+		await this.getHouseList(++this.page)
+	}
+	events = {
+		sortHouses (sortObj) {
+			this.page = 1
+			this.dataList = []
+			// 将除了小区的元素，其他置空
+			if (this.sortObj.estateName) {
+				var estateName = this.sortObj.estateName
+			}
+			this.sortObj = []
+			this.sortObj.estateName = estateName
+			Object.assign(this.sortObj, sortObj)
+			this.getHouseList(this.page)
+		}
 	}
 	async onLoad() {
 	}
+	getHouseList(page) {
+		return new Promise(async resolve => {
+			if (page != 1) {
+				wx.showLoading({
+					title: '玩命加载中',
+				})
+			}
+			const form = {
+				page: page,
+				pagesize: 8
+			}
+			Object.assign(form, this.sortObj)
+			const {data: {list}} = await wepy.request({
+				url: api['houseList'],
+				data: form
+			})
+			if (list) {
+				list.forEach(ele => {
+					ele.unitPrice = (ele.sellPrice / ele.square).toFixed(2)
+					this.dataList.push(ele)
+				})
+			}
+			wx.hideLoading()
+			this.$apply()
+			resolve()
+		})
+	}
 	methods = {
 		onInputChange: ({detail: {value}}) => {
+			this.isChoosed = false
+			this.dataList = []
 			if (!value) {
 				this.isSearched = false
 				this.estateList = []
@@ -169,17 +221,16 @@ export default class IndexSearch extends wepy.page {
 			this.isSearched = false
 			this.searchText = ''
 			this.estateList = []
+			this.$invoke('sortBar', 'clearResult')
 		},
 		async setEstateName(item) {
 			console.log(item)
 			this.isChoosed = true
-			const {data: {list}} = await wepy.request({
-				url: api['houseList'],
-				data: {
-					estateName: item.estateName
-				}
-			})
-			this.dataList = list
+			this.searchText = item.estateName
+			this.sortObj = {}
+			this.sortObj.estateName = item.estateName
+			this.$invoke('sortBar', 'clearResult')
+			await this.getHouseList(1)
 			this.$apply()
 		}
 	}

@@ -178,6 +178,7 @@ export default class barSort extends wepy.component {
 
 	data = {
 		sortData,
+		preSortData: sortData,
 		sortBarTop: 0,
 		showSortBarPanel: false,
 		isTabFixed: false,
@@ -204,6 +205,14 @@ export default class barSort extends wepy.component {
 	}
 	onLoad() {
 		this.getTop()
+	}
+	clearResult () {
+		this.resultObj = {}
+		// 重置数据，深拷贝
+		this.sortData = []
+		const preSortData = this.preSortData
+		this.sortData = JSON.parse(JSON.stringify(preSortData))
+		this.$apply()
 	}
 	getTop () {
 		return new Promise(resolve => {
@@ -237,6 +246,7 @@ export default class barSort extends wepy.component {
 				})
 			}
 			this.isTabFixed = true
+			this.$apply()
 		},
 		hideSortBarPanel() {
 			this.showSortBarPanel = false
@@ -334,13 +344,17 @@ export default class barSort extends wepy.component {
 							case '五室':
 							this.resultObj.countF = 5
 							break
-							default:
+							case '五室以上':
 							this.resultObj.countF = 6
+							break
+							default:
+							this.resultObj.countF = ''
 							break
 						}
 					}
 					break
 				default:
+					// 更多
 					if (this.resultObj.square) {
 						const square = this.resultObj.square
 						if (square == '50平以下') {
@@ -350,22 +364,27 @@ export default class barSort extends wepy.component {
 						} else {
 							if (square != '不限') this.resultObj.square = square.slice(0, square.length - 1)
 						}
-						this.sortData[index].title = this.resultObj.square
 					}
 					if (this.resultObj.direction) {
-						this.resultObj.direction = this.resultObj.direction.slice(1)
-						this.sortData[index].title = this.resultObj.direction
+						if (this.resultObj.direction != '不限') this.resultObj.direction = this.resultObj.direction.slice(1)
 					}
 					break
 			}
 			if (this.sortData[index].title != '不限') this.sortData[index].isConfirmed = true
 			this.showSortBarPanel = false
+			this.isTabFixed = false
 			for (let i in this.resultObj) {
 				if (this.resultObj[i] == '' || this.resultObj[i] == '不限') {
 					delete this.resultObj[i]
 				}
 			}
 			this.$emit('sortHouses', this.resultObj)
+			setTimeout(() => {
+				wx.pageScrollTo({
+					scrollTop: this.sortBarTop,
+					duration: 300
+				})
+			}, 500)
 			this.$apply()
 		}
 	}

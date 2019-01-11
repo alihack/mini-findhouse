@@ -57,8 +57,15 @@
 		border:none;
 	}
 }
+.nodata {
+	image {
+		width: 80rpx;
+		height: 80rpx;
+	}
+}
 </style>
 <template>
+<view>
 	<view class="main">
 		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})" data-index="{{index}}">
 			<image src="{{item.photoList[0].photoUrl}}"></image>
@@ -73,6 +80,8 @@
 			</view>
 		</view>
 	</view>	
+	<view wx:if="{{dataList.length == 0}}" class="nodata"><image src="../images/no-data.png"></image></view>
+</view>
 </template>
 <script>
 import wepy from 'wepy'

@@ -53,7 +53,7 @@ const supportArry = [{
 const sortData = [{
 			title: '区域',
 			isSelected: false,
-			kinds: ['不限', '湖里区', '集美区', '海沧区', '翔安区', '同安区']
+			kinds: ['不限', '湖里区', '思明区', '集美区', '海沧区', '翔安区', '同安区']
 		},
 		{
 			title: '总价',
@@ -97,6 +97,7 @@ const sortData = [{
 			]
 		}
 	]
+
 module.exports = {
 	supportArry,
 	sortData

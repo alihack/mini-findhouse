@@ -35,7 +35,6 @@
 	bindcontroltap="controltap"
 	markers="{{markers}}"
 	bindtap="mapDetail"
-	polyline="{{polyline}}"
 	style="width: 100%; height: 100%;"
 	></map>
 	<cover-view class="fixed-bar">
@@ -80,10 +79,10 @@ export default class DetailSupport extends wepy.page {
 	events = {
 	}
 
-	async onLoad() {
+	async onLoad(option) {
 		// await getLocation()
 		// this.mapLocation = wx.getStorageSync('locationInfo').location
-		const mapLocation = {latitude: 39.919998, longitude: 116.45999}
+		const mapLocation = {latitude: option.lat, longitude: option.lng}
 		this.locationMarker.latitude = mapLocation.latitude
 		this.locationMarker.longitude = mapLocation.longitude
 		console.log('locationMarker', this.locationMarker)

@@ -85,13 +85,15 @@
 import wepy from 'wepy'
 import api from '../utils/api'
 export default class Poster extends wepy.component {
+	props = {
+		house: Object
+	}
 	data = {
 		userInfo: {},
 		codeUrl: '',
 		tempFilePath: '',
 		showCanvas: true,
-		backgroundImg: 'http://qimg.fangzi.xiaoyu.com/fangniu/poster.png',
-		houseImgs: ['http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg', 'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg', 'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg', 'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg']
+		backgroundImg: 'https://qimg.fangzi.xiaoyu.com/fangniu/poster.png',
 	}
 	onShareAppMessage(ops) {
 		console.log('ops', ops)
@@ -150,10 +152,10 @@ export default class Poster extends wepy.component {
 			const ctx = wx.createCanvasContext('poster')
 			ctx.drawImage(this.userInfo.headimg, 132, 550, 35, 35) // 画经纪人头像
 			ctx.drawImage(this.backgroundImg, 0, 0, 375, 600)   // 画海报
-			ctx.drawImage(this.houseImgs[0], 40, 100, 142, 90) // 画房源图片1
-			ctx.drawImage(this.houseImgs[1], 193, 100, 142, 90) // 画房源图片2
-			ctx.drawImage(this.houseImgs[2], 40, 200, 142, 90) // 画房源图片3
-			ctx.drawImage(this.houseImgs[3], 193, 200, 142, 90) // 画房源图片4
+			ctx.drawImage(this.house.photoList[0].photoUrl, 40, 100, 142, 90) // 画房源图片1
+			ctx.drawImage(this.house.photoList[1].photoUrl, 193, 100, 142, 90) // 画房源图片2
+			ctx.drawImage(this.house.photoList[2].photoUrl, 40, 200, 142, 90) // 画房源图片3
+			ctx.drawImage(this.house.photoList[3].photoUrl, 193, 200, 142, 90) // 画房源图片4
 			ctx.drawImage(this.codeUrl, 155, 400, 65, 65) // 小程序二维码
 			ctx.drawImage('../images/approve.png', 285, 280, 70, 60) // 画房源认证
 			ctx.setFontSize(14)

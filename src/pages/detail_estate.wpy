@@ -76,7 +76,8 @@
 				.number {
 					.flex;
 					font-size: 40rpx;
-					color:#5bca39;
+					.green{color:#5bca39}
+					.red{color:#f95640}
 				}
 				image {
 					width: 35rpx;
@@ -144,8 +145,8 @@
 				<view class="side-right">
 					<view class="title">环比上个月变化</view>
 					<view class="number">
-						<image src="../images/decline.png"></image>
-						<text>{{currentEstate.ratio}}</text>
+						<image src="{{currentEstate.isDecline?'../images/decline.png':'../images/rise.png'}}"></image>
+						<text class="{{currentEstate.isDecline? 'green': 'red'}}"> {{currentEstate.ratio}}%</text>
 					</view>
 				</view>
 			</view>
@@ -174,9 +175,9 @@
 			</view>
 		</view>
 		<!-- 周边配套 -->
-		<panelSupport></panelSupport>
+		<panelSupport :estate.sync="currentEstate"></panelSupport>
 		<!-- 同小区房源 -->
-		<communitySource type="community"></communitySource>
+		<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
 		<!-- 尾部广告 -->
 		<footer></footer>
 	</view>
@@ -211,7 +212,8 @@ export default class detailEstate extends wepy.page {
 		duration: 1000,
 		isMarked: false,
 		markText: '关注',
-		currentEstate: {}
+		currentEstate: {},
+		sameEstateHouses: []
 	}
 
 	computed = {
@@ -236,6 +238,15 @@ export default class detailEstate extends wepy.page {
 			}
 		})
 		this.currentEstate = data
+		// 对环比数据进行处理
+		if (data.ratio.indexOf('-') != -1) {
+			this.currentEstate.ratio = data.ratio.slice(1)
+			this.currentEstate.isDecline = true
+		}
+		// 获取同房源小区数据
+		const pages = getCurrentPages()
+		const prevPage = pages[pages.length - 2]
+		this.sameEstateHouses = prevPage.data.sameEstateHouses
 		this.$apply()
 	}
 

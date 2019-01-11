@@ -200,7 +200,7 @@ export default class AgentHome extends wepy.page {
 				}
 			})
 			this.agentHouses = list
-			this.movableHeight = list.length * 190 + 'rpx'
+			this.movableHeight = list.length * 250 + 'rpx'
 			this.agentHouses.forEach(ele => {
 				ele.movabled = false
 			})

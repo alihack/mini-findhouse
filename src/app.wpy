@@ -52,10 +52,10 @@ page {
 }
 /* 无数据  */
 .nodata {
-  padding-top: 200rpx;
-  text-align: center;
-  font-size: 32rpx;
-  color: #ddd;
+	color: #c3c6cd;
+	padding: 50rpx 0;
+	text-align: center;
+	font-size: 32rpx;
 }
 </style>
 
@@ -67,14 +67,14 @@ export default class extends wepy.app {
 	config = {
 		pages: [
 			'pages/index',
+			'pages/detail',
+			'pages/index_search',
 			'pages/agent_addSource',
 			'pages/chat',
 			'pages/my',
 			'pages/agent_home',
 			'pages/message',
-			'pages/index_search',
 			'pages/detail_sameEstate',
-			'pages/detail',
 			'pages/detail_introduce',
 			'pages/detail_estate',
 			'pages/user_mark',

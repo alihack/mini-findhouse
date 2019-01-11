@@ -136,7 +136,7 @@
 		</view>
 		<view class="search-bar" @tap="toSearch">
 			<image src="../images/search.png"></image>
-			<text>搜索小区或地址</text>
+			<text>搜索小区</text>
 		</view>
 		<view class="header">
 			<view class="header-left">
@@ -189,6 +189,7 @@ export default class Index extends wepy.page {
 
 	data = {
 		dataList: [],
+		sortObj: {},
 		market: {},
 		showAuthorModal: false,
 		scrollTop: 0,
@@ -204,7 +205,6 @@ export default class Index extends wepy.page {
 			wx.showTabBar()
 		},
 		sortHouses (sortObj) {
-			console.log('refda', sortObj)
 			this.page = 1
 			this.sortObj = sortObj
 			this.dataList = []
@@ -219,6 +219,7 @@ export default class Index extends wepy.page {
 	// 上拉触底事件
 	async onReachBottom() {
 		if (!this.indexVIP) {
+			console.log('上拉触底事件')
 			await this.getHouseList(++this.page)
 		}
 	}

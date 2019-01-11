@@ -9,6 +9,19 @@
 			height: 100%;
 		}
 	}
+	.indicator {
+		width: 100rpx;
+		height: 40rpx;
+		text-align: center;
+		background: #000;
+		opacity: 0.5;
+		position: absolute;
+		top:500rpx;
+		left:325rpx;
+		border-radius: 40rpx;
+		line-height: 40rpx;
+		color:#fff;
+	}
 	.panel-house {
 		.panel;
 		.cell1 {
@@ -16,7 +29,9 @@
 			height: 170rpx;
 			.flex;
 			&-text {
-				width: 600rpx;
+				width: 590rpx;
+				height: 106rpx;
+				overflow: hidden;
 				font-size: 38rpx;
 			}
 			&-mark {
@@ -121,6 +136,7 @@
 				}
 			}
 			&-main {
+				padding-top:20rpx;
 				font-size: 26rpx;
 				&-title {
 					margin:45rpx 0rpx 25rpx;
@@ -138,10 +154,9 @@
 <view class="house-deatil">
 	<swiper
 		class="banner"
-		indicator-dots="{{indicatorDots}}"
-		autoplay="{{autoplay}}"
-		interval="{{interval}}"
-		duration="{{duration}}"
+		duration="{{300}}"
+		circular
+		@change="onSwiperChange"
 	>
 	<block wx:for="{{house.photoList}}" wx:key="index">
 		<swiper-item>
@@ -149,6 +164,7 @@
 		</swiper-item>
 	</block>
 	</swiper>
+	<view class="indicator">{{currentIndex + 1}} / {{house.photoList.length}}</view>
 	<view class="panel-house">
 		<view class="cell1">
 			<view class="cell1-text">{{house.title}}</view>
@@ -164,7 +180,7 @@
 			</view>
 			<view class="cell2-center">
 				<view class="cell2-title">房型</view>
-				<view class="cell2-text">{{house.countF}}室/{{house.countT}}厅</view>
+				<view class="cell2-text">{{house.countF}}室 | {{house.countT}}厅</view>
 			</view>
 			<view class="cell2-right">
 				<view class="cell2-title">建筑面积</view>
@@ -227,7 +243,7 @@
 				</view>
 			</view>
 			<view class="cell4-main">
-				<view class="cell4-main-title">[周边配套]</view>
+				<!-- <view class="cell4-main-title">[周边配套]</view> -->
 				<rich-text class="cell4-main-text" nodes="{{house.content}}"></rich-text>
 			</view>
 		</view>
@@ -243,12 +259,13 @@ export default class panelHouseDetail extends wepy.component {
 	}
 
 	data = {
+		currentIndex: 0,
 		indicatorDots: false,
 		autoplay: false,
 		interval: 5000,
 		duration: 1000,
 		isFollowed: false,
-		markText: '关注'
+		markText: '关注',
 	}
 
 	watch = {
@@ -289,8 +306,11 @@ export default class panelHouseDetail extends wepy.component {
 		previewImg() {
 			wx.previewImage({
 				current: '', // 当前显示图片的http链接
-				urls: this.imgUrls // 需要预览的图片http链接列表
+				urls: this.house.photoList // 需要预览的图片http链接列表
 			})
+		},
+		onSwiperChange ({detail: {current}}) {
+			this.currentIndex = current
 		}
 	}
 }

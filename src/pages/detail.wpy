@@ -80,7 +80,7 @@
 		<!-- 同小区房源 -->
 		<communitySource  :sourceList.sync="sameEstateHouses" type="community"></communitySource>
 		<!-- 周边配套 -->
-		<panelSupport></panelSupport>
+		<panelSupport  :estate.sync="currentEstate"></panelSupport>
 		<!-- 推荐房源 -->
 		<recommendSource  :sourceList.sync="sameEstateHouses" type="recommend"></recommendSource>
 		<!-- 尾部广告 -->
@@ -101,7 +101,7 @@
 		<!-- 经纪人生成海报悬浮球 -->
 		<view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view>
 		<!-- 经纪人生成海报 -->
-		<poster wx:if="{{showPoster}}"></poster>
+		<poster wx:if="{{showPoster}}" :house.sync="currentHouse"></poster>
 	</view>
 </template>
 
