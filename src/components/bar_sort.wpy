@@ -307,14 +307,27 @@ export default class barSort extends wepy.component {
 				case 0:
 					if (this.resultObj.districtName) {
 						this.resultObj.districtName = this.resultObj.districtName.slice(0, 2) // 将区字去掉
-						this.sortData[index].title = this.resultObj.districtName
+						// 设置title
+						if (this.resultObj.districtName == '不限') {
+							this.sortData[index].title = '区域'
+						} else {
+							this.sortData[index].title = this.resultObj.districtName
+							this.sortData[index].isConfirmed = true
+						}
 					}
 					break
 				case 1:
 					if (this.minPrice && this.maxPrice) break
 					if (this.resultObj.sellPrice) {
 						const sellPrice = this.resultObj.sellPrice
-						this.sortData[index].title = this.resultObj.sellPrice
+						// 设置title
+						if (sellPrice == '不限') {
+							this.sortData[index].title = '总价'
+						} else {
+							this.sortData[index].title = this.resultObj.sellPrice
+							this.sortData[index].isConfirmed = true
+						}
+						// 设置内容
 						if (sellPrice == '100万以下') {
 							this.resultObj.sellPrice = '0 - 100'
 						} else if (sellPrice == '800万以上') {
@@ -327,7 +340,13 @@ export default class barSort extends wepy.component {
 				case 2:
 					if (this.resultObj.countF) {
 						const countF = this.resultObj.countF
-						this.sortData[index].title = this.resultObj.countF
+						// 设置title
+						if (countF == '不限') {
+							this.sortData[index].title = '户型'
+						} else {
+							this.sortData[index].title = countF
+							this.sortData[index].isConfirmed = true
+						}
 						switch (countF) {
 							case '一室':
 							this.resultObj.countF = 1
@@ -362,15 +381,20 @@ export default class barSort extends wepy.component {
 						} else if (square == '200平以上') {
 							this.resultObj.square = '200'
 						} else {
-							if (square != '不限') this.resultObj.square = square.slice(0, square.length - 1)
+							if (square != '不限') {
+								this.resultObj.square = square.slice(0, square.length - 1)
+								this.sortData[index].isConfirmed = true
+							}
 						}
 					}
 					if (this.resultObj.direction) {
-						if (this.resultObj.direction != '不限') this.resultObj.direction = this.resultObj.direction.slice(1)
+						if (this.resultObj.direction != '不限') {
+							this.sortData[index].isConfirmed = true
+							this.resultObj.direction = this.resultObj.direction.slice(1)
+						}
 					}
 					break
 			}
-			if (this.sortData[index].title != '不限') this.sortData[index].isConfirmed = true
 			this.showSortBarPanel = false
 			this.isTabFixed = false
 			for (let i in this.resultObj) {

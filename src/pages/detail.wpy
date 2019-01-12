@@ -87,7 +87,7 @@
 		<footer></footer>
 		<!-- 固定尾部 -->
 		<view class="fixed-bottom">
-			<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg" class="avatar"></image>
+			<image src="{{currentHouse.headimg}}" class="avatar"></image>
 			<view class="detail">
 				<view class="name">
 					<text>{{currentHouse.employeeName1}}</text>
@@ -96,7 +96,7 @@
 				<view class="company">{{currentHouse.deptName1}}</view>
 			</view>
 			<view class="online-label" @tap="chatOnLine">在线咨询</view>
-			<view class="phone-label">电话咨询</view>
+			<view class="phone-label" @tap="chatOnPhone">电话咨询</view>
 		</view>
 		<!-- 经纪人生成海报悬浮球 -->
 		<view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view>
@@ -189,10 +189,6 @@ export default class Detail extends wepy.page {
 			this.isAgent = true
 		}
 		await this.getHouseInfo(option.id)
-		const pages = getCurrentPages()
-		const prevPage = pages[pages.length - 2]
-		const preHouseInfo = prevPage.data.$houseList$preHouseInfo
-		Object.assign(this.currentHouse, preHouseInfo)
 		await this.getSameEstateHouses()
 		this.$apply()
 	}
@@ -205,14 +201,27 @@ export default class Detail extends wepy.page {
 			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
 		async chatOnLine(fid) {
-			if (this.indexVIP) {
+			const house = this.currentHouse
+			if (house.agentId == wepy.$instance.globalData.myUserInfo.uid) {
 				wx.showToast({
 					title: '不能与自己聊天哦',
 					icon: 'none'
 				})
 				return
 			}
-			wepy.navigateTo({url: `chat?friendId=20&friendAvatar='http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg'&friendName=陈立`})
+			wepy.navigateTo({url: `chat?friendId=${house.agentId}&friendAvatar=${house.headimg}&friendName=${house.employeeName1}`})
+		},
+		chatOnPhone () {
+			if (this.currentHouse.agentId == wepy.$instance.globalData.myUserInfo.uid) {
+				wx.showToast({
+					title: '不能给自己打电话哦',
+					icon: 'none'
+				})
+				return
+			}
+			wx.makePhoneCall({
+				phoneNumber: this.currentHouse.phoneList[0] // 仅为示例，并非真实的电话号码
+			})
 		},
 		getPoster() {
 			this.showPoster = true

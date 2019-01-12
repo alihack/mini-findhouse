@@ -44,6 +44,10 @@
 						font-size: 32rpx;
 						font-weight: bold;
 						padding: 10rpx 20rpx;
+						box-sizing: border-box;
+						width: 100%;
+						height: 92rpx;
+						overflow: hidden;
 					}
 					.detail {
 						font-size: 24rpx;
@@ -157,10 +161,10 @@ export default class Chat extends wepy.page {
 
 	data = {
 		houseCard: {
-			img: '../images/banner.jpg',
-			title: '瑞景公园自主精装4房，采光视野好',
-			detail: '4室2厅/158.14m2/东',
-			price: '253万'
+			img: '',
+			title: '',
+			detail: '',
+			price: ''
 		},
 		friendAvatar: '',
 		friendId: '',
@@ -215,6 +219,17 @@ export default class Chat extends wepy.page {
 		// 首次进入,经纪人发送房源信息
 		if (this.msgLength == 0) {
 			console.log('首次进入,向经纪人发送房源信息')
+			// 获取前一页面数据,制作卡片
+			const pages = getCurrentPages()
+			const prevPage = pages[pages.length - 2]
+			const currentHouse = prevPage.data.currentHouse
+			this.houseCard.img = currentHouse.photoUrl[0]
+			this.houseCard.title = currentHouse.title
+			const houseType = currentHouse.countF + '室' + currentHouse.countT + '厅' + currentHouse.countW + '卫'
+			const houseSquare = currentHouse.square
+			const direction = currentHouse.direction
+			this.houseCard.price = currentHouse.sellPrice + '万'
+			this.houseCard.detail = houseType + '|' + houseSquare + '|' + direction
 			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
 			await this.msgController(this.houseCard, true)
 		}

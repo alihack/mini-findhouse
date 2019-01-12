@@ -67,8 +67,8 @@
 <template>
 <view>
 	<view class="main">
-		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})" data-index="{{index}}">
-			<image src="{{item.photoList[0].photoUrl}}"></image>
+		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})">
+			<image src="{{item.photoList[0]}}"></image>
 			<view class="detail">
 				<view class="title1">{{item.title}}</view>
 				<view class="title2">{{item.estateName}}</view>
@@ -91,7 +91,6 @@ export default class ListHouse extends wepy.component {
 	}
 
 	data = {
-		preHouseInfo: {}
 	}
 
 	watch = {
@@ -101,9 +100,7 @@ export default class ListHouse extends wepy.component {
 	}
 
 	methods = {
-		toHouseDetail(id, e) {
-			const index = e.currentTarget.dataset.index
-			this.preHouseInfo = this.dataList[index]
+		toHouseDetail(id) {
 			wepy.navigateTo({url: `detail?id=${id}`})
 		}
 	}

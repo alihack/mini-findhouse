@@ -158,13 +158,13 @@
 		circular
 		@change="onSwiperChange"
 	>
-	<block wx:for="{{house.photoList}}" wx:key="index">
+	<block wx:for="{{house.photoUrl}}" wx:key="index">
 		<swiper-item>
-			<image src="{{item.photoUrl}}" class="slide-image" @tap="previewImg"/>
+			<image src="{{item}}" class="slide-image" @tap="previewImg({{item}})"/>
 		</swiper-item>
 	</block>
 	</swiper>
-	<view class="indicator">{{currentIndex + 1}} / {{house.photoList.length}}</view>
+	<view class="indicator">{{currentIndex + 1}} / {{house.photoUrl.length}}</view>
 	<view class="panel-house">
 		<view class="cell1">
 			<view class="cell1-text">{{house.title}}</view>
@@ -180,7 +180,7 @@
 			</view>
 			<view class="cell2-center">
 				<view class="cell2-title">房型</view>
-				<view class="cell2-text">{{house.countF}}室 | {{house.countT}}厅</view>
+				<view class="cell2-text">{{house.countF}}室 | {{house.countT}}厅 | {{house.countW}}卫</view>
 			</view>
 			<view class="cell2-right">
 				<view class="cell2-title">建筑面积</view>
@@ -284,7 +284,7 @@ export default class panelHouseDetail extends wepy.component {
 					method: 'POST',
 					data: {
 						uid: wepy.$instance.globalData.myUserInfo.uid,
-						type: 1,
+						type: 1, // 1房子，2小区
 						propertyUuid: this.house.propertyUuid
 					}
 				})
@@ -303,10 +303,10 @@ export default class panelHouseDetail extends wepy.component {
 			this.house.isFollowed = !this.house.isFollowed
 			this.$apply()
 		},
-		previewImg() {
+		previewImg(item) {
 			wx.previewImage({
-				current: '', // 当前显示图片的http链接
-				urls: this.house.photoList // 需要预览的图片http链接列表
+				current: item, // 当前显示图片的http链接
+				urls: this.house.photoUrl // 需要预览的图片http链接列表
 			})
 		},
 		onSwiperChange ({detail: {current}}) {

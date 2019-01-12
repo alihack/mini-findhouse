@@ -128,11 +128,12 @@
 					<view class="name">{{currentEstate.estate_name}}</view>
 					<view class="address">
 						<image src="../images/address.png"></image>
-						<text>{{currentEstate.full_address}}</text>
+						<text wx:if="{{currentEstate.full_address}}">{{currentEstate.full_address}}</text>
+						<text wx:else>{{currentEstate.short_address}}</text>
 					</view>
 				</view>
-				<view class="header-right" @tap="setMark">
-					<image src="{{isMarked ? '../images/mark.png': '../images/un-mark.png'}}"></image>
+				<view class="header-right" @tap="setFollow">
+					<image src="{{currentEstate.isFollowed ? '../images/mark.png': '../images/un-mark.png'}}"></image>
 					<view>{{markText}}</view>
 				</view>
 			</view>
@@ -210,7 +211,7 @@ export default class detailEstate extends wepy.page {
 		autoplay: false,
 		interval: 5000,
 		duration: 1000,
-		isMarked: false,
+		isFollowed: false,
 		markText: '关注',
 		currentEstate: {},
 		sameEstateHouses: []
@@ -220,8 +221,8 @@ export default class detailEstate extends wepy.page {
 	}
 
 	watch = {
-		isMarked () {
-			this.markText = this.isMarked == true ? '已关注' : '关注'
+		isFollowed () {
+			this.markText = this.isFollowed == true ? '已关注' : '关注'
 			this.$apply()
 		}
 	}
@@ -235,6 +236,7 @@ export default class detailEstate extends wepy.page {
 			url: api['estateInfo'],
 			data: {
 				estateUuid: id,
+				uid: wepy.$instance.globalData.myUserInfo.uid,
 			}
 		})
 		this.currentEstate = data
@@ -254,8 +256,32 @@ export default class detailEstate extends wepy.page {
 		mapDetail() {
 			wepy.navigateTo({url: 'detail_support'})
 		},
-		setMark () {
-			this.isMarked = !this.isMarked
+		async setFollow () {
+			if (!this.currentEstate.isFollowed) {
+				// 关注
+				await wepy.request({
+					url: api['follow'],
+					method: 'POST',
+					data: {
+						uid: wepy.$instance.globalData.myUserInfo.uid,
+						type: 2,  // 1房子，2小区
+						estateUuid: this.currentEstate.estate_uuid
+					}
+				})
+			} else {
+				// 取消关注
+				await wepy.request({
+					url: api['cancelFollow'],
+					method: 'POST',
+					data: {
+						uid: wepy.$instance.globalData.myUserInfo.uid,
+						type: 2,
+						estateUuid: this.currentEstate.estate_uuid
+					}
+				})
+			}
+			this.currentEstate.isFollowed = !this.currentEstate.isFollowed
+			this.$apply()
 		}
 	}
 }

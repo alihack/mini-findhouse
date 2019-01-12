@@ -38,6 +38,43 @@
 			}
 		}
 	}
+	.panel {
+		background: #fff;
+		width: 100%;
+		padding:0 30rpx;
+		box-sizing: border-box;	
+		margin-top:2rpx;
+		&-main {
+			width: 690rpx;
+			height: 258rpx;
+			border-top:4rpx solid #f5f5f5;
+			padding:40rpx 0;
+			box-sizing: border-box;
+		.flex;
+			image {
+				width: 220rpx;
+				height: 165rpx;
+				background: #2d8cf0;
+				margin-right: 30rpx;
+			}
+			.detail {
+				font-size: 22rpx;
+				.title {
+				font-size: 30rpx;
+				width: 420rpx;
+				height: 44rpx;
+				overflow: hidden;
+				font-weight: bold;
+				}
+				&-text {
+					color: @gray;
+				}
+			}
+		}
+	}
+	.panel-main:first-child {
+		border:none
+	}
 }
 </style>
 <template>
@@ -55,10 +92,21 @@
 			</view>
 		</view>
 		<block wx:if="{{houseIsChoosed}}">
-			<houseSourceList :dataList.sync="houseSourceList"></houseSourceList>
+			<houseList :dataList.sync="houseSourceList"></houseList>
 		</block>
 		<block wx:else>
-			<communityList :dataList.sync="communityList"></communityList>
+			<view class="panel">
+				<view class="panel-main" wx:for="{{communityList}}" wx:key="index"  @tap="estateDetail({{item.estate_uuid}})">
+					<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg"></image>
+					<view class="detail">
+						<view class="title">{{item.estate_name}}</view>
+						<view class="detail-text">建筑年代：{{item.estate_age}}年建</view>
+						<view class="detail-text">产权年数：{{item.ownYear}}年</view>
+						<view class="detail-text">房屋总数：{{item.total_house}}户</view>
+						<view class="detail-text">参考均价：{{item.estate_price}}元/m²</view>
+					</view>
+				</view>
+			</view>
 		</block>
 	</view>
 </template>
@@ -73,8 +121,7 @@ export default class UserMark extends wepy.page {
 		navigationBarBackgroundColor: '#f5f5f5'
 	}
 	components = {
-		houseSourceList: houseList,
-		communityList: houseList,
+		houseList: houseList,
 	}
 
 	data = {
@@ -131,6 +178,9 @@ export default class UserMark extends wepy.page {
 			} else {
 				this.houseIsChoosed = false
 			}
+		},
+		estateDetail (id) {
+			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		}
 	}
 }

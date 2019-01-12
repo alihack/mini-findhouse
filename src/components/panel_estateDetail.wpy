@@ -47,7 +47,7 @@
 				</view>
 			</view>
 			<view class="panel-main">
-				<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg"></image>
+				<image src="{{estate.photo_url[0]}}"></image>
 				<view class="detail">
 					<view class="title">
 						<view class="title-left">参考均价：</view>
@@ -69,24 +69,11 @@ export default class panelEstateDetail extends wepy.component {
 	}
 
 	data = {
-		isMarked: false,
-		markText: '关注'
 	}
-
-	watch = {
-		isMarked () {
-			this.markText = this.isMarked == true ? '已关注' : '关注'
-			this.$apply()
-		}
-	}
-
 	methods = {
 		estateDetail (id) {
 			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
-		setMark () {
-			this.isMarked = !this.isMarked
-		}
 	}
 }
 </script>
