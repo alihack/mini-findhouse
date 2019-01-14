@@ -116,7 +116,7 @@
 			interval="{{interval}}"
 			duration="{{duration}}"
 		>
-		<block wx:for="{{imgUrls}}" wx:key="index">
+		<block wx:for="{{currentEstate.photo_url}}" wx:key="index">
 			<swiper-item>
 				<image src="{{item}}" class="slide-image"/>
 			</swiper-item>
@@ -202,11 +202,6 @@ export default class detailEstate extends wepy.page {
 	}
 
 	data = {
-		imgUrls: [
-			'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg',
-			'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg',
-			'http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg',
-		],
 		indicatorDots: false,
 		autoplay: false,
 		interval: 5000,

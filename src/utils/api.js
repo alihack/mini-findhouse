@@ -23,6 +23,8 @@ const apis = [
 	'getMarket',
 	'follow',
 	'cancelFollow',
+	'c2cMsgs',
+	'getMsgs',
 	// 经纪人
 	'agentLogin',
 	'agentHouses',

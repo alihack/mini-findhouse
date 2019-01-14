@@ -110,10 +110,10 @@
 <template>
 	<view class="container">
 		<scroll-view class='chat' id="chat" style="height:{{scrollHeight}}px" scroll-y scroll-top='{{scrollInto}}'>
-			<block  wx:for="{{msgList}}" wx:key="index" wx:for-item="msg">
+			<block  wx:for="{{msgList}}" wx:for-item="msg" wx:key="index" >
 				<view class="chat-item">
 					<view class='time'>{{msg.time}}</view>
-					<view wx:for="{{msg.data}}" class="main {{item.isSelfSend ? 'reverse' : ''}}" wx:key="index">
+					<view wx:for="{{msg.data}}" class="main {{item.isSelfSend ? 'reverse' : ''}}"  wx:key="index">
 						<image class="avatar" src="{{item.isSelfSend ? myAvatar: friendAvatar}}"></image>
 						<!-- 房屋卡片 -->
 						<view wx:if="{{item.houseCard}}">
@@ -149,7 +149,7 @@
 <script>
 import wepy from 'wepy'
 import chatBar from '../components/bar_chat'
-import {getC2CHistoryMsgs, convertTime, convertCustomMsgToHtml, initIM, sendMessage} from '../utils/util'
+import {getC2CHistoryMsgs, convertTime, convertCustomMsgToHtml, initIM, sendMessage, sendMsgsToServer} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -213,7 +213,7 @@ export default class Chat extends wepy.page {
 				})
 		}
 		await initIM(onMsgNotify)
-		const data = await getC2CHistoryMsgs(this.friendId)
+		const data = await getC2CHistoryMsgs(this.friendId, true)
 		this.msgList = data.newMsgList
 		this.msgLength = data.Msglength
 		// 首次进入,经纪人发送房源信息
@@ -279,6 +279,9 @@ export default class Chat extends wepy.page {
 			this.msgLength ++
 			this.$apply()
 			resolve()
+			// 保存消息到后端服务器
+			const msgToServerItem = {time: nowTime, data: JSON.stringify([item])}
+			sendMsgsToServer(this.friendId, [msgToServerItem])
 		})
 	}
 

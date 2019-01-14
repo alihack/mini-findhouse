@@ -84,7 +84,7 @@
 import wepy from 'wepy'
 import api from '../utils/api'
 import webim from '../utils/webim_wx'
-import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml} from '../utils/util'
+import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml, getUnread, getAllUnread} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
@@ -106,21 +106,26 @@ export default class Message extends wepy.page {
 	async onLoad() {
 	}
 	async onShow() {
+		this.sessionList = []
+		wx.showLoading({title: '加载中'})
 		const onMsgNotify = (newMsgs) => {
-			console.log('newMsg', newMsgs)
-			this.getUnread(newMsgs)
+			console.log('列表页新信息', newMsgs)
+			this.onGetUnread(newMsgs)
 		}
 		await initIM(onMsgNotify)
-		const sessionItem = await getRecentContactList()
-		if (sessionItem == undefined) {
+		const sessionArry = await getRecentContactList()
+		if (sessionArry == undefined) {
 			this.isNoData = true
 			this.$apply()
 			return
 		}
-		await this.dataController(sessionItem)
+		await getUnread()
+		getAllUnread()
+		await this.dataController(sessionArry)
+		wx.hideLoading()
 		this.$apply()
 	}
-	getUnread(newMsgs) {
+	onGetUnread(newMsgs) {
 		const sessMap = webim.MsgStore.sessMap()
 		console.log('sessMap', sessMap)
 		this.sessionList.forEach(async ele => {
@@ -136,6 +141,8 @@ export default class Message extends wepy.page {
 	}
 	async dataController(data) {
 		return new Promise(resolve => {
+			this.sessionList = []
+			const unreadList = wx.getStorageSync('unread')
 			data.forEach(async ele => {
 				const item = {}
 				const {data: {userInfo}} = await wepy.request({
@@ -156,7 +163,10 @@ export default class Message extends wepy.page {
 					ele.MsgShow = '[语音信息]'
 				}
 				item.content = ele.MsgShow
-				this.sessionList = []
+				// 注入初始未读计数
+				unreadList.forEach(ele2 => {
+					if (ele2.fid == item.id) item.unread = ele2.number
+				})
 				this.sessionList.push(item)
 				this.$apply()
 			})

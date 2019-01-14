@@ -227,6 +227,37 @@ export default class barChat extends wepy.component {
 			console.log('recorder fail', res.errMsg)
 		})
 	}
+	getAuth () {
+		return new Promise(resolve => {
+			wx.getSetting({
+				success(res) {
+					if (!res.authSetting['scope.record']) {
+						console.log('无录音授权')
+						wx.authorize({
+							scope: 'scope.record',
+							fail: (err) => {
+								console.log('err', err)
+								wx.showModal({
+									title: '提示',
+									content: '录音授权失败，您可以点击确定设置获取录音权限后再尝试保存！',
+									complete: (res) => {
+										console.log(res)
+										if (res.confirm) {
+											wx.openSetting({}) // 打开小程序设置页面，可以设置权限
+										}
+									}
+								})
+							}
+						})
+						resolve(false)
+					} else {
+						console.log('有录音授权')
+						resolve(true)
+					}
+				}
+			})
+		})
+	}
 	methods = {
 		sendMessage: async () => {
 			const data = await sendMessage(this.msgText, this.friendId)
@@ -262,10 +293,15 @@ export default class barChat extends wepy.component {
 		},
 		toggleRecorder() {
 			this.showStartButton = !this.showStartButton
+			this.getAuth()
 		},
-		recordStart () {
-			this.isRecording = true
-			this.recorderManager.start(this.recorderOpts)
+		async recordStart () {
+			console.log('getAUt', await this.getAuth())
+			if (await this.getAuth()) {
+				this.isRecording = true
+				this.recorderManager.start(this.recorderOpts)
+				this.$apply()
+			}
 		},
 		recordEnd () {
 			this.isRecording = false

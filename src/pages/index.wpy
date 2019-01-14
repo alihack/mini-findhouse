@@ -171,7 +171,8 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo, getUserId} from '../utils/util'
+import webim from '../utils/webim_wx'
+import {getUserInfo, getUserId, initIM, getUnread, getAllUnread} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -235,6 +236,21 @@ export default class Index extends wepy.page {
 		} else {
 			await getUserInfo()
 		}
+		const onMsgNotify = (newMsgs) => {
+			console.log('主页收到新消息', newMsgs)
+			// 更新未读数
+			const unreadList = wx.getStorageSync('unread')
+			const sessMap = webim.MsgStore.sessMap()
+			unreadList.forEach(ele => {
+				ele.number = sessMap[`C2C${ele.fid}`].unread()
+			})
+			wx.setStorageSync('unread', unreadList)
+			getAllUnread(unreadList)
+		}
+		await initIM(onMsgNotify)
+		// 计算总未读数
+		const unreadList = await getUnread()
+		getAllUnread(unreadList)
 		this.$apply()
 	}
 	async onShow () {

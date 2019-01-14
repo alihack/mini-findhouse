@@ -196,6 +196,7 @@ const initIM = (onMsgNotify) => {
 }
 
 const sendMessage = (msgtosend, selToID, isCustomMsg) => {
+	console.log('msgtosend', msgtosend)
 	return new Promise(resolve => {
 		var msg
 		var isSend = true
@@ -255,21 +256,61 @@ const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 		)
 	})
 }
-
+const getAllUnread = (unreadList) => {
+	const allUnread = unreadList.reduce((total, item) => {
+		return total + item.number
+	}, 0)
+	console.log('总未读计数为', allUnread)
+	if (allUnread != 0) wx.showTabBarRedDot({index: 1})
+}
 const getUnread = () => {
-	return new Promise(resolve => {
-		var selType = webim.SESSION_TYPE.C2C
-		var selSess = new webim.Session(selType, loginInfo.identifier, loginInfo.identifierNick, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
-		//	获取所有会话
-		var sessMap = webim.MsgStore.sessMap()
-		// const num = sessMap['C2C2'].
-		console.log('未读消息数map', sessMap)
-		console.log('未读消息数', selSess)
-		resolve()
+	return new Promise(async resolve => {
+		let unread = []
+		// 将腾讯返回历史记录与后端服务器比较，获取未读数
+		const contactList = await getRecentContactList()
+		contactList.forEach(async (ele, contactIndex) => {
+			const {newMsgList} = await getC2CHistoryMsgs(ele.To_Account)
+			const {data} = await getMsgsFromServer(ele.To_Account)
+			const serverMsgList = data
+			console.log('c2cmsg', newMsgList)
+			console.log('servermsg', serverMsgList)
+			if (newMsgList.length == 0) {
+				// 腾讯无历史记录
+				unread.push({fid: ele.To_Account, number: 0})
+			} else {
+				// 腾讯有历史记录
+				if (serverMsgList.length == 0) {
+					// 服务器无数据，为初次
+					console.log('全为新消息')
+					unread.push({fid: ele.To_Account, number: newMsgList.length - 1})
+				} else {
+					// 如果腾讯返回第一条数据时间比服务器最后一条时间晚，即后面全是新消息
+					const firstNewMsgDate = new Date(newMsgList[0].time)
+					const firstNewMsgTime = firstNewMsgDate.getTime()
+					const lastServerMsgDate = new Date(serverMsgList[serverMsgList.length - 1].time)
+					const lastServerMsgTime = lastServerMsgDate.getTime()
+					if (firstNewMsgTime > lastServerMsgTime) {
+						console.log('全为新消息')
+						unread.push({fid: ele.To_Account, number: newMsgList.length - 1})
+					} else {
+						// 找到服务器最后一条时间与腾讯数据时间相同的一条
+						newMsgList.forEach((newItem, index) => {
+							if ((newItem.time + ':00') == serverMsgList[serverMsgList.length - 1].time) {
+								unread.push({fid: ele.To_Account, number: newMsgList.length - 1 - index})
+							}
+						})
+					}
+				}
+			}
+			if (contactIndex == contactList.length - 1) {
+				wx.setStorageSync('unread', unread)
+				resolve(unread)
+			}
+		})
 	})
 }
 
-const getC2CHistoryMsgs = (friendID) => {
+const getC2CHistoryMsgs = (friendID, setRead = false) => {
 	return new Promise(resolve => {
 		var lastMsgTime = 0 // 第一次拉取好友历史消息时，必须传 0
 		var msgKey = ''
@@ -288,7 +329,6 @@ const getC2CHistoryMsgs = (friendID) => {
 				// 	'LastMsgTime': resp.LastMsgTime,
 				// 	'MsgKey': resp.MsgKey
 				// }
-				console.log('最近历史记录', resp.MsgList)
 				const MsgList = resp.MsgList
 				const Msglength = resp.MsgList.length
 				const data = []
@@ -335,6 +375,16 @@ const getC2CHistoryMsgs = (friendID) => {
 				})
 				console.log('新历史记录', newMsgList)
 				resolve({newMsgList, Msglength})
+				// 将新历史记录处理后发送给后端服务器,标记已读
+				if (setRead) {
+					const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
+					const msgsToServerList = []
+					newMsgList2.forEach(ele => {
+						ele.data = JSON.stringify(ele.data)
+						msgsToServerList.push(ele)
+					})
+					sendMsgsToServer(friendID, msgsToServerList)
+				}
 			},
 			(err) => {
 				console.log('获取历史记录失败', err)
@@ -500,6 +550,33 @@ const uploadQiNiu = (filePath, type) => {
 	})
 }
 
+const sendMsgsToServer = (fid, msg) => {
+	return new Promise(async resolve => {
+		await wepy.request({
+			url: api['c2cMsgs'],
+			method: 'POST',
+			data: {
+				uid: loginInfo.identifier,
+				fid,
+				msg: JSON.stringify(msg)
+			}
+		})
+		resolve()
+	})
+}
+const getMsgsFromServer = (fid) => {
+	return new Promise(async resolve => {
+		const msgList = await wepy.request({
+			url: api['getMsgs'],
+			data: {
+				uid: loginInfo.identifier,
+				fid,
+			}
+		})
+		resolve(msgList)
+	})
+}
+
 module.exports = {
 	getUserId,
 	getUserInfo,
@@ -511,11 +588,14 @@ module.exports = {
 	quitIM,
 	sendMessage,
 	getUnread,
+	getAllUnread,
 	getC2CHistoryMsgs,
 	getRecentContactList,
 	convertTime,
 	getDateDiff,
 	loginInfo,
 	convertCustomMsgToHtml,
-	uploadQiNiu
+	uploadQiNiu,
+	sendMsgsToServer,
+	getMsgsFromServer
 }
