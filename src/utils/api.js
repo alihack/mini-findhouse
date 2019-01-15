@@ -25,6 +25,7 @@ const apis = [
 	'cancelFollow',
 	'c2cMsgs',
 	'getMsgs',
+	'saveFromId',
 	// 经纪人
 	'agentLogin',
 	'agentHouses',

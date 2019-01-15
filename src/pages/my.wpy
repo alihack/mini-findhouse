@@ -77,10 +77,24 @@ export default class My extends wepy.page {
 			this.isQuit = true
 			return
 		}
+		// 手机号脱敏处理
+		const mobile = this.userInfo.mobile
+		if (this.userInfo.mobile.length == 11) this.userInfo.mobile = mobile.replace(mobile.slice(3, 9), '****')
 		if (this.userInfo.deptName) this.isAgent = true
+		this.$apply()
 	}
 	async onShow() {
-		this.refresh()
+		this.userInfo = wepy.$instance.globalData.myUserInfo
+		if (!this.userInfo) {
+			wx.showLoading({title: '加载中'})
+			console.log('在我的中-首页还未加载完成')
+			setTimeout(() => {
+				this.refresh()
+				wx.hideLoading({title: '加载中'})
+			}, 1500)
+		} else {
+			this.refresh()
+		}
 		this.$apply()
 	}
 

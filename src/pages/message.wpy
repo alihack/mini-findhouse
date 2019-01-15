@@ -53,9 +53,28 @@
 		}
 	}
 }
+.nochat {
+	.flex;
+	flex-direction: column;
+	background: #fff;
+	width: 100%;
+	height: 100%;
+	image {
+		width: 260rpx;
+		height: 200rpx;
+		padding-top:85rpx;
+	}
+	.text {
+		color:@gray;
+		padding-top:30rpx;
+	}
+	.button {
+		margin-top: 70rpx;
+	}
+}
 </style>
 <template>
-	<view class="container">
+	<view class="container" style="{{isNoData ? 'height:100%': ''}}">
 		<view class="cells" wx:if="{{!isNoData}}">
 			<view class="cell" 
 				@tap="toChat" 
@@ -74,8 +93,12 @@
 				</view>
 			</view>
 		</view>
-		<view wx:else class="nodata">
-			无消息记录
+		<view wx:else class="nochat">
+			<image src="../images/no-chat.jpg"></image>
+			<view class="text">暂无聊天记录，您可在线寻找心仪房源</view>
+			<form bindsubmit="submit" report-submit="true" class="form">
+				<button class="button" form-type="submit" @tap="toIndex">查找真房源</button>
+			</form>
 		</view>
 	</view>
 </template>
@@ -95,7 +118,9 @@ export default class Message extends wepy.page {
 
 	data = {
 		sessionList: [],
-		isNoData: false
+		sessionStorage: [],
+		unreadList: [],
+		isNoData: true,
 	}
 
 	computed = {
@@ -107,9 +132,16 @@ export default class Message extends wepy.page {
 	}
 	async onShow() {
 		this.sessionList = []
+		this.unreadList = wx.getStorageSync('unread')
+		if (!this.unreadList) {
+			// 首页还未加载完
+			this.isNoData = true
+			return
+		}
 		wx.showLoading({title: '加载中'})
 		const onMsgNotify = (newMsgs) => {
 			console.log('列表页新信息', newMsgs)
+			wx.showTabBarRedDot({index: 1})
 			this.onGetUnread(newMsgs)
 		}
 		await initIM(onMsgNotify)
@@ -117,11 +149,14 @@ export default class Message extends wepy.page {
 		if (sessionArry == undefined) {
 			this.isNoData = true
 			this.$apply()
+			wx.hideLoading()
 			return
+		} else {
+			this.isNoData = false
 		}
-		await getUnread()
-		getAllUnread()
 		await this.dataController(sessionArry)
+		this.sessionStorage = wx.getStorageSync('sessionStorage')
+		if (!this.sessionStorage) getAllUnread(await getUnread(sessionArry))
 		wx.hideLoading()
 		this.$apply()
 	}
@@ -142,18 +177,29 @@ export default class Message extends wepy.page {
 	async dataController(data) {
 		return new Promise(resolve => {
 			this.sessionList = []
-			const unreadList = wx.getStorageSync('unread')
+			let sameToStroage
+			if (data.length == this.sessionStorage.length) sameToStroage = true
 			data.forEach(async ele => {
 				const item = {}
-				const {data: {userInfo}} = await wepy.request({
-					url: api['userInfo'],
-					data: {
-						uid: ele.To_Account
-					}
-				})
+				if (!sameToStroage) {
+					const {data: {userInfo}} = await wepy.request({
+						url: api['userInfo'],
+						data: {
+							uid: ele.To_Account
+						}
+					})
+					item.avatar = userInfo.headimg
+					item.name = userInfo.nickname
+				} else {
+					console.log('无需重新获取头像，缓存中取')
+					this.sessionStorage.forEach(ses => {
+						if (ele.To_Account == ses.id) {
+							item.avatar = ses.avatar
+							item.name = ses.name
+						}
+					})
+				}
 				item.id = ele.To_Account
-				item.avatar = userInfo.headimg
-				item.name = userInfo.nickname
 				item.time = getDateDiff(ele.MsgTimeStamp * 1000)
 				if (ele.MsgShow == '[其他]') {
 					ele.MsgShow = '[房源信息]'
@@ -164,13 +210,17 @@ export default class Message extends wepy.page {
 				}
 				item.content = ele.MsgShow
 				// 注入初始未读计数
-				unreadList.forEach(ele2 => {
+				this.unreadList.forEach(ele2 => {
 					if (ele2.fid == item.id) item.unread = ele2.number
 				})
 				this.sessionList.push(item)
 				this.$apply()
 			})
 			console.log('sessionList', this.sessionList)
+			setTimeout(() => {
+				// 将sessionList写入缓存
+				wx.setStorageSync('sessionStorage', this.sessionList)
+			}, 500)
 			resolve()
 		})
 	}
@@ -179,6 +229,20 @@ export default class Message extends wepy.page {
 			console.log('e', dataset)
 			wepy.navigateTo({url: `chat?friendId=${dataset.id}&friendAvatar=${dataset.avatar}&friendName=${dataset.name}`})
 		},
+		async submit({detail}) {
+			console.log('detail', detail)
+			await wepy.request({
+				url: api['saveFromId'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					form_id: detail.formId
+				}
+			})
+		},
+		toIndex() {
+			wx.switchTab({url: 'index'})
+		}
 	}
 }
 </script>

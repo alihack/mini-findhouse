@@ -138,7 +138,7 @@
 				<view class="row-side" @tap="addSource">添加房源</view>
 			</view>
 		</view>
-		<movable-area class="cells" style="height:{{movableHeight}}">
+		<movable-area class="cells" style="height:{{movableHeight}}" wx:if="{{agentHouses.length != 0}}">
 			<view class="tips">可拖拽排序</view>
 			<movable-view 
 				direction="vertical" 
@@ -199,13 +199,15 @@ export default class AgentHome extends wepy.page {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
 				}
 			})
-			this.agentHouses = list
-			this.movableHeight = list.length * 250 + 'rpx'
-			this.agentHouses.forEach(ele => {
-				ele.movabled = false
-			})
-			resolve()
-			this.$apply()
+			if (list) {
+				this.agentHouses = list
+				this.movableHeight = list.length * 250 + 'rpx'
+				this.agentHouses.forEach(ele => {
+					ele.movabled = false
+				})
+				resolve()
+				this.$apply()
+			}
 		})
 	}
 	sortHouses(oldIndex, newIndex) {

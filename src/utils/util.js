@@ -206,6 +206,7 @@ const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 		var subType = webim.C2C_MSG_SUB_TYPE.COMMON // 消息子类型
 		var selType = webim.SESSION_TYPE.C2C
 		var selSess = new webim.Session(selType, selToID, selToID, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
+		console.log('selsess', selSess)
 		msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
 		// 解析文本和表情
 		var textObj, faceObj, customObj, tmsg, emotionIndex, emotion, restMsgIndex
@@ -257,17 +258,27 @@ const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 	})
 }
 const getAllUnread = (unreadList) => {
+	if (!unreadList) return
 	const allUnread = unreadList.reduce((total, item) => {
 		return total + item.number
 	}, 0)
 	console.log('总未读计数为', allUnread)
-	if (allUnread != 0) wx.showTabBarRedDot({index: 1})
+	if (allUnread != 0) {
+		wx.showTabBarRedDot({index: 1})
+	} else {
+		wx.hideTabBarRedDot({index: 1})
+	}
 }
-const getUnread = () => {
+const getUnread = (contactList) => {
 	return new Promise(async resolve => {
 		let unread = []
 		// 将腾讯返回历史记录与后端服务器比较，获取未读数
-		const contactList = await getRecentContactList()
+		if (!contactList) contactList = await getRecentContactList()
+		if (!contactList) {
+			console.log('无聊天记录')
+			resolve()
+			return
+		}
 		contactList.forEach(async (ele, contactIndex) => {
 			const {newMsgList} = await getC2CHistoryMsgs(ele.To_Account)
 			const {data} = await getMsgsFromServer(ele.To_Account)

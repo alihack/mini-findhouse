@@ -74,6 +74,8 @@
 			font-size: 32rpx;
 			margin-top:2rpx;
 			justify-content: space-between;
+			border:none;
+			line-height: 0;
 			&-foot {
 				.flex;
 				image {
@@ -126,17 +128,20 @@
 			</view>
 		</view>
 		<view class="cells">
-			<view class="cell" @tap="toHome">
-				<view class="cell-head">我的主页</view>
-				<view class="cell-foot">
-					<image src="../images/next.png"/>
-				</view>
-			</view>
+			<form bindsubmit="submit" report-submit="true" class="form">
+				<button class="cell" form-type="submit" @tap="toHome">
+					<view class="cell-head">我的主页</view>
+					<view class="cell-foot">
+						<image src="../images/next.png"/>
+					</view>
+				</button>
+			</form>
 		</view>
 	</view>
 </template>
 <script>
 import wepy from 'wepy'
+import api from '../utils/api'
 export default class Footer extends wepy.component {
 	props = {
 		userInfo: Object,
@@ -155,6 +160,17 @@ export default class Footer extends wepy.component {
 		toHome() {
 			wepy.navigateTo({url: 'agent_home'})
 		},
+		async submit({detail}) {
+			console.log('detail', detail)
+			await wepy.request({
+				url: api['saveFromId'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					form_id: detail.formId
+				}
+			})
+		}
 	}
 }
 </script>

@@ -3,7 +3,7 @@
 .container {
 	.reverse {flex-direction: row-reverse}
 	.chat {
-		padding:10rpx 30rpx 100rpx 30rpx;
+		padding:10rpx 30rpx 130rpx 30rpx;
 		width: 100%;
 		box-sizing: border-box;
 		&-item {
@@ -46,7 +46,7 @@
 						padding: 10rpx 20rpx;
 						box-sizing: border-box;
 						width: 100%;
-						height: 92rpx;
+						height: 104rpx;
 						overflow: hidden;
 					}
 					.detail {
@@ -216,20 +216,19 @@ export default class Chat extends wepy.page {
 		const data = await getC2CHistoryMsgs(this.friendId, true)
 		this.msgList = data.newMsgList
 		this.msgLength = data.Msglength
-		// 首次进入,经纪人发送房源信息
-		if (this.msgLength == 0) {
-			console.log('首次进入,向经纪人发送房源信息')
-			// 获取前一页面数据,制作卡片
-			const pages = getCurrentPages()
-			const prevPage = pages[pages.length - 2]
-			const currentHouse = prevPage.data.currentHouse
+		// 向经纪人发送房源信息
+		const pages = getCurrentPages()
+		const prevPage = pages[pages.length - 2]
+		const currentHouse = prevPage.data.currentHouse
+		if (currentHouse) {
+			console.log('从咨询来的')
 			this.houseCard.img = currentHouse.photoUrl[0]
 			this.houseCard.title = currentHouse.title
 			const houseType = currentHouse.countF + '室' + currentHouse.countT + '厅' + currentHouse.countW + '卫'
-			const houseSquare = currentHouse.square
+			const houseSquare = currentHouse.square + 'm²'
 			const direction = currentHouse.direction
 			this.houseCard.price = currentHouse.sellPrice + '万'
-			this.houseCard.detail = houseType + '|' + houseSquare + '|' + direction
+			this.houseCard.detail = houseType + ' | ' + houseSquare + ' | ' + direction
 			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
 			await this.msgController(this.houseCard, true)
 		}
@@ -246,7 +245,17 @@ export default class Chat extends wepy.page {
 		this.myUid = wepy.$instance.globalData.myUserInfo.uid
 		wx.setNavigationBarTitle({title: friendName})
 		this.scrollHeight = wx.getSystemInfoSync().windowHeight
+		// 设置缓存中unread为0
+		const unreadList = wx.getStorageSync('unread')
+		unreadList.forEach(ele => {
+			if (ele.fid == this.friendId) ele.number = 0
+		})
+		wx.setStorageSync('unread', unreadList)
 		this.$apply()
+	}
+	onUnload () {
+		console.log('页面离开')
+		this.innerAudio.stop()
 	}
 	msgController(value, isSelfSend, type) {
 		return new Promise(resolve => {

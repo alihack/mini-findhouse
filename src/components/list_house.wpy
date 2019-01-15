@@ -16,7 +16,6 @@
 		image {
 			width: 226rpx;
 			height: 175rpx;
-			background: #2d8cf0;
 			margin-right: 30rpx;
 			border-radius: 5rpx;
 		}
@@ -68,7 +67,8 @@
 <view>
 	<view class="main">
 		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})">
-			<image src="{{item.photoList[0]}}"></image>
+			<image wx:if="{{item.photoList[2]}}" src="{{item.photoList[2]}}"></image>
+			<image wx:else src="http://qimg.fangzi.xiaoyu.com/fangniu/index-default.jpg"></image>
 			<view class="detail">
 				<view class="title1">{{item.title}}</view>
 				<view class="title2">{{item.estateName}}</view>

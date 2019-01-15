@@ -57,6 +57,20 @@ page {
 	text-align: center;
 	font-size: 32rpx;
 }
+// 轮播图指示点
+.indicator {
+	width: 100rpx;
+	height: 40rpx;
+	text-align: center;
+	background: #000;
+	opacity: 0.5;
+	position: absolute;
+	top:500rpx;
+	left:325rpx;
+	border-radius: 40rpx;
+	line-height: 40rpx;
+	color:#fff;
+}
 </style>
 
 <script>

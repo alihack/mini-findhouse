@@ -110,18 +110,18 @@
 	<view class="container">
 		<!-- 顶部banner -->
 		<swiper
-			class="banner"
-			indicator-dots="{{indicatorDots}}"
-			autoplay="{{autoplay}}"
-			interval="{{interval}}"
-			duration="{{duration}}"
+		class="banner"
+		duration="{{300}}"
+		circular
+		@change="onSwiperChange"
 		>
-		<block wx:for="{{currentEstate.photo_url}}" wx:key="index">
-			<swiper-item>
-				<image src="{{item}}" class="slide-image"/>
-			</swiper-item>
-		</block>
+			<block wx:for="{{currentEstate.photo_url}}" wx:key="index">
+				<swiper-item>
+					<image src="{{item}}" class="slide-image" @tap="previewImg({{item}})"/>
+				</swiper-item>
+			</block>
 		</swiper>
+	<view class="indicator">{{currentIndex + 1}} / {{currentEstate.photo_url.length}}</view>
 		<view class="community">
 			<view class="header">
 				<view class="header-left">
@@ -133,13 +133,13 @@
 					</view>
 				</view>
 				<view class="header-right" @tap="setFollow">
-					<image src="{{currentEstate.isFollowed ? '../images/mark.png': '../images/un-mark.png'}}"></image>
+					<image src="{{currentEstate.isFollowed? '../images/mark.png': '../images/un-mark.png'}}"></image>
 					<view>{{markText}}</view>
 				</view>
 			</view>
 			<view class="side">
 				<view class="side-left">
-					<view class="title">参考均价(元/m2)</view>
+					<view class="title">参考均价(元/m²)</view>
 					<view class="number">{{currentEstate.estate_price}}</view>
 				</view>
 				<view class="side-center"></view>
@@ -163,7 +163,7 @@
 				</view>
 				<view class="item">
 					<view class="item-head">房屋结构：</view>
-					<view class="item-foot">暂无数据</view>
+					<view class="item-foot">{{}}</view>
 				</view>
 				<view class="item">
 					<view class="item-head">房屋总数：</view>
@@ -178,7 +178,9 @@
 		<!-- 周边配套 -->
 		<panelSupport :estate.sync="currentEstate"></panelSupport>
 		<!-- 同小区房源 -->
-		<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
+		<block wx:if="{{sameEstateHouses.length > 2}}">
+			<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
+		</block>
 		<!-- 尾部广告 -->
 		<footer></footer>
 	</view>
@@ -202,6 +204,7 @@ export default class detailEstate extends wepy.page {
 	}
 
 	data = {
+		currentIndex: 0,
 		indicatorDots: false,
 		autoplay: false,
 		interval: 5000,
@@ -235,6 +238,14 @@ export default class detailEstate extends wepy.page {
 			}
 		})
 		this.currentEstate = data
+		this.currentEstate.photo_url = this.currentEstate.photo_url.slice(0, 10)
+		// 空数据改为暂无
+		// for (let i in this.currentEstate) {
+		// 	if (i == 'isFollowed') {
+		// 		return
+		// 	}
+		// 	if (!this.currentEstate[i] || this.currentEstate[i] == '0') this.currentEstate[i] = '暂无'
+		// }
 		// 对环比数据进行处理
 		if (data.ratio.indexOf('-') != -1) {
 			this.currentEstate.ratio = data.ratio.slice(1)
@@ -248,6 +259,9 @@ export default class detailEstate extends wepy.page {
 	}
 
 	methods = {
+		onSwiperChange ({detail: {current}}) {
+			this.currentIndex = current
+		},
 		mapDetail() {
 			wepy.navigateTo({url: 'detail_support'})
 		},
@@ -277,7 +291,13 @@ export default class detailEstate extends wepy.page {
 			}
 			this.currentEstate.isFollowed = !this.currentEstate.isFollowed
 			this.$apply()
-		}
+		},
+		previewImg(item) {
+			wx.previewImage({
+				current: item, // 当前显示图片的http链接
+				urls: this.currentEstate.photo_url // 需要预览的图片http链接列表
+			})
+		},
 	}
 }
 </script>

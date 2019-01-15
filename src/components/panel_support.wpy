@@ -26,17 +26,7 @@
 					<image class="next-icon" src="../images/next.png"/>
 				</view>
 			</view>
-			<map
-				class="panel-main"
-				id="map"
-				longitude="{{estate.lng}}"
-				latitude="{{estate.lat}}"
-				scale="14"
-				bindcontroltap="controltap"
-				markers="{{markers}}"
-				bindtap="mapDetail"
-			>
-			</map>
+			<image class="panel-main" src="{{estate.img_url}}"></image>
 		</view>
 	</view>
 </template>
@@ -48,31 +38,15 @@ export default class panelSupport extends wepy.component {
 	}
 
 	data = {
-		indicatorDots: false,
-		autoplay: false,
-		interval: 5000,
-		duration: 1000,
-		markers: [{
-			iconPath: '../images/red-address.png',
-			id: 0,
-			width: 30,
-			height: 30,
-		}]
 	}
 
 	watch = {
 	}
 	onLoad() {
-		// 页面数据还未加载完成，会导致组件赋值为空
-		setTimeout(() => {
-			this.markers[0].latitude = this.estate.lat
-			this.markers[0].longitude = this.estate.lng
-			this.$apply()
-		}, 2000)
 	}
 	methods = {
 		mapDetail() {
-			wepy.navigateTo({url: `detail_support?lng=${this.estate.lng}&lat=${this.estate.lat}`})
+			wepy.navigateTo({url: `detail_support?lng=${this.estate.lng}&lat=${this.estate.lat}&title=${this.estate.estate_name}`})
 		}
 	}
 }

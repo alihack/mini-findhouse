@@ -14,7 +14,6 @@
 		box-shadow: 0 -0rpx 5rpx #eaeaea;
 		.avatar {
 			.avatar-auto(80rpx);
-			background: #2d8cf0;
 			margin-right: 20rpx;
 		}
 		.detail {
@@ -23,10 +22,11 @@
 				.flex;
 				text {
 					font-size: 32rpx;
-					margin-right: 13rpx;
+					margin-right: 8rpx;
 					color:@gray;
-					max-width: 156rpx;
-					.ellipsis;
+					max-width: 124rpx;
+					white-space: nowrap;
+					overflow: hidden;
 				}
 				.label {
 					.label-auto(50rpx, 20rpx);
@@ -39,6 +39,9 @@
 				font-size: 26rpx;
 			}
 		}
+		.form {
+			.flex;
+		}
 		.online-label {
 			.label-auto(180rpx, 100rpx);
 			color:#fff;
@@ -46,6 +49,7 @@
 			font-size: 30rpx;
 			margin-right: 20rpx;
 			border-radius: 15rpx;
+			display: inline-block;
 		}
 		.phone-label {
 			.online-label;
@@ -78,28 +82,48 @@
 		<!-- 小区详情 -->
 		<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
 		<!-- 同小区房源 -->
-		<communitySource  :sourceList.sync="sameEstateHouses" type="community"></communitySource>
+		<block wx:if="{{sameEstateHouses.length > 2}}">
+			<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
+		</block>
 		<!-- 周边配套 -->
 		<panelSupport  :estate.sync="currentEstate"></panelSupport>
 		<!-- 推荐房源 -->
-		<recommendSource  :sourceList.sync="sameEstateHouses" type="recommend"></recommendSource>
+		<recommendSource  :sourceList.sync="recommendEstateHouses" type="recommend"></recommendSource>
 		<!-- 尾部广告 -->
 		<footer></footer>
 		<!-- 固定尾部 -->
 		<view class="fixed-bottom">
-			<image src="{{currentHouse.headimg}}" class="avatar"></image>
-			<view class="detail">
-				<view class="name">
-					<text>{{currentHouse.employeeName1}}</text>
-					<view class="label">经纪人</view>
+			<block wx:if="{{!isDept}}">
+				<image src="{{currentHouse.headimg}}" class="avatar"></image>
+				<view class="detail">
+					<view class="name">
+						<text>{{currentHouse.employeeName1}}</text>
+						<view class="label">经纪人</view>
+					</view>
+					<view class="company">{{currentHouse.deptName1}}</view>
 				</view>
-				<view class="company">{{currentHouse.deptName1}}</view>
-			</view>
-			<view class="online-label" @tap="chatOnLine">在线咨询</view>
-			<view class="phone-label" @tap="chatOnPhone">电话咨询</view>
+				<form bindsubmit="submit" report-submit="true" class="form">
+					<button wx:if="{{hasPhone}}" class="online-label" form-type="submit" @tap="chatOnLine">在线咨询</button>
+					<button wx:else class="online-label" open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber">在线咨询</button>
+					<button class="phone-label" form-type="submit" @tap="chatOnPhone">电话咨询</button>
+				</form>
+			</block>
+			<block wx:else>
+				<image src="../images/haixi.jpg" class="avatar"></image>
+				<view class="detail">
+					<view class="name">
+						<text>公共账户</text>
+						<view class="label" style="background:#fe9f00">店铺</view>
+					</view>
+					<view class="company">{{currentHouse.deptName1}}</view>
+				</view>
+				<form bindsubmit="submit" report-submit="true" class="form">
+					<button class="phone-label" form-type="submit" @tap="chatOnPhone" style="width:380rpx;margin-left:30rpx">电话咨询</button>
+				</form>
+			</block>
 		</view>
 		<!-- 经纪人生成海报悬浮球 -->
-		<view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view>
+		<!-- <view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view> -->
 		<!-- 经纪人生成海报 -->
 		<poster wx:if="{{showPoster}}" :house.sync="currentHouse"></poster>
 	</view>
@@ -108,7 +132,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {convertTime} from '../utils/util'
+import {convertTime, getUserInfo, checkSession} from '../utils/util'
 import panelHouseDetail from '../components/panel_houseDetail'
 import panelEstateDetail from '../components/panel_estateDetail'
 import panelSource from '../components/panel_source'
@@ -134,29 +158,19 @@ export default class Detail extends wepy.page {
 		currentHouse: {},
 		currentEstate: {},
 		sameEstateHouses: [],
+		recommendEstateHouses: [],
 		indexVIP: false,
 		isAgent: false,
-		showPoster: false
+		isDept: false, // 经纪人是否为店铺
+		showPoster: false,
+		hasPhone: true,
+		userInfo: {}
 	}
 
 	events = {
 		closePoster() {
 			this.showPoster = false
 		}
-	}
-
-	getSameEstateHouses() {
-		return new Promise(async resolve => {
-			const {data: {list}} = await wepy.request({
-				url: api['houseList'],
-				data: {
-					estateName: this.currentHouse.estate.estate_name
-				}
-			})
-			this.sameEstateHouses = list
-			resolve()
-			this.$apply()
-		})
 	}
 	getHouseInfo(id) {
 		return new Promise(async resolve => {
@@ -168,14 +182,19 @@ export default class Detail extends wepy.page {
 				}
 			})
 			this.currentHouse = data
+			this.sameEstateHouses = data.same_estate
+			this.recommendEstateHouses = data.recommend_estate
 			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
 			this.currentEstate = data.estate
+			if (data.phoneList[0].indexOf('-') != -1) this.isDept = true
+			// 空数据改为暂无
+			for (let i in this.currentEstate) {
+				if (!this.currentEstate[i] || this.currentEstate[i] == '0') this.currentEstate[i] = '暂无'
+			}
 			this.indexVIP = wx.getStorageSync('indexVIP')
 			// 如果是经纪人专属主页，修改底部联系人为自己
 			if (this.indexVIP) {
 				const userInfo = wepy.$instance.globalData.myUserInfo
-				console.log('userinfo', userInfo)
-				console.log('this.cur', this.currentHouse)
 				this.currentHouse.employeeName1 = userInfo.name
 				this.currentHouse.deptName1 = userInfo.deptName
 			}
@@ -183,13 +202,31 @@ export default class Detail extends wepy.page {
 			this.$apply()
 		})
 	}
-	async onLoad(option) {
-		wx.showShareMenu()
-		if (wepy.$instance.globalData.myUserInfo.type == '2') {
+	async refresh(houseId) {
+		if (this.userInfo.type == '2') {
 			this.isAgent = true
 		}
-		await this.getHouseInfo(option.id)
-		await this.getSameEstateHouses()
+		if (!this.userInfo.mobile) {
+			this.hasPhone = false
+			console.log('没有手机号')
+		}
+		await this.getHouseInfo(houseId)
+		this.$apply()
+	}
+	async onLoad(option) {
+		wx.showShareMenu()
+		this.userInfo = wepy.$instance.globalData.myUserInfo
+		if (!this.userInfo) {
+			console.log('首页数据还未加载完成')
+			wx.showLoading({title: '加载中'})
+			setTimeout(() => {
+				wx.hideLoading()
+				this.userInfo = wepy.$instance.globalData.myUserInfo
+				this.refresh(option.id)
+			}, 1000)
+		} else {
+			this.refresh(option.id)
+		}
 		this.$apply()
 	}
 
@@ -200,7 +237,7 @@ export default class Detail extends wepy.page {
 		estateDetail(id) {
 			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
-		async chatOnLine(fid) {
+		async chatOnLine() {
 			const house = this.currentHouse
 			if (house.agentId == wepy.$instance.globalData.myUserInfo.uid) {
 				wx.showToast({
@@ -228,7 +265,46 @@ export default class Detail extends wepy.page {
 			console.log('点击海报')
 			this.$invoke('poster', 'getPoster')
 			this.$apply()
-		}
+		},
+		async submit({detail}) {
+			console.log('detail', detail)
+			await wepy.request({
+				url: api['saveFromId'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					form_id: detail.formId
+				}
+			})
+		},
+		async getPhoneNumber ({detail}) {
+			console.log(detail)
+			await checkSession()
+			if (!detail.iv) {
+				console.log('用户取消授权')
+				return
+			}
+			const res = await wepy.request({
+				url: api['userMobile'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					encryptedData: detail.encryptedData,
+					iv: detail.iv
+				}
+			})
+			if (res.code != 400) {
+				wx.showToast({title: '登录成功'})
+				await getUserInfo()
+				this.hasPhone = true
+			} else {
+				wx.showToast({
+					title: '请求失败',
+					icon: 'none'
+				})
+			}
+			this.$apply()
+		},
 	}
 }
 </script>

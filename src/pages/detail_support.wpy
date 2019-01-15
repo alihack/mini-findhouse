@@ -31,7 +31,7 @@
 	id="map"
 	longitude="{{locationMarker.longitude}}"
 	latitude="{{locationMarker.latitude}}"
-	scale="17"
+	scale="18"
 	bindcontroltap="controltap"
 	markers="{{markers}}"
 	bindtap="mapDetail"
@@ -65,13 +65,18 @@ export default class DetailSupport extends wepy.page {
 			id: 0,
 			width: 30,
 			height: 30,
+			callout: {
+				content: '',
+				padding: 10,
+				borderRadius: 5,
+				display: 'ALWAYS'
+			},
 		},
 		supportMarkers: []
 	}
 
 	computed = {
 		markers() {
-			console.log('computed')
 			return [...[this.locationMarker], ...this.supportMarkers]
 		}
 	}
@@ -85,6 +90,7 @@ export default class DetailSupport extends wepy.page {
 		const mapLocation = {latitude: option.lat, longitude: option.lng}
 		this.locationMarker.latitude = mapLocation.latitude
 		this.locationMarker.longitude = mapLocation.longitude
+		this.locationMarker.callout.content = option.title
 		console.log('locationMarker', this.locationMarker)
 		this.$apply()
 	}
@@ -106,7 +112,11 @@ export default class DetailSupport extends wepy.page {
 						this.supportMarkers = []
 						for (var i = 0; i < res.data.length; i++) {
 							this.supportMarkers.push({ // 获取返回结果，放到mks数组中
-								title: res.data[i].title,
+								callout: {
+									content: res.data[i].title,
+									padding: 10,
+									borderRadius: 5,
+								},
 								id: res.data[i].id,
 								latitude: res.data[i].location.lat,
 								longitude: res.data[i].location.lng,

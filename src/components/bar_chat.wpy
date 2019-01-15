@@ -136,7 +136,7 @@
 <template>
 <view class="chat-bar">
 	<view class="fixed-shade" @tap="hideAddMore" wx:if="{{showMore}}"></view>
-	<view class="fixed-bottom">
+	<view class="fixed-bottom" style="{{isXPhone ? 'padding-bottom: 40rpx':''}}">
 		<view class="main">
 			<view class="main-left">
 				<image class="recorder-icon" src="{{showStartButton?'../images/input.png':'../images/audio.png'}}"  @tap="toggleRecorder"></image>
@@ -145,7 +145,7 @@
 				<input 
 					wx:if="{{!showStartButton}}"
 					placeholder="对Ta发送消息" 
-					@confirm="onConfirm"  @input="onInput"
+					@input="onInput"
 					placeholder-style="line-height:124rpx" 
 					value="{{msgText}}"/>
 			</view>
@@ -198,7 +198,8 @@ export default class barChat extends wepy.component {
 			numberOfChannels: 1,
 			encodeBitRate: 192000
 		},
-		msgText: ''
+		msgText: '',
+		isXPhone: false
 	}
 	watch = {
 		isRecording() {
@@ -207,6 +208,13 @@ export default class barChat extends wepy.component {
 		}
 	}
 	onLoad() {
+		wx.getSystemInfo({
+			success: (res) => {
+				console.log('res.band', res.model)
+				if (res.model.indexOf('X') != -1) this.isXPhone = true
+				this.$apply()
+			}
+		})
 		let recorderManager = this.recorderManager
 		// 监听录音器开始录音
 		recorderManager.onStart(() => {
@@ -220,8 +228,8 @@ export default class barChat extends wepy.component {
 		recorderManager.onStop(async (res) => {
 			console.log('recorder stop', res)
 			const {imageURL} = await uploadQiNiu(res.tempFilePath, 'audio')
-			await sendMessage(imageURL, this.friendId)
 			this.$emit('addMessage', imageURL, 'audio')
+			await sendMessage(imageURL, this.friendId)
 		})
 		recorderManager.onError((res) => {
 			console.log('recorder fail', res.errMsg)
@@ -260,6 +268,7 @@ export default class barChat extends wepy.component {
 	}
 	methods = {
 		sendMessage: async () => {
+			this.$emit('addMessage', this.msgText)
 			const data = await sendMessage(this.msgText, this.friendId)
 			if (data != 'ok') {
 				wepy.showToast({
@@ -267,14 +276,8 @@ export default class barChat extends wepy.component {
 					icon: 'none'
 				})
 			}
-			this.$emit('addMessage', this.msgText)
 			this.msgText = ''
 			this.showSend = false
-			this.$apply()
-		},
-		onConfirm: async ({detail: {value}}) => {
-			this.msgText = value
-			this.methods.sendMessage()
 			this.$apply()
 		},
 		onInput({detail: {value}}) {
@@ -315,9 +318,9 @@ export default class barChat extends wepy.component {
 					console.log('temp', tempFilePaths)
 					tempFilePaths.forEach(async ele => {
 						const {imageURL} = await uploadQiNiu(ele, 'img')
+						this.$emit('addMessage', imageURL, 'img')
 						await sendMessage(imageURL, this.friendId)
 						this.showMore = false
-						this.$emit('addMessage', imageURL, 'img')
 						this.$apply()
 					})
 				}
