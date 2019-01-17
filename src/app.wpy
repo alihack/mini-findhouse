@@ -56,6 +56,10 @@ page {
 	padding: 50rpx 0;
 	text-align: center;
 	font-size: 32rpx;
+	image {
+		width: 80rpx;
+		height: 80rpx;
+	}
 }
 // 轮播图指示点
 .indicator {

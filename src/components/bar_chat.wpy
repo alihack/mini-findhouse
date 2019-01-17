@@ -66,6 +66,11 @@
 			}
 			&-right {
 				.flex;
+				.add {
+					padding: 0rpx;
+					line-height: 0rpx;
+					border:none;
+				}
 				.send {
 					.label-auto(115rpx, 76rpx);
 					background: #00b966;
@@ -73,6 +78,7 @@
 					border-radius: 10rpx;
 					margin-left: 20rpx;
 					padding: 0rpx;
+					border:none;
 				}
 			}
 		}
@@ -136,13 +142,16 @@
 </style>
 <template>
 <view class="chat-bar">
+	<form bindsubmit="submit" report-submit="true">
 	<view class="fixed-shade" @tap="hideAddMore" wx:if="{{showMore}}"></view>
 	<view class="fixed-bottom" style="{{isXPhone ? 'padding-bottom: 40rpx':''}}">
 		<view class="main">
 			<view class="main-left">
 				<image class="recorder-icon" src="{{showStartButton?'../images/input.png':'../images/audio.png'}}"  @tap="toggleRecorder"></image>
-				<view class="recorder-button {{isRecording? 'recording': ''}}" 
-					wx:if="{{showStartButton}}" @touchstart="recordStart" @touchend="recordEnd">{{buttonText}}</view>
+				<button class="recorder-button {{isRecording? 'recording': ''}}" 
+						form-type="submit" plain
+						wx:if="{{showStartButton}}" @touchstart="recordStart" @touchend="recordEnd">{{buttonText}}
+				</button>
 				<input 
 					wx:if="{{!showStartButton}}"
 					placeholder="对Ta发送消息" 
@@ -151,10 +160,8 @@
 					value="{{msgText}}"/>
 			</view>
 			<view class="main-right">
-				<image class="add-icon" src="../images/add.png" @tap="addMore"></image>
-				<form bindsubmit="submit" report-submit="true">
-					<button class="send" form-type="submit" hidden="{{!showSend}}" @tap="sendMessage">发送</button>
-				</form>
+				<button form-type="submit" plain  @tap="addMore" class="add"><image class="add-icon" src="../images/add.png"></image></button>
+				<button class="send" plain form-type="submit" hidden="{{!showSend}}" @tap="sendMessage">发送</button>
 			</view>
 		</view>
 		<view class="addMore" wx:if="{{showMore}}">
@@ -177,7 +184,7 @@
 		<image src="../images/shade-record.png"></image>
 		<text>正在录音中...</text>
 	</view>
-</view>
+	</form>
 </view>
 </template>
 <script>

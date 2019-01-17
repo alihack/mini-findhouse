@@ -107,6 +107,7 @@
 					</view>
 				</view>
 			</view>
+			<view wx:if="{{communityList == 0}}" class="nodata"><image src="../images/no-data.png"></image></view>
 		</block>
 	</view>
 </template>

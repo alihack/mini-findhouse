@@ -380,6 +380,7 @@ export default class barSort extends wepy.component {
 							this.resultObj.square = '0 - 50'
 						} else if (square == '200平以上') {
 							this.resultObj.square = '300'
+							this.sortData[index].isConfirmed = true
 						} else {
 							if (square != '不限') {
 								this.resultObj.square = square.slice(0, square.length - 1)
