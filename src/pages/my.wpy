@@ -67,14 +67,15 @@ export default class My extends wepy.page {
 		}
 	}
 	refresh() {
-		this.isAgent = false
+		console.log('我的主页')
 		this.isQuit = false
+		this.isAgent = false
 		this.isLoginBySMS = false
 		this.isSMSByAgent = false
-		console.log('我的主页')
 		this.userInfo = wepy.$instance.globalData.myUserInfo
 		if (!this.userInfo.mobile) {
 			this.isQuit = true
+			this.$apply()
 			return
 		}
 		// 手机号脱敏处理
@@ -83,15 +84,30 @@ export default class My extends wepy.page {
 		if (this.userInfo.deptName) this.isAgent = true
 		this.$apply()
 	}
-	async onShow() {
+	async waitIndex() {
+		return new Promise(resolve => {
+			setTimeout(async () => {
+				wx.showLoading({title: '加载中'})
+				this.userInfo = wepy.$instance.globalData.myUserInfo
+				if (!this.userInfo) {
+					console.log('等待中。。。')
+					await this.waitIndex()
+					resolve()
+				} else {
+					this.userInfo = wepy.$instance.globalData.myUserInfo
+					console.log('获取到首页数据了')
+					wx.hideLoading()
+					this.$apply()
+					resolve()
+				}
+			}, 500)
+		})
+	}
+	async onLoad() {
 		this.userInfo = wepy.$instance.globalData.myUserInfo
 		if (!this.userInfo) {
-			wx.showLoading({title: '加载中'})
-			console.log('在我的中-首页还未加载完成')
-			setTimeout(() => {
-				this.refresh()
-				wx.hideLoading({title: '加载中'})
-			}, 1500)
+			await this.waitIndex()
+			this.refresh()
 		} else {
 			this.refresh()
 		}

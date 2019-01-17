@@ -2,51 +2,51 @@
 const supportArry = [{
 		title: '餐饮',
 		isSelected: false,
-		whiteIcon: '../images/white-dinner.png',
-		blueIcon: '../images/blue-dinner.png',
-		markerIcon: '../images/marker-dinner.png'
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-dinner.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-dinner.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-dinner.png'
 	},
 	{
 		title: '学校',
 		isSelected: false,
-		whiteIcon: '../images/white-school.png',
-		blueIcon: '../images/blue-school.png',
-		markerIcon: '../images/marker-school.png'
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-school.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-school.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-school.png'
 	},
 	{
 		title: '地铁',
 		isSelected: false,
-		whiteIcon: '../images/white-subway.png',
-		blueIcon: '../images/blue-subway.png',
-		markerIcon: '../images/marker-subway.png'
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-subway.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-subway.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-subway.png'
 	},
 	{
 		title: '公交',
 		isSelected: false,
-		whiteIcon: '../images/white-bus.png',
-		blueIcon: '../images/blue-bus.png',
-		markerIcon: '../images/marker-bus.png'
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-bus.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-bus.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-bus.png'
 	},
 	{
 		title: '娱乐',
 		isSelected: false,
-		whiteIcon: '../images/white-game.png',
-		blueIcon: '../images/blue-game.png',
-		markerIcon: '../images/marker-game.png'
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-game.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-game.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-game.png'
 	},
 	{
 		title: '医院',
 		isSelected: false,
-		whiteIcon: '../images/white-hospital.png',
-		blueIcon: '../images/blue-hospital.png',
-		markerIcon: '../images/marker-hospital.png'
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-hospital.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-hospital.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-hospital.png'
 	},
 	{
 		title: '银行',
 		isSelected: false,
-		whiteIcon: '../images/white-bank.png',
-		blueIcon: '../images/blue-bank.png',
-		markerIcon: '../images/marker-bank.png'
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-bank.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-bank.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-bank.png'
 	}]
 
 // 排序工具栏

@@ -42,11 +42,13 @@
 					.unread {
 						width: 35rpx;
 						height: 35rpx;
+						line-height: 35rpx;
 						border-radius: 35rpx;
 						background: red;
 						color:#fff;
 						text-align: center;
 						margin-top:10rpx;
+						font-size: 25rpx;
 					}
 				}
 			}
@@ -132,7 +134,6 @@ export default class Message extends wepy.page {
 	}
 	async onShow() {
 		this.sessionList = []
-		this.unreadList = wx.getStorageSync('unread')
 		if (!this.unreadList) {
 			// 首页还未加载完
 			this.isNoData = true
@@ -154,9 +155,9 @@ export default class Message extends wepy.page {
 		} else {
 			this.isNoData = false
 		}
-		await this.dataController(sessionArry)
 		this.sessionStorage = wx.getStorageSync('sessionStorage')
 		if (!this.sessionStorage) getAllUnread(await getUnread(sessionArry))
+		await this.dataController(sessionArry)
 		wx.hideLoading()
 		this.$apply()
 	}
@@ -176,7 +177,6 @@ export default class Message extends wepy.page {
 	}
 	async dataController(data) {
 		return new Promise(resolve => {
-			this.sessionList = []
 			let sameToStroage
 			if (data.length == this.sessionStorage.length) sameToStroage = true
 			data.forEach(async ele => {
@@ -226,8 +226,7 @@ export default class Message extends wepy.page {
 	}
 	methods = {
 		toChat({currentTarget: {dataset}}) {
-			console.log('e', dataset)
-			wepy.navigateTo({url: `chat?friendId=${dataset.id}&friendAvatar=${dataset.avatar}&friendName=${dataset.name}`})
+			wepy.navigateTo({url: `chat?fId=${dataset.id}&fAvatar=${dataset.avatar}&fName=${dataset.name}`})
 		},
 		async submit({detail}) {
 			console.log('detail', detail)

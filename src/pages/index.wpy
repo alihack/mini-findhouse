@@ -159,7 +159,7 @@
 			</view>
 		</view>
 		<sortBar :scrollTop.sync="scrollTop"></sortBar>
-		<houseList :dataList.sync="dataList"></houseList>
+		<houseList :dataList.sync="dataList" from="index"></houseList>
 		<footer></footer>
 		<!-- 授权弹窗 -->
 		<authorModal :showAuthorModal.sync="showAuthorModal"></authorModal>
@@ -195,7 +195,8 @@ export default class Index extends wepy.page {
 		showAuthorModal: false,
 		scrollTop: 0,
 		page: 1,
-		indexVIP: false
+		indexVIP: false,
+		onLoading: false
 	}
 
 	computed = {
@@ -204,6 +205,7 @@ export default class Index extends wepy.page {
 	events = {
 		finishAuthor () {
 			wx.showTabBar()
+			this.refresh()
 		},
 		sortHouses (sortObj) {
 			this.page = 1
@@ -226,16 +228,6 @@ export default class Index extends wepy.page {
 	}
 
 	async refresh() {
-		await this.getHouseList(this.page)
-		await this.getMarket()
-		await getUserId()
-		const uid = wx.getStorageSync('uid')
-		if (!uid) {
-			this.showAuthorModal = true
-			wx.hideTabBar()
-		} else {
-			await getUserInfo()
-		}
 		const onMsgNotify = (newMsgs) => {
 			console.log('主页收到新消息', newMsgs)
 			// 更新未读数
@@ -246,6 +238,7 @@ export default class Index extends wepy.page {
 			})
 			wx.setStorageSync('unread', unreadList)
 			getAllUnread(unreadList)
+			this.$apply()
 		}
 		await initIM(onMsgNotify)
 		// 计算总未读数
@@ -254,6 +247,10 @@ export default class Index extends wepy.page {
 		this.$apply()
 	}
 	async onShow () {
+		// 得检查是否登录,如从后台再切入前台需再次登录
+		if (!webim.checkLogin() && !this.onLoading) {
+			this.refresh()
+		}
 		this.indexVIP = wx.getStorageSync('indexVIP')
 		if (this.indexVIP) {
 			// 经纪人的专属主页
@@ -262,7 +259,20 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onLoad() {
+		this.onLoading = true
+		wx.hideTabBar()
+		this.getHouseList(this.page)
+		this.getMarket()
+		const uid = await getUserId()
+		if (!uid) {
+			this.showAuthorModal = true
+		} else {
+			wx.showTabBar()
+			await getUserInfo()
+		}
 		this.refresh()
+		wx.showShareMenu()
+		this.onLoading = false
 		this.$apply()
 	}
 
@@ -304,14 +314,21 @@ export default class Index extends wepy.page {
 
 	getHouseList(page) {
 		return new Promise(async resolve => {
+			let form
 			if (page != 1) {
 				wx.showLoading({
 					title: '玩命加载中',
 				})
-			}
-			const form = {
-				page: page,
-				pagesize: 8
+				form = {
+					page: page,
+					pagesize: 8
+				}
+			} else {
+				// 初次加载
+				form = {
+					page: page,
+					pagesize: 4
+				}
 			}
 			Object.assign(form, this.sortObj)
 			const {data: {list}} = await wepy.request({

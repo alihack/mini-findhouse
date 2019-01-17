@@ -26,6 +26,7 @@ const apis = [
 	'c2cMsgs',
 	'getMsgs',
 	'saveFromId',
+	'clickCount',
 	// 经纪人
 	'agentLogin',
 	'agentHouses',
@@ -33,10 +34,11 @@ const apis = [
 	'deleteHouses',
 	'searchHouses',
 	'sortHouses',
-	'getQRCode'
+	'getQRCode',
+	'signIn'
 ]
 
-const env = 'test' // dev: 本地测试服务器， prod：线上服务器, test：测试服务器
+const env = 'prod' // dev: 本地测试服务器， prod：线上服务器, test：测试服务器
 const root = roots[env]
 const api = {}
 apis.forEach(ele => {

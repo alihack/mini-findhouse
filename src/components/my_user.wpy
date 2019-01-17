@@ -13,7 +13,6 @@
 		font-size: 32rpx;
 		.avatar {
 			.avatar-auto(100rpx);
-			background: green;
 			margin-right: 25rpx;
 		}
 	}

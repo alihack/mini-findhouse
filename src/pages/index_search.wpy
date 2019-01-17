@@ -1,12 +1,10 @@
 <style lang="less" scoped>
 .container {
 	width: 100%;
-	height: 100%;
 	background: #fff;
   	box-sizing: border-box;
 	align-items: center;
 	padding-top:20rpx;
-	padding-bottom: 80rpx;
 	.item {
 		margin-bottom: 30rpx;
 		&-head {
@@ -110,6 +108,8 @@
 	<block wx:if="{{isChoosed}}">
 		<sortBar :scrollTop.sync="scrollTop"></sortBar>
 		<houseList :dataList.sync="dataList"></houseList>
+		<!-- 尾部广告 -->
+		<footer></footer>
 	</block>
 </view>
 </template>
@@ -117,6 +117,7 @@
 <script>
 import wepy from 'wepy'
 import houseList from '../components/list_house'
+import footer from '../components/footer'
 import sortBar from '../components/bar_sort'
 import api from '../utils/api'
 export default class IndexSearch extends wepy.page {
@@ -127,7 +128,8 @@ export default class IndexSearch extends wepy.page {
 	}
 	components = {
 		houseList,
-		sortBar
+		sortBar,
+		footer
 	}
     data = {
 		searchText: '',

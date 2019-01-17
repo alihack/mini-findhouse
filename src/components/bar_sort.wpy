@@ -331,7 +331,7 @@ export default class barSort extends wepy.component {
 						if (sellPrice == '100万以下') {
 							this.resultObj.sellPrice = '0 - 100'
 						} else if (sellPrice == '800万以上') {
-							this.resultObj.sellPrice = '800'
+							this.resultObj.sellPrice = '900'
 						} else {
 							if (sellPrice != '不限') this.resultObj.sellPrice = sellPrice.slice(0, sellPrice.length - 1)
 						}
@@ -379,7 +379,7 @@ export default class barSort extends wepy.component {
 						if (square == '50平以下') {
 							this.resultObj.square = '0 - 50'
 						} else if (square == '200平以上') {
-							this.resultObj.square = '200'
+							this.resultObj.square = '300'
 						} else {
 							if (square != '不限') {
 								this.resultObj.square = square.slice(0, square.length - 1)

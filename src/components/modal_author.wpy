@@ -1,7 +1,15 @@
 <style lang="less">
 @import '../styles/base.less';
+@keyframes fadeUp {	
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
 .authorModal {
-	position: absolute;
+	position: fixed;
 	display: flex;
 	flex-direction: column;
 	width: 540rpx;
@@ -13,6 +21,7 @@
 	border-radius: 20rpx;
 	padding: 20rpx 30rpx;
 	box-sizing: border-box;
+	animation: fadeUp 1s;
 	&-main {
 		margin-top:20rpx;
 		font-size: 20px;
@@ -45,7 +54,7 @@
 }
 </style>
 <template>
-	<view class="authorModal animation-1s" wx:if="{{showAuthorModal}}">
+	<view class="authorModal" wx:if="{{showAuthorModal}}">
 		<view class="authorModal-main">
 			<view class="txt">真房源 找房牛</view>
 			<view class="txt">省钱省时间</view>

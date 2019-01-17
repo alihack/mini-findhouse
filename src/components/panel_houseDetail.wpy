@@ -92,12 +92,16 @@
 				}
 				&-right {
 					margin-right: 10rpx;
+					width: 212rpx;
 				}
 			}
 			.budget {
 				.flex;
 				justify-content: space-between;
 				margin-top:30rpx;
+				padding: 0;
+				border:none;
+				font-size: 26rpx;
 				&-main {
 					color:@blue;
 				}
@@ -197,12 +201,12 @@
 				</view>
 				<view class="kinds-right">
 					<view class="item">
-						<view class="cell3-title">发布：</view>
-						<view class="cell3-answer">{{house.createdTime}}</view>
-					</view>
-					<view class="item">
 						<view class="cell3-title">朝向：</view>
 						<view class="cell3-answer">{{house.direction}}</view>
+					</view>
+					<view class="item">
+						<view class="cell3-title">总层：</view>
+						<view class="cell3-answer">{{house.totalFloor}}层</view>
 					</view>
 					<view class="item">
 						<view class="cell3-title">装修：</view>
@@ -214,13 +218,22 @@
 					</view>
 				</view>
 			</view>
-			<view class="budget"  @tap="chatOnLine">
-				<view class="budget-head">
-					<text class="cell3-title">首付预算：</text>
-					<text class="budget-main">参考首付及月供请咨询经纪人</text>
-				</view>
-				<image class="next-icon" src="../images/next.png"/>
-			</view>
+			<form bindsubmit="submit" report-submit="true">
+				<button class="budget"  @tap="chatOnLine" plain wx:if="{{hasPhone}}" form-type="submit">
+					<view class="budget-head">
+						<text class="cell3-title">首付预算：</text>
+						<text class="budget-main">参考首付及月供请咨询经纪人</text>
+					</view>
+					<image class="next-icon" src="../images/next.png"/>
+				</button>
+				<button wx:else class="budget" plain open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber">
+					<view class="budget-head">
+						<text class="cell3-title">首付预算：</text>
+						<text class="budget-main">参考首付及月供请咨询经纪人</text>
+					</view>
+					<image class="next-icon" src="../images/next.png"/>
+				</button>
+			</form>
 		</view>
 		<view class="cell4">
 			<view class="cell4-title">
@@ -240,9 +253,15 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
+import {getUserId, getUserInfo} from '../utils/util'
 export default class panelHouseDetail extends wepy.component {
 	props = {
-		house: Object
+		house: Object,
+		isDept: Boolean,
+		hasPhone: {
+			type: Boolean,
+			twoWay: true
+		}
 	}
 
 	data = {
@@ -251,7 +270,6 @@ export default class panelHouseDetail extends wepy.component {
 		autoplay: false,
 		interval: 5000,
 		duration: 1000,
-		isFollowed: false,
 		markText: '关注',
 	}
 
@@ -261,10 +279,22 @@ export default class panelHouseDetail extends wepy.component {
 			this.$apply()
 		}
 	}
-
+	async clickCount(type) {
+		await wepy.request({
+			url: api['clickCount'],
+			method: 'POST',
+			data: {
+				uid: wepy.$instance.globalData.myUserInfo.uid,
+				type: type,
+				agentId: this.house.agentId,
+				property_uuid: this.house.propertyUuid
+			}
+		})
+	}
 	methods = {
 		async setFollow () {
-			if (!this.house.isFollowed) {
+			this.house.isFollowed = !this.house.isFollowed
+			if (this.house.isFollowed) {
 				// 关注
 				await wepy.request({
 					url: api['follow'],
@@ -287,19 +317,30 @@ export default class panelHouseDetail extends wepy.component {
 					}
 				})
 			}
-			this.house.isFollowed = !this.house.isFollowed
 			this.$apply()
 		},
 		previewImg(item) {
+			wx.setStorageSync('toQuitIM', false)
 			wx.previewImage({
 				current: item, // 当前显示图片的http链接
-				urls: this.house.photoUrl // 需要预览的图片http链接列表
+				urls: this.house.photoUrl, // 需要预览的图片http链接列表
+				complete: res => {
+					console.log('res')
+					wx.setStorageSync('toQuitIM', true)
+				}
 			})
 		},
 		onSwiperChange ({detail: {current}}) {
 			this.currentIndex = current
 		},
-		async chatOnLine() {
+		chatOnLine: () => {
+			if (this.isDept) {
+				wx.makePhoneCall({
+					phoneNumber: this.house.phoneList[0]
+				})
+				this.clickCount(3)
+				return
+			}
 			if (this.house.agentId == wepy.$instance.globalData.myUserInfo.uid) {
 				wx.showToast({
 					title: '不能与自己聊天哦',
@@ -307,7 +348,52 @@ export default class panelHouseDetail extends wepy.component {
 				})
 				return
 			}
-			wepy.navigateTo({url: `chat?friendId=${this.house.agentId}&friendAvatar=${this.house.headimg}&friendName=${this.house.employeeName1}`})
+			// 头像路径过长，存入缓存带参
+			wx.setStorageSync('fAvatar', this.house.headimg)
+			this.clickCount(2)
+			wepy.navigateTo({url: `chat?fId=${this.house.agentId}&fName=${this.house.employeeName1}`})
+		},
+		async submit({detail}) {
+			console.log('detail', detail)
+			await wepy.request({
+				url: api['saveFromId'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					form_id: detail.formId
+				}
+			})
+		},
+		async getPhoneNumber ({detail}) {
+			if (!detail.iv) {
+				console.log('用户取消授权')
+				return
+			}
+			console.log(detail)
+			wx.showLoading({title: '授权中'})
+			await getUserId(true)
+			const res = await wepy.request({
+				url: api['userMobile'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					encryptedData: detail.encryptedData,
+					iv: detail.iv
+				}
+			})
+			wx.hideLoading()
+			if (res.code != 400) {
+				wx.showToast({title: '登录成功'})
+				await getUserInfo()
+				this.hasPhone = true
+				this.methods.chatOnLine()
+			} else {
+				wx.showToast({
+					title: '请求失败',
+					icon: 'none'
+				})
+			}
+			this.$apply()
 		},
 	}
 }

@@ -87,7 +87,8 @@
 import wepy from 'wepy'
 export default class ListHouse extends wepy.component {
 	props = {
-		dataList: Array
+		dataList: Array,
+		from: String
 	}
 
 	data = {
@@ -101,6 +102,8 @@ export default class ListHouse extends wepy.component {
 
 	methods = {
 		toHouseDetail(id) {
+			// 修复用户快速点击房源导致showTabBar未执行
+			if (this.from == 'index') wx.showTabBar()
 			wepy.navigateTo({url: `detail?id=${id}`})
 		}
 	}

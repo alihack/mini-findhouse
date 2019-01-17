@@ -145,10 +145,11 @@
 				<view class="side-center"></view>
 				<view class="side-right">
 					<view class="title">环比上个月变化</view>
-					<view class="number">
+					<view class="number" wx:if="{{currentEstate.ratio != '暂无'}}">
 						<image src="{{currentEstate.isDecline?'../images/decline.png':'../images/rise.png'}}"></image>
 						<text class="{{currentEstate.isDecline? 'green': 'red'}}"> {{currentEstate.ratio}}%</text>
 					</view>
+					<view class="number" wx:else><text style="color:#666666">暂无</text></view>
 				</view>
 			</view>
 			<view class="content">
@@ -160,10 +161,6 @@
 				<view class="item">
 					<view class="item-head">产权年数：</view>
 					<view class="item-foot">{{currentEstate.own_year}}</view>
-				</view>
-				<view class="item">
-					<view class="item-head">房屋结构：</view>
-					<view class="item-foot">{{}}</view>
 				</view>
 				<view class="item">
 					<view class="item-head">房屋总数：</view>
@@ -209,7 +206,6 @@ export default class detailEstate extends wepy.page {
 		autoplay: false,
 		interval: 5000,
 		duration: 1000,
-		isFollowed: false,
 		markText: '关注',
 		currentEstate: {},
 		sameEstateHouses: []
@@ -219,8 +215,8 @@ export default class detailEstate extends wepy.page {
 	}
 
 	watch = {
-		isFollowed () {
-			this.markText = this.isFollowed == true ? '已关注' : '关注'
+		currentEstate () {
+			this.markText = this.currentEstate.isFollowed == true ? '已关注' : '关注'
 			this.$apply()
 		}
 	}
@@ -238,14 +234,10 @@ export default class detailEstate extends wepy.page {
 			}
 		})
 		this.currentEstate = data
+		// 对小区图片进行处理
+		const firstImg = this.currentEstate.photo_url[0]
+		if (!firstImg || firstImg == ' ') this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
 		this.currentEstate.photo_url = this.currentEstate.photo_url.slice(0, 10)
-		// 空数据改为暂无
-		// for (let i in this.currentEstate) {
-		// 	if (i == 'isFollowed') {
-		// 		return
-		// 	}
-		// 	if (!this.currentEstate[i] || this.currentEstate[i] == '0') this.currentEstate[i] = '暂无'
-		// }
 		// 对环比数据进行处理
 		if (data.ratio.indexOf('-') != -1) {
 			this.currentEstate.ratio = data.ratio.slice(1)
@@ -255,6 +247,7 @@ export default class detailEstate extends wepy.page {
 		const pages = getCurrentPages()
 		const prevPage = pages[pages.length - 2]
 		this.sameEstateHouses = prevPage.data.sameEstateHouses
+		wx.showShareMenu()
 		this.$apply()
 	}
 
@@ -266,7 +259,8 @@ export default class detailEstate extends wepy.page {
 			wepy.navigateTo({url: 'detail_support'})
 		},
 		async setFollow () {
-			if (!this.currentEstate.isFollowed) {
+			this.currentEstate.isFollowed = !this.currentEstate.isFollowed
+			if (this.currentEstate.isFollowed) {
 				// 关注
 				await wepy.request({
 					url: api['follow'],
@@ -289,13 +283,17 @@ export default class detailEstate extends wepy.page {
 					}
 				})
 			}
-			this.currentEstate.isFollowed = !this.currentEstate.isFollowed
 			this.$apply()
 		},
 		previewImg(item) {
+			wx.setStorageSync('toQuitIM', false)
 			wx.previewImage({
 				current: item, // 当前显示图片的http链接
-				urls: this.currentEstate.photo_url // 需要预览的图片http链接列表
+				urls: this.currentEstate.photo_url, // 需要预览的图片http链接列表
+				complete: res => {
+					console.log('res')
+					wx.setStorageSync('toQuitIM', true)
+				}
 			})
 		},
 	}

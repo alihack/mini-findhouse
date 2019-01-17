@@ -220,6 +220,7 @@ export default class MyLoginSMS extends wepy.component {
 					if (code == 400) {
 						console.log('faile')
 						this.showModal = true
+						this.isGetingCode = false
 						this.$apply()
 						return
 					}

@@ -196,7 +196,7 @@ const initIM = (onMsgNotify) => {
 }
 
 const sendMessage = (msgtosend, selToID, isCustomMsg) => {
-	console.log('msgtosend', msgtosend)
+	console.log('login', loginInfo)
 	return new Promise(resolve => {
 		var msg
 		var isSend = true
@@ -206,7 +206,6 @@ const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 		var subType = webim.C2C_MSG_SUB_TYPE.COMMON // 消息子类型
 		var selType = webim.SESSION_TYPE.C2C
 		var selSess = new webim.Session(selType, selToID, selToID, loginInfo.identifierAvatar, Math.round(new Date().getTime() / 1000))
-		console.log('selsess', selSess)
 		msg = new webim.Msg(selSess, isSend, seq, random, msgTime, loginInfo.identifier, subType, loginInfo.identifierNick)
 		// 解析文本和表情
 		var textObj, faceObj, customObj, tmsg, emotionIndex, emotion, restMsgIndex

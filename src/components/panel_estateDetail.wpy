@@ -15,7 +15,6 @@
 			image {
 				width: 220rpx;
 				height: 165rpx;
-				background: #2d8cf0;
 				margin-right: 30rpx;
 			}
 			.detail {
@@ -51,7 +50,8 @@
 				<view class="detail">
 					<view class="title">
 						<view class="title-left">参考均价：</view>
-						<view class="title-right">{{estate.estate_price}}元/m²</view>
+						<view class="title-right" wx:if="{{estate.estate_price != '暂无'}}">{{estate.estate_price}}元/m²</view>
+						<view class="title-right" wx:else>暂无</view>
 					</view>
 					<view class="detail-text">建筑年代：{{estate.estate_age}}</view>
 					<view class="detail-text">产权年数：{{estate.own_year}}</view>

@@ -72,6 +72,7 @@
 					color: #fff;
 					border-radius: 10rpx;
 					margin-left: 20rpx;
+					padding: 0rpx;
 				}
 			}
 		}
@@ -151,7 +152,9 @@
 			</view>
 			<view class="main-right">
 				<image class="add-icon" src="../images/add.png" @tap="addMore"></image>
-				<view class="send" hidden="{{!showSend}}" @tap="sendMessage">发送</view>
+				<form bindsubmit="submit" report-submit="true">
+					<button class="send" form-type="submit" hidden="{{!showSend}}" @tap="sendMessage">发送</button>
+				</form>
 			</view>
 		</view>
 		<view class="addMore" wx:if="{{showMore}}">
@@ -179,6 +182,7 @@
 </template>
 <script>
 import wepy from 'wepy'
+import api from '../utils/api'
 import {sendMessage, uploadQiNiu} from '../utils/util'
 export default class barChat extends wepy.component {
 	props = {
@@ -311,6 +315,7 @@ export default class barChat extends wepy.component {
 			this.recorderManager.stop()
 		},
 		addPhoto(type) {
+			wx.setStorageSync('toQuitIM', false)
 			wx.chooseImage({
 				sourceType: [type],
 				success: async (res) => {
@@ -321,8 +326,20 @@ export default class barChat extends wepy.component {
 						this.$emit('addMessage', imageURL, 'img')
 						await sendMessage(imageURL, this.friendId)
 						this.showMore = false
+						wx.setStorageSync('toQuitIM', true)
 						this.$apply()
 					})
+				}
+			})
+		},
+		async submit({detail}) {
+			console.log('detail', detail)
+			await wepy.request({
+				url: api['saveFromId'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					form_id: detail.formId
 				}
 			})
 		},

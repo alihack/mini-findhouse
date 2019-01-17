@@ -86,6 +86,7 @@ export default class SameEstate extends wepy.page {
 		const prevPage = pages[pages.length - 2]
 		this.dataList = prevPage.data.sameEstateHouses
 		this.sortObj.estateName = prevPage.data.currentEstate.estate_name
+		wx.showShareMenu()
 		this.$apply()
 	}
 	methods = {

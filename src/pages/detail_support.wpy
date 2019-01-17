@@ -39,6 +39,7 @@
 	></map>
 	<cover-view class="fixed-bar">
 		<cover-view class="item" wx:for="{{supportArry}}" wx:key="index" @tap="select({{index}})">
+			<cover-view class="{{item.isSelected}}"></cover-view>
 			<cover-image src="{{item.isSelected? item.blueIcon :item.whiteIcon}}"></cover-image>
 			<cover-view style="{{item.isSelected? 'color:#2d8cf0':''}}">{{item.title}}</cover-view>
 		</cover-view>

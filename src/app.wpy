@@ -75,12 +75,14 @@ page {
 
 <script>
 import wepy from 'wepy'
+import webim from './utils/webim_wx'
 import 'wepy-async-function'
 
 export default class extends wepy.app {
 	config = {
 		pages: [
 			'pages/index',
+			'pages/detail_support',
 			'pages/detail',
 			'pages/index_search',
 			'pages/agent_addSource',
@@ -89,11 +91,9 @@ export default class extends wepy.app {
 			'pages/agent_home',
 			'pages/message',
 			'pages/detail_sameEstate',
-			'pages/detail_introduce',
 			'pages/detail_estate',
 			'pages/user_mark',
 			'pages/user_history',
-			'pages/detail_support',
 		],
 		tabBar: {
 			'selectedColor': '#2d8cf0',
@@ -131,7 +131,20 @@ export default class extends wepy.app {
 		myUserInfo: null
 	}
 	async onLaunch() {
-		wx.clearStorage()  // 清除缓存
+		wx.clearStorageSync()  // 清除缓存
+		wx.setStorageSync('toQuitIM', true)
+	}
+
+	onHide() {
+		// 从前台进入后台
+		console.log('从前台切入后台')
+		const quitIM = wx.getStorageSync('toQuitIM')
+		console.log('quitIm', quitIM)
+		if (quitIM) {
+			webim.logout(res => {
+				console.log('退出', res)
+			})
+		}
 	}
 
 	constructor() {

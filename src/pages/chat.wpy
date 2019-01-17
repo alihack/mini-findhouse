@@ -116,7 +116,7 @@
 					<view wx:for="{{msg.data}}" class="main {{item.isSelfSend ? 'reverse' : ''}}"  wx:key="index">
 						<image class="avatar" src="{{item.isSelfSend ? myAvatar: friendAvatar}}"></image>
 						<!-- 房屋卡片 -->
-						<view wx:if="{{item.houseCard}}">
+						<view wx:if="{{item.houseCard}}" @tap="houseDetail({{item.houseCard.houseId}})">
 							<view class="card">
 								<image mode= "scaleToFill" src="{{item.houseCard.img}}"></image>
 								<view class="title">{{item.houseCard.title}}</view>
@@ -125,7 +125,7 @@
 							</view>
 						</view>
 						<!-- 图片 -->
-						<image wx:if="{{item.img}}" src="{{item.img}}" class="photo"></image>
+						<image wx:if="{{item.img}}" src="{{item.img}}" class="photo" @tap="previewImg({{item.img}})"/>
 						<!-- 语音 -->
 						<view wx:if="{{item.audio && item.isSelfSend}}" class="audio" @tap="playAudio({{item.audio}})">
 							<view class="audio-second"> "</view>
@@ -164,7 +164,8 @@ export default class Chat extends wepy.page {
 			img: '',
 			title: '',
 			detail: '',
-			price: ''
+			price: '',
+			houseId: ''
 		},
 		friendAvatar: '',
 		friendId: '',
@@ -197,20 +198,25 @@ export default class Chat extends wepy.page {
 	async refresh() {
 		if (!this.friendId) return
 		const onMsgNotify = (newMsgList) => {
-				console.log('新消息', newMsgList)
-				// 判断是否为当前聊天对象,是的话插入
-				newMsgList.forEach(async ele => {
-					if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
-						const value = await convertCustomMsgToHtml(ele)
-						var type
+			console.log('新消息', newMsgList)
+			// 判断是否为当前聊天对象,是的话插入
+			newMsgList.forEach(async ele => {
+				if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
+					const value = await convertCustomMsgToHtml(ele)
+					console.log('value', value)
+					var type
+					if (!value.houseCard) {
 						if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
 							type = 'img'
 						} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
 							type = 'audio'
 						}
 						await this.msgController(value, false, type)
+					} else {
+						await this.msgController(value.houseCard, false, type)
 					}
-				})
+				}
+			})
 		}
 		await initIM(onMsgNotify)
 		const data = await getC2CHistoryMsgs(this.friendId, true)
@@ -224,6 +230,7 @@ export default class Chat extends wepy.page {
 			console.log('从咨询来的')
 			this.houseCard.img = currentHouse.photoUrl[0]
 			this.houseCard.title = currentHouse.title
+			this.houseCard.houseId = currentHouse.propertyUuid
 			const houseType = currentHouse.countF + '室' + currentHouse.countT + '厅' + currentHouse.countW + '卫'
 			const houseSquare = currentHouse.square + 'm²'
 			const direction = currentHouse.direction
@@ -234,23 +241,27 @@ export default class Chat extends wepy.page {
 		}
 		this.$apply()
 	}
-	async onShow() {
-		this.refresh()
-	}
-	async onLoad({friendId, friendAvatar, friendName}) {
-		this.friendAvatar = friendAvatar
-		this.friendId = friendId
-		this.friendName = friendName
+	async onLoad({fId, fAvatar, fName}) {
+		if (!fAvatar) {
+			this.friendAvatar = wx.getStorageSync('fAvatar')
+		} else {
+			this.friendAvatar = fAvatar
+		}
+		this.friendId = fId
+		this.friendName = fName
 		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
 		this.myUid = wepy.$instance.globalData.myUserInfo.uid
-		wx.setNavigationBarTitle({title: friendName})
+		wx.setNavigationBarTitle({title: fName})
 		this.scrollHeight = wx.getSystemInfoSync().windowHeight
+		this.refresh()
 		// 设置缓存中unread为0
 		const unreadList = wx.getStorageSync('unread')
-		unreadList.forEach(ele => {
-			if (ele.fid == this.friendId) ele.number = 0
-		})
-		wx.setStorageSync('unread', unreadList)
+		if (unreadList) {
+			unreadList.forEach(ele => {
+				if (ele.fid == this.friendId) ele.number = 0
+			})
+			wx.setStorageSync('unread', unreadList)
+		}
 		this.$apply()
 	}
 	onUnload () {
@@ -308,7 +319,21 @@ export default class Chat extends wepy.page {
 			console.log('inner', this.innerAudio)
 			this.innerAudio.src = audioURL
 			this.innerAudio.play()
-		}
+		},
+		houseDetail(id) {
+			wepy.navigateTo({url: `detail?id=${id}`})
+		},
+		previewImg(item) {
+			wx.setStorageSync('toQuitIM', false)
+			wx.previewImage({
+				current: item, // 当前显示图片的http链接
+				urls: [item], // 需要预览的图片http链接列表
+				complete: res => {
+					console.log('res')
+					wx.setStorageSync('toQuitIM', true)
+				}
+			})
+		},
 	}
 }
 </script>

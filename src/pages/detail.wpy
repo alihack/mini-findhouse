@@ -78,7 +78,7 @@
 <template>
 	<view class="container">
 		<!-- 房屋详情 -->
-		<panelHouseDetail :house.sync="currentHouse"></panelHouseDetail>
+		<panelHouseDetail :house.sync="currentHouse" :isDept.sync="isDept"  :hasPhone.sync="hasPhone"></panelHouseDetail>
 		<!-- 小区详情 -->
 		<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
 		<!-- 同小区房源 -->
@@ -109,7 +109,7 @@
 				</form>
 			</block>
 			<block wx:else>
-				<image src="../images/haixi.jpg" class="avatar"></image>
+				<image src="http://qimg.fangzi.xiaoyu.com/fangniu/haixi.jpg" class="avatar"></image>
 				<view class="detail">
 					<view class="name">
 						<text>公共账户</text>
@@ -132,7 +132,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {convertTime, getUserInfo, checkSession} from '../utils/util'
+import {convertTime, getUserInfo, getUserId} from '../utils/util'
 import panelHouseDetail from '../components/panel_houseDetail'
 import panelEstateDetail from '../components/panel_estateDetail'
 import panelSource from '../components/panel_source'
@@ -182,17 +182,17 @@ export default class Detail extends wepy.page {
 				}
 			})
 			this.currentHouse = data
+			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 6)
 			this.sameEstateHouses = data.same_estate
 			this.recommendEstateHouses = data.recommend_estate
 			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
 			this.currentEstate = data.estate
-			if (data.phoneList[0].indexOf('-') != -1) this.isDept = true
-			// 空数据改为暂无
-			for (let i in this.currentEstate) {
-				if (!this.currentEstate[i] || this.currentEstate[i] == '0') this.currentEstate[i] = '暂无'
-			}
-			this.indexVIP = wx.getStorageSync('indexVIP')
+			// 对小区图片进行处理
+			const firstImg = this.currentEstate.photo_url[0]
+			if (!firstImg || firstImg == ' ') this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
+			if ((data.phoneList[0].indexOf('-') != -1) || data.phoneList[0].length < 11) this.isDept = true
 			// 如果是经纪人专属主页，修改底部联系人为自己
+			this.indexVIP = wx.getStorageSync('indexVIP')
 			if (this.indexVIP) {
 				const userInfo = wepy.$instance.globalData.myUserInfo
 				this.currentHouse.employeeName1 = userInfo.name
@@ -229,7 +229,18 @@ export default class Detail extends wepy.page {
 		}
 		this.$apply()
 	}
-
+	async clickCount(type) {
+		await wepy.request({
+			url: api['clickCount'],
+			method: 'POST',
+			data: {
+				uid: wepy.$instance.globalData.myUserInfo.uid,
+				type: type,
+				agentId: this.currentHouse.agentId,
+				property_uuid: this.currentHouse.propertyUuid
+			}
+		})
+	}
 	methods = {
 		mapDetail() {
 			wepy.navigateTo({url: 'detail_support'})
@@ -237,7 +248,7 @@ export default class Detail extends wepy.page {
 		estateDetail(id) {
 			wepy.navigateTo({url: `detail_estate?id=${id}`})
 		},
-		async chatOnLine() {
+		chatOnLine: () => {
 			const house = this.currentHouse
 			if (house.agentId == wepy.$instance.globalData.myUserInfo.uid) {
 				wx.showToast({
@@ -246,7 +257,10 @@ export default class Detail extends wepy.page {
 				})
 				return
 			}
-			wepy.navigateTo({url: `chat?friendId=${house.agentId}&friendAvatar=${house.headimg}&friendName=${house.employeeName1}`})
+			// 头像路径过长，存入缓存带参
+			wx.setStorageSync('fAvatar', house.headimg)
+			this.clickCount(2)
+			wepy.navigateTo({url: `chat?fId=${house.agentId}&fName=${house.employeeName1}`})
 		},
 		chatOnPhone () {
 			if (this.currentHouse.agentId == wepy.$instance.globalData.myUserInfo.uid) {
@@ -257,8 +271,9 @@ export default class Detail extends wepy.page {
 				return
 			}
 			wx.makePhoneCall({
-				phoneNumber: this.currentHouse.phoneList[0] // 仅为示例，并非真实的电话号码
+				phoneNumber: this.currentHouse.phoneList[0]
 			})
+			this.clickCount(3)
 		},
 		getPoster() {
 			this.showPoster = true
@@ -278,12 +293,13 @@ export default class Detail extends wepy.page {
 			})
 		},
 		async getPhoneNumber ({detail}) {
-			console.log(detail)
-			await checkSession()
 			if (!detail.iv) {
 				console.log('用户取消授权')
 				return
 			}
+			console.log(detail)
+			wx.showLoading({title: '授权中'})
+			await getUserId(true)
 			const res = await wepy.request({
 				url: api['userMobile'],
 				method: 'POST',
@@ -293,10 +309,12 @@ export default class Detail extends wepy.page {
 					iv: detail.iv
 				}
 			})
+			wx.hideLoading()
 			if (res.code != 400) {
 				wx.showToast({title: '登录成功'})
 				await getUserInfo()
 				this.hasPhone = true
+				this.methods.chatOnLine()
 			} else {
 				wx.showToast({
 					title: '请求失败',
