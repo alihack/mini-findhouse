@@ -117,7 +117,7 @@
 		>
 			<block wx:for="{{currentEstate.photo_url}}" wx:key="index">
 				<swiper-item>
-					<image src="{{item}}" class="slide-image" @tap="previewImg({{item}})"/>
+					<image src="{{item}}" class="slide-image" @tap="previewImg({{index}})"/>
 				</swiper-item>
 			</block>
 		</swiper>
@@ -247,6 +247,12 @@ export default class detailEstate extends wepy.page {
 		const pages = getCurrentPages()
 		const prevPage = pages[pages.length - 2]
 		this.sameEstateHouses = prevPage.data.sameEstateHouses
+		// 获取原图链接
+		const previewImgs = []
+		this.currentEstate.photo_url.forEach(ele => {
+			previewImgs.push(ele.split('|')[0])
+		})
+		this.currentEstate.previewImgs = previewImgs
 		wx.showShareMenu()
 		this.$apply()
 	}
@@ -285,13 +291,12 @@ export default class detailEstate extends wepy.page {
 			}
 			this.$apply()
 		},
-		previewImg(item) {
+		previewImg(index) {
 			wx.setStorageSync('toQuitIM', false)
 			wx.previewImage({
-				current: item, // 当前显示图片的http链接
-				urls: this.currentEstate.photo_url, // 需要预览的图片http链接列表
+				current: this.currentEstate.previewImgs[index], // 当前显示图片的http链接
+				urls: this.currentEstate.previewImgs, // 需要预览的图片http链接列表
 				complete: res => {
-					console.log('res')
 					wx.setStorageSync('toQuitIM', true)
 				}
 			})

@@ -41,7 +41,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo, getUserId} from '../utils/util'
+import {getUserInfo, checkSession} from '../utils/util'
 export default class MyLoginWX extends wepy.component {
 	props = {
 		navigationBarTitleText: '登录'
@@ -67,7 +67,7 @@ export default class MyLoginWX extends wepy.component {
 			}
 			console.log(detail)
 			wx.showLoading({title: '授权中'})
-			await getUserId(true)
+			await checkSession()
 			const res = await wepy.request({
 				url: api['userMobile'],
 				method: 'POST',

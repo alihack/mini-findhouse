@@ -67,7 +67,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo} from '../utils/util'
+import {getUserInfo, getUserId} from '../utils/util'
 export default class modalAuthor extends wepy.component {
 	props = {
 		showAuthorModal: {
@@ -91,7 +91,7 @@ export default class modalAuthor extends wepy.component {
 					success: async (res) => {
 						if (res.code) {
 							wx.showLoading({title: '授权中'})
-							const {data: {uid}} = await wepy.request({
+							await wepy.request({
 								url: api['saveUser'],
 								method: 'POST',
 								data: {
@@ -101,7 +101,7 @@ export default class modalAuthor extends wepy.component {
 								}
 							})
 							wx.hideLoading()
-							wx.setStorageSync('uid', uid)
+							await getUserId()
 							await getUserInfo()
 							this.$emit('finishAuthor')
 							this.showAuthorModal = false

@@ -132,7 +132,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {convertTime, getUserInfo, getUserId} from '../utils/util'
+import {convertTime, getUserInfo, checkSession} from '../utils/util'
 import panelHouseDetail from '../components/panel_houseDetail'
 import panelEstateDetail from '../components/panel_estateDetail'
 import panelSource from '../components/panel_source'
@@ -172,6 +172,22 @@ export default class Detail extends wepy.page {
 			this.showPoster = false
 		}
 	}
+	onShareAppMessage(ops) {
+		console.log('ops', ops)
+		return {
+			title: this.currentHouse.title,
+			path: 'pages/index', // 点击分享消息是打开的页面
+			success: (res) => {
+			// 转发成功
+			console.log('转发成功:' + JSON.stringify(res))
+			//   var shareTickets = res.shareTickets
+			},
+			fail: (err) => {
+			// 转发失败
+			console.log('转发失败:' + JSON.stringify(err))
+			}
+		}
+	}
 	getHouseInfo(id) {
 		return new Promise(async resolve => {
 			const {data} = await wepy.request({
@@ -183,10 +199,16 @@ export default class Detail extends wepy.page {
 			})
 			this.currentHouse = data
 			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 6)
+			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
 			this.sameEstateHouses = data.same_estate
 			this.recommendEstateHouses = data.recommend_estate
-			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
 			this.currentEstate = data.estate
+			// 获取原图链接
+			const previewImgs = []
+			this.currentHouse.photoUrl.forEach(ele => {
+				previewImgs.push(ele.split('|')[0])
+			})
+			this.currentHouse.previewImgs = previewImgs
 			// 对小区图片进行处理
 			const firstImg = this.currentEstate.photo_url[0]
 			if (!firstImg || firstImg == ' ') this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
@@ -203,6 +225,7 @@ export default class Detail extends wepy.page {
 		})
 	}
 	async refresh(houseId) {
+		this.getHouseInfo(houseId)
 		if (this.userInfo.type == '2') {
 			this.isAgent = true
 		}
@@ -210,11 +233,9 @@ export default class Detail extends wepy.page {
 			this.hasPhone = false
 			console.log('没有手机号')
 		}
-		await this.getHouseInfo(houseId)
 		this.$apply()
 	}
 	async onLoad(option) {
-		wx.showShareMenu()
 		this.userInfo = wepy.$instance.globalData.myUserInfo
 		if (!this.userInfo) {
 			console.log('首页数据还未加载完成')
@@ -227,6 +248,7 @@ export default class Detail extends wepy.page {
 		} else {
 			this.refresh(option.id)
 		}
+		wx.showShareMenu()
 		this.$apply()
 	}
 	async clickCount(type) {
@@ -299,7 +321,7 @@ export default class Detail extends wepy.page {
 			}
 			console.log(detail)
 			wx.showLoading({title: '授权中'})
-			await getUserId(true)
+			await checkSession()
 			const res = await wepy.request({
 				url: api['userMobile'],
 				method: 'POST',

@@ -75,6 +75,18 @@ page {
 	line-height: 40rpx;
 	color:#fff;
 }
+// 加载中
+.loading {
+	display: flex;
+	align-items: center;
+	margin:30rpx;
+	color: #c3c6cd;
+	image {
+		width: 30rpx;
+		height: 30rpx;
+		margin-right: 10rpx;
+	}
+}
 </style>
 
 <script>

@@ -148,6 +148,7 @@
 
 <script>
 import wepy from 'wepy'
+import webim from '../utils/webim_wx'
 import chatBar from '../components/bar_chat'
 import {getC2CHistoryMsgs, convertTime, convertCustomMsgToHtml, initIM, sendMessage, sendMsgsToServer} from '../utils/util'
 export default class Chat extends wepy.page {
@@ -177,6 +178,7 @@ export default class Chat extends wepy.page {
 		msgList: [],
 		msgLength: 1,
 		innerAudio: wepy.createInnerAudioContext(), // 播放语音实例
+		onLoading: false
 	}
 
 	computed = {
@@ -195,33 +197,58 @@ export default class Chat extends wepy.page {
 			await this.msgController(value, true, type)
 		}
 	}
-	async refresh() {
-		if (!this.friendId) return
-		const onMsgNotify = (newMsgList) => {
-			console.log('新消息', newMsgList)
-			// 判断是否为当前聊天对象,是的话插入
-			newMsgList.forEach(async ele => {
-				if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
-					const value = await convertCustomMsgToHtml(ele)
-					console.log('value', value)
-					var type
-					if (!value.houseCard) {
-						if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
-							type = 'img'
-						} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
-							type = 'audio'
+	async myInitIM() {
+		return new Promise(async resolve => {
+			if (!this.friendId) return
+			const onMsgNotify = (newMsgList) => {
+				console.log('新消息', newMsgList)
+				// 判断是否为当前聊天对象,是的话插入
+				newMsgList.forEach(async ele => {
+					if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
+						const value = await convertCustomMsgToHtml(ele)
+						console.log('value', value)
+						var type
+						if (!value.houseCard) {
+							if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
+								type = 'img'
+							} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
+								type = 'audio'
+							}
+							await this.msgController(value, false, type)
+						} else {
+							await this.msgController(value.houseCard, false, type)
 						}
-						await this.msgController(value, false, type)
-					} else {
-						await this.msgController(value.houseCard, false, type)
 					}
-				}
-			})
+				})
+			}
+			await initIM(onMsgNotify)
+			const data = await getC2CHistoryMsgs(this.friendId, true)
+			this.msgList = data.newMsgList
+			this.msgLength = data.Msglength
+			resolve()
+			this.$apply()
+		})
+	}
+	async onShow () {
+		// 得检查是否登录,如从后台再切入前台需再次登录
+		if (!webim.checkLogin() && !this.onLoading) {
+			await this.myInitIM()
 		}
-		await initIM(onMsgNotify)
-		const data = await getC2CHistoryMsgs(this.friendId, true)
-		this.msgList = data.newMsgList
-		this.msgLength = data.Msglength
+	}
+	async onLoad({fId, fAvatar, fName}) {
+		this.onLoading = true
+		if (!fAvatar) {
+			this.friendAvatar = wx.getStorageSync('fAvatar')
+		} else {
+			this.friendAvatar = fAvatar
+		}
+		this.friendId = fId
+		this.friendName = fName
+		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
+		this.myUid = wepy.$instance.globalData.myUserInfo.uid
+		wx.setNavigationBarTitle({title: fName})
+		this.scrollHeight = wx.getSystemInfoSync().windowHeight
+		await this.myInitIM()
 		// 向经纪人发送房源信息
 		const pages = getCurrentPages()
 		const prevPage = pages[pages.length - 2]
@@ -239,21 +266,6 @@ export default class Chat extends wepy.page {
 			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
 			await this.msgController(this.houseCard, true)
 		}
-		this.$apply()
-	}
-	async onLoad({fId, fAvatar, fName}) {
-		if (!fAvatar) {
-			this.friendAvatar = wx.getStorageSync('fAvatar')
-		} else {
-			this.friendAvatar = fAvatar
-		}
-		this.friendId = fId
-		this.friendName = fName
-		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
-		this.myUid = wepy.$instance.globalData.myUserInfo.uid
-		wx.setNavigationBarTitle({title: fName})
-		this.scrollHeight = wx.getSystemInfoSync().windowHeight
-		this.refresh()
 		// 设置缓存中unread为0
 		const unreadList = wx.getStorageSync('unread')
 		if (unreadList) {
@@ -262,6 +274,7 @@ export default class Chat extends wepy.page {
 			})
 			wx.setStorageSync('unread', unreadList)
 		}
+		this.onLoading = false
 		this.$apply()
 	}
 	onUnload () {

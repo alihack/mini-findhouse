@@ -13,7 +13,7 @@
 		font-size: 30rpx;
 		border-radius: 50rpx;
 	}
-	.sign:hover{
+	.hover-sign{
 		background: @gold + #111;
 	}
 	.header {
@@ -107,30 +107,30 @@
 				<view class="phone">{{userInfo.mobile}}</view>
 			</view>
 			<form bindsubmit="submit" report-submit="true">
-				<button class="sign" form-type="submit" @tap="sign">签到</button>
+				<button class="sign" hover-class="hover-sign" form-type="submit" @tap="sign">签到</button>
 			</form>
 		</view>
 		<view class="main">
 			<view class="row">
 				<view class="row-side">
 					<view class="title">本月主页打开次数</view>
-					<view class="number">253242</view>
+					<view class="number">{{userInfo.month_open}}</view>
 				</view>
 				<view class="row-center"></view>
 				<view class="row-side right">
 					<view class="title">本月咨询</view>
-					<view class="number">2532</view>
+					<view class="number">{{userInfo.month_consult}}</view>
 				</view>
 			</view>
 			<view class="row">
 				<view class="row-side">
 					<view class="title">总计主页打开次数</view>
-					<view class="number">253242</view>
+					<view class="number">{{userInfo.total_open}}</view>
 				</view>
 				<view class="row-center"></view>
 				<view class="row-side right">
 					<view class="title">总计咨询</view>
-					<view class="number">812532</view>
+					<view class="number">{{userInfo.total_consult}}</view>
 				</view>
 			</view>
 		</view>
@@ -180,6 +180,7 @@ export default class Footer extends wepy.component {
 			})
 		},
 		async sign() {
+			wepy.showToast({title: '签到成功'})
 			await wepy.request({
 				url: api['signIn'],
 				method: 'POST',
@@ -187,7 +188,6 @@ export default class Footer extends wepy.component {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
 				}
 			})
-			wepy.showToast({title: '签到成功'})
 		}
 	}
 }

@@ -151,7 +151,7 @@
 	>
 	<block wx:for="{{house.photoUrl}}" wx:key="index">
 		<swiper-item>
-			<image src="{{item}}" @tap="previewImg({{item}})"/>
+			<image src="{{item}}" @tap="previewImg({{index}})"/>
 		</swiper-item>
 	</block>
 	</swiper>
@@ -253,7 +253,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserId, getUserInfo} from '../utils/util'
+import {checkSession, getUserInfo} from '../utils/util'
 export default class panelHouseDetail extends wepy.component {
 	props = {
 		house: Object,
@@ -319,13 +319,12 @@ export default class panelHouseDetail extends wepy.component {
 			}
 			this.$apply()
 		},
-		previewImg(item) {
+		previewImg(index) {
 			wx.setStorageSync('toQuitIM', false)
 			wx.previewImage({
-				current: item, // 当前显示图片的http链接
-				urls: this.house.photoUrl, // 需要预览的图片http链接列表
+				current: this.house.previewImgs[index], // 当前显示图片的http链接
+				urls: this.house.previewImgs, // 需要预览的图片http链接列表
 				complete: res => {
-					console.log('res')
 					wx.setStorageSync('toQuitIM', true)
 				}
 			})
@@ -371,7 +370,7 @@ export default class panelHouseDetail extends wepy.component {
 			}
 			console.log(detail)
 			wx.showLoading({title: '授权中'})
-			await getUserId(true)
+			await checkSession()
 			const res = await wepy.request({
 				url: api['userMobile'],
 				method: 'POST',

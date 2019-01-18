@@ -100,10 +100,10 @@
 					<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg"></image>
 					<view class="detail">
 						<view class="title">{{item.estate_name}}</view>
-						<view class="detail-text">建筑年代：{{item.estate_age}}年建</view>
-						<view class="detail-text">产权年数：{{item.ownYear}}年</view>
-						<view class="detail-text">房屋总数：{{item.total_house}}户</view>
-						<view class="detail-text">参考均价：{{item.estate_price}}元/m²</view>
+						<view class="detail-text">建筑年代：{{item.estate_age}}</view>
+						<view class="detail-text">产权年数：{{item.own_year}}</view>
+						<view class="detail-text">房屋总数：{{item.total_house}}</view>
+						<view class="detail-text">参考均价：{{item.estate_price}}</view>
 					</view>
 				</view>
 			</view>
@@ -150,7 +150,7 @@ export default class UserMark extends wepy.page {
 					type: 2, // 1房源2小区
 				}
 			})
-			console.log('data', data)
+			console.log('关注的小区', data)
 			this.communityList = data
 			this.$apply()
 			resolve()
@@ -165,7 +165,7 @@ export default class UserMark extends wepy.page {
 					type: 1,
 				}
 			})
-			console.log('data', data)
+			console.log('关注的二手房', data)
 			this.houseSourceList = data
 			this.$apply()
 			resolve()

@@ -15,6 +15,7 @@ const getUserId = (isForced) => {
 		}
 		wx.login({
 			success: async (res) => {
+				console.log('wx.login登录')
 				if (res.code) {
 					console.log(res)
 					const {data} = await wepy.request({
@@ -36,6 +37,7 @@ const getUserId = (isForced) => {
 }
 
 const checkSession = () => {
+	console.log('调用checkSession方法')
 	return new Promise(resolve => {
 		wx.checkSession({
 			success: async () => {

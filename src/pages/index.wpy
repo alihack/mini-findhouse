@@ -160,6 +160,10 @@
 		</view>
 		<sortBar :scrollTop.sync="scrollTop"></sortBar>
 		<houseList :dataList.sync="dataList" from="index"></houseList>
+		<view class="loading" wx:if="{{isLoading}}">
+			<image src="../images/loading.png"></image>
+			<view>玩命加载中</view>
+		</view>
 		<footer></footer>
 		<!-- 授权弹窗 -->
 		<authorModal :showAuthorModal.sync="showAuthorModal"></authorModal>
@@ -179,7 +183,8 @@ import sortBar from '../components/bar_sort'
 import authorModal from '../components/modal_author'
 export default class Index extends wepy.page {
 	config = {
-		navigationBarTitleText: '房牛找房'
+		navigationBarTitleText: '房牛找房',
+		onReachBottomDistance: 150
 	}
 	components = {
 		footer,
@@ -196,7 +201,8 @@ export default class Index extends wepy.page {
 		scrollTop: 0,
 		page: 1,
 		indexVIP: false,
-		onLoading: false
+		onLoading: false,  // 处理onLoad事件中
+		isLoading: false,  // 列表页加载中
 	}
 
 	computed = {
@@ -205,7 +211,7 @@ export default class Index extends wepy.page {
 	events = {
 		finishAuthor () {
 			wx.showTabBar()
-			this.refresh()
+			this.myInitIM()
 		},
 		sortHouses (sortObj) {
 			this.page = 1
@@ -215,8 +221,8 @@ export default class Index extends wepy.page {
 		}
 	}
 	// 监听页面滚动
-	onPageScroll (e) {
-		this.scrollTop = e.scrollTop
+	onPageScroll ({scrollTop}) {
+		this.scrollTop = scrollTop
 		this.$apply()
 	}
 	// 上拉触底事件
@@ -226,8 +232,24 @@ export default class Index extends wepy.page {
 			await this.getHouseList(++this.page)
 		}
 	}
+	onShareAppMessage(ops) {
+		console.log('ops', ops)
+		return {
+			title: '真房源找房牛，省钱省时间',
+			path: 'pages/index', // 点击分享消息是打开的页面
+			success: (res) => {
+			// 转发成功
+			console.log('转发成功:' + JSON.stringify(res))
+			//   var shareTickets = res.shareTickets
+			},
+			fail: (err) => {
+			// 转发失败
+			console.log('转发失败:' + JSON.stringify(err))
+			}
+		}
+	}
 
-	async refresh() {
+	async myInitIM() {
 		const onMsgNotify = (newMsgs) => {
 			console.log('主页收到新消息', newMsgs)
 			// 更新未读数
@@ -249,7 +271,7 @@ export default class Index extends wepy.page {
 	async onShow () {
 		// 得检查是否登录,如从后台再切入前台需再次登录
 		if (!webim.checkLogin() && !this.onLoading) {
-			this.refresh()
+			this.myInitIM()
 		}
 		this.indexVIP = wx.getStorageSync('indexVIP')
 		if (this.indexVIP) {
@@ -270,7 +292,7 @@ export default class Index extends wepy.page {
 			wx.showTabBar()
 			await getUserInfo()
 		}
-		this.refresh()
+		this.myInitIM()
 		wx.showShareMenu()
 		this.onLoading = false
 		this.$apply()
@@ -316,9 +338,6 @@ export default class Index extends wepy.page {
 		return new Promise(async resolve => {
 			let form
 			if (page != 1) {
-				wx.showLoading({
-					title: '玩命加载中',
-				})
 				form = {
 					page: page,
 					pagesize: 8
@@ -331,17 +350,13 @@ export default class Index extends wepy.page {
 				}
 			}
 			Object.assign(form, this.sortObj)
+			this.isLoading = true
 			const {data: {list}} = await wepy.request({
 				url: api['houseList'],
 				data: form
 			})
-			if (list) {
-				list.forEach(ele => {
-					ele.unitPrice = (ele.sellPrice / ele.square).toFixed(2)
-					this.dataList.push(ele)
-				})
-			}
-			wx.hideLoading()
+			this.dataList = [...this.dataList, ...list]
+			this.isLoading = false
 			this.$apply()
 			resolve()
 		})
@@ -368,7 +383,7 @@ export default class Index extends wepy.page {
 		quitVIP() {
 			this.indexVIP = false
 			wx.setStorageSync('indexVIP', false)
-			this.refresh()
+			this.myInitIM()
 		}
 	}
 }

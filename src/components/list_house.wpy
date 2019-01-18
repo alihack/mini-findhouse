@@ -35,13 +35,6 @@
 				font-size: 22rpx;
 				color: #707476;
 			}
-			// .label {
-			// 	.label-auto(90rpx,30rpx);
-			// 	background: #b0d3f5;
-			// 	color:#fff;
-			// 	line-height: 30rpx;
-			// 	font-size: 22rpx;
-			// }
 			.price-total {
 				color:#f95640;
 				font-size: 30rpx;
@@ -56,18 +49,12 @@
 		border:none;
 	}
 }
-.nodata {
-	image {
-		width: 80rpx;
-		height: 80rpx;
-	}
-}
 </style>
 <template>
 <view>
 	<view class="main">
 		<view class="item" wx:for="{{dataList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})">
-			<image wx:if="{{item.photoList[2]}}" src="{{item.photoList[2]}}"></image>
+			<image wx:if="{{item.photoList[0]}}" src="{{item.photoList[0]}}"></image>
 			<image wx:else src="http://qimg.fangzi.xiaoyu.com/fangniu/index-default.jpg"></image>
 			<view class="detail">
 				<view class="title1">{{item.title}}</view>

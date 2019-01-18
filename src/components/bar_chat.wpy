@@ -147,11 +147,11 @@
 	<view class="fixed-bottom" style="{{isXPhone ? 'padding-bottom: 40rpx':''}}">
 		<view class="main">
 			<view class="main-left">
-				<image class="recorder-icon" src="{{showStartButton?'../images/input.png':'../images/audio.png'}}"  @tap="toggleRecorder"></image>
+				<!-- <image class="recorder-icon" src="{{showStartButton?'../images/input.png':'../images/audio.png'}}"  @tap="toggleRecorder"></image>
 				<button class="recorder-button {{isRecording? 'recording': ''}}" 
 						form-type="submit" plain
 						wx:if="{{showStartButton}}" @touchstart="recordStart" @touchend="recordEnd">{{buttonText}}
-				</button>
+				</button> -->
 				<input 
 					wx:if="{{!showStartButton}}"
 					placeholder="对Ta发送消息" 
@@ -160,11 +160,11 @@
 					value="{{msgText}}"/>
 			</view>
 			<view class="main-right">
-				<button form-type="submit" plain  @tap="addMore" class="add"><image class="add-icon" src="../images/add.png"></image></button>
+				<!-- <button form-type="submit" plain  @tap="addMore" class="add"><image class="add-icon" src="../images/add.png"></image></button> -->
 				<button class="send" plain form-type="submit" hidden="{{!showSend}}" @tap="sendMessage">发送</button>
 			</view>
 		</view>
-		<view class="addMore" wx:if="{{showMore}}">
+		<!-- <view class="addMore" wx:if="{{showMore}}">
 			<view class="item-wrap" @tap="addPhoto('album')">
 				<view class="item">
 					<image class="album" src="../images/album.png"></image>
@@ -177,7 +177,7 @@
 				</view>
 				<view class="text">摄影</view>
 			</view>
-		</view>
+		</view> -->
 	</view>
 	<!-- 正在录音遮罩 -->
 	<view wx:if="{{isRecording}}" class="shade">
