@@ -123,6 +123,7 @@ export default class Message extends wepy.page {
 		sessionStorage: [],
 		unreadList: [],
 		isNoData: true,
+		isAgent: false
 	}
 
 	computed = {
@@ -131,6 +132,8 @@ export default class Message extends wepy.page {
 	events = {
 	}
 	async onLoad() {
+		if (wepy.$instance.globalData.myUserInfo.type == '2') this.isAgent = true
+		this.$apply()
 	}
 	async onShow() {
 		this.sessionList = []
@@ -188,8 +191,15 @@ export default class Message extends wepy.page {
 							uid: ele.To_Account
 						}
 					})
-					item.avatar = userInfo.headimg
-					item.name = userInfo.nickname
+					if (this.isAgent) {
+						// 自己为经纪人，则列表对象为用户
+						item.avatar = userInfo.headimg
+						item.name = userInfo.nickname
+					} else {
+						// 列表对象为经纪人
+						item.avatar = userInfo.photoUrl
+						item.name = userInfo.name
+					}
 				} else {
 					console.log('无需重新获取头像，缓存中取')
 					this.sessionStorage.forEach(ses => {
@@ -226,7 +236,10 @@ export default class Message extends wepy.page {
 	}
 	methods = {
 		toChat({currentTarget: {dataset}}) {
-			wepy.navigateTo({url: `chat?fId=${dataset.id}&fAvatar=${dataset.avatar}&fName=${dataset.name}`})
+			console.log('dataset', dataset)
+			// 头像路径过长，存入缓存带参
+			wx.setStorageSync('fAvatar', dataset.avatar)
+			wepy.navigateTo({url: `chat?fId=${dataset.id}&fName=${dataset.name}`})
 		},
 		async submit({detail}) {
 			console.log('detail', detail)
