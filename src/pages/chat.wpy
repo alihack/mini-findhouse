@@ -178,7 +178,8 @@ export default class Chat extends wepy.page {
 		msgList: [],
 		msgLength: 1,
 		innerAudio: wepy.createInnerAudioContext(), // 播放语音实例
-		onLoading: false
+		onLoading: false,
+		lastContent: '' // 最后一条消息记录
 	}
 
 	computed = {
@@ -211,17 +212,21 @@ export default class Chat extends wepy.page {
 						if (!value.houseCard) {
 							if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
 								type = 'img'
+								this.lastContent = '[图片信息]'
 							} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
 								type = 'audio'
+								this.lastContent = '[语音信息]'
 							}
 							await this.msgController(value, false, type)
 						} else {
+							this.lastContent = '[房源信息]'
 							await this.msgController(value.houseCard, false, type)
 						}
 					}
 				})
 			}
 			await initIM(onMsgNotify)
+			wx.setStorageSync('IMByMessPage', false)
 			const data = await getC2CHistoryMsgs(this.friendId, true)
 			this.msgList = data.newMsgList
 			this.msgLength = data.Msglength
@@ -266,19 +271,23 @@ export default class Chat extends wepy.page {
 			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
 			await this.msgController(this.houseCard, true)
 		}
-		// 设置缓存中unread为0
-		const unreadList = wx.getStorageSync('unread')
-		if (unreadList) {
-			unreadList.forEach(ele => {
-				if (ele.fid == this.friendId) ele.number = 0
-			})
-			wx.setStorageSync('unread', unreadList)
-		}
 		this.onLoading = false
 		this.$apply()
 	}
 	onUnload () {
 		console.log('页面离开')
+		// 更新sessionStorage缓存
+		const sessionStorage = wx.getStorageSync('sessionStorage')
+		sessionStorage.forEach((ele, index) => {
+			if (ele.id == this.friendId) {
+				ele.unread = 0
+				ele.time = '刚刚'
+				ele.content = this.lastContent
+				sessionStorage.splice(index, 1)
+				sessionStorage.unshift(ele)
+				wx.setStorageSync('sessionStorage', sessionStorage)
+			}
+		})
 		this.innerAudio.stop()
 	}
 	msgController(value, isSelfSend, type) {
@@ -291,10 +300,13 @@ export default class Chat extends wepy.page {
 			} else {
 				if (type == 'img') {
 					item.img = 'http://' + value
+					this.lastContent = '[图片信息]'
 				} else if (type == 'audio') {
 					item.audio = 'http://' + value
+					this.lastContent = '[语音信息]'
 				} else {
 					item.html = value
+					this.lastContent = value
 				}
 			}
 			item.time = nowTime

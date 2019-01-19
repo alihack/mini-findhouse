@@ -270,31 +270,24 @@ const getAllUnread = (unreadList) => {
 		wx.hideTabBarRedDot({index: 1})
 	}
 }
-const getUnread = (contactList) => {
+const setSessionUnread = (contactList) => {
 	return new Promise(async resolve => {
-		let unread = []
 		// 将腾讯返回历史记录与后端服务器比较，获取未读数
-		if (!contactList) contactList = await getRecentContactList()
-		if (!contactList) {
-			console.log('无聊天记录')
-			resolve()
-			return
-		}
 		contactList.forEach(async (ele, contactIndex) => {
 			const {newMsgList} = await getC2CHistoryMsgs(ele.To_Account)
 			const {data} = await getMsgsFromServer(ele.To_Account)
 			const serverMsgList = data
-			console.log('c2cmsg', newMsgList)
-			console.log('servermsg', serverMsgList)
+			console.log('腾讯数据', newMsgList)
+			console.log('服务器数据', serverMsgList)
 			if (newMsgList.length == 0) {
 				// 腾讯无历史记录
-				unread.push({fid: ele.To_Account, number: 0})
+				ele.unread = 0
 			} else {
 				// 腾讯有历史记录
 				if (serverMsgList.length == 0) {
 					// 服务器无数据，为初次
 					console.log('全为新消息')
-					unread.push({fid: ele.To_Account, number: newMsgList.length - 1})
+					ele.unread = newMsgList.length
 				} else {
 					// 如果腾讯返回第一条数据时间比服务器最后一条时间晚，即后面全是新消息
 					const firstNewMsgDate = new Date(newMsgList[0].time)
@@ -303,20 +296,19 @@ const getUnread = (contactList) => {
 					const lastServerMsgTime = lastServerMsgDate.getTime()
 					if (firstNewMsgTime > lastServerMsgTime) {
 						console.log('全为新消息')
-						unread.push({fid: ele.To_Account, number: newMsgList.length - 1})
+						ele.unread = newMsgList.length
 					} else {
 						// 找到服务器最后一条时间与腾讯数据时间相同的一条
 						newMsgList.forEach((newItem, index) => {
 							if ((newItem.time + ':00') == serverMsgList[serverMsgList.length - 1].time) {
-								unread.push({fid: ele.To_Account, number: newMsgList.length - 1 - index})
+								ele.unread = newMsgList.length - index
 							}
 						})
 					}
 				}
 			}
 			if (contactIndex == contactList.length - 1) {
-				wx.setStorageSync('unread', unread)
-				resolve(unread)
+				resolve(contactList)
 			}
 		})
 	})
@@ -448,21 +440,6 @@ const convertCustomMsgToHtml = (msg) => {
 				case webim.MSG_ELEMENT_TYPE.TEXT:
 					html += content.getText()
 					break
-				// case webim.MSG_ELEMENT_TYPE.FACE:
-				// 	html += convertFaceMsgToHtml(content)
-				// 	break
-				// case webim.MSG_ELEMENT_TYPE.IMAGE:
-				// 	html += convertImageMsgToHtml(content)
-				// 	break
-				// case webim.MSG_ELEMENT_TYPE.SOUND:
-				// 	html += convertSoundMsgToHtml(content)
-				// 	break
-				// case webim.MSG_ELEMENT_TYPE.FILE:
-				// 	html += convertFileMsgToHtml(content)
-				// 	break
-				// case webim.MSG_ELEMENT_TYPE.LOCATION:// 暂不支持地理位置
-				// 	// html += convertLocationMsgToHtml(content);
-				// 	break
 				case webim.MSG_ELEMENT_TYPE.CUSTOM:
 					try {
 						html = {}
@@ -471,9 +448,6 @@ const convertCustomMsgToHtml = (msg) => {
 						console.log('e', e)
 					}
 					break
-				// case webim.MSG_ELEMENT_TYPE.GROUP_TIP:
-				// 	html += convertGroupTipMsgToHtml(content)
-				// 	break
 				default:
 					webim.Log.error('未知消息元素类型: elemType=' + type)
 					break
@@ -599,7 +573,7 @@ module.exports = {
 	initIM,
 	quitIM,
 	sendMessage,
-	getUnread,
+	setSessionUnread,
 	getAllUnread,
 	getC2CHistoryMsgs,
 	getRecentContactList,

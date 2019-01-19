@@ -35,6 +35,7 @@
 			&-right {
 				.flex;
 				flex-direction: column;
+				width: 110rpx;
 				.time {color:#b7b9bb}
 				.unread-wrap {
 					width: 35rpx;
@@ -109,7 +110,7 @@
 import wepy from 'wepy'
 import api from '../utils/api'
 import webim from '../utils/webim_wx'
-import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml, getUnread, getAllUnread} from '../utils/util'
+import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml, setSessionUnread} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
@@ -120,8 +121,6 @@ export default class Message extends wepy.page {
 
 	data = {
 		sessionList: [],
-		sessionStorage: [],
-		unreadList: [],
 		isNoData: true,
 		isAgent: false
 	}
@@ -136,21 +135,19 @@ export default class Message extends wepy.page {
 		this.$apply()
 	}
 	async onShow() {
+		wx.hideTabBarRedDot({index: 1})
 		this.sessionList = []
-		if (!this.unreadList) {
-			// 首页还未加载完
-			this.isNoData = true
-			return
-		}
 		wx.showLoading({title: '加载中'})
-		const onMsgNotify = (newMsgs) => {
-			console.log('列表页新信息', newMsgs)
-			wx.showTabBarRedDot({index: 1})
-			this.onGetUnread(newMsgs)
+		// 没有登录当前页面的IM时进行登录
+		const IMByMessPage = wx.getStorageSync('IMByMessPage')
+		if (!webim.checkLogin() || !IMByMessPage) {
+			await this.myInitIM()
+			wx.setStorageSync('IMByMessPage', true)
 		}
-		await initIM(onMsgNotify)
-		const sessionArry = await getRecentContactList()
-		if (sessionArry == undefined) {
+		// 首先判断有无会话列表
+		const contactList = await getRecentContactList()
+		if (contactList == undefined) {
+			console.log('无聊天记录')
 			this.isNoData = true
 			this.$apply()
 			wx.hideLoading()
@@ -158,58 +155,74 @@ export default class Message extends wepy.page {
 		} else {
 			this.isNoData = false
 		}
-		this.sessionStorage = wx.getStorageSync('sessionStorage')
-		if (!this.sessionStorage) getAllUnread(await getUnread(sessionArry))
-		await this.dataController(sessionArry)
+		// 有会话列表继续执行
+		const sessionStorage = wx.getStorageSync('sessionStorage')
+		console.log('sessionStorage', sessionStorage)
+		console.log('contalist', contactList)
+		if (sessionStorage) {
+			// 有数据缓存非第一次进来，且会话列表长度与缓存一致，无需重复进行数据处理
+			if (sessionStorage.length == contactList.length) {
+				console.log('会话列表长度与缓存一致，无需重复进行数据处理')
+				this.sessionList = sessionStorage
+				wx.hideLoading()
+				this.$apply()
+				return
+			}
+		}
+		const initSessionList = await setSessionUnread(contactList)
+		console.log('初始会话列表数据', initSessionList)
+		// 进一步数据处理（头像，文字，时间）
+		await this.dataController(initSessionList)
 		wx.hideLoading()
 		this.$apply()
 	}
-	onGetUnread(newMsgs) {
-		const sessMap = webim.MsgStore.sessMap()
-		console.log('sessMap', sessMap)
-		this.sessionList.forEach(async ele => {
-			ele.unread = sessMap[`C2C${ele.id}`].unread()
-			ele.time = '刚刚'
-			newMsgs.forEach(async msg => {
-				if (msg.fromAccount == ele.id) {
-					ele.content = await convertCustomMsgToHtml(msg)
-				}
-				this.$apply()
-			})
+	async myInitIM() {
+		return new Promise(async resolve => {
+			const onMsgNotify = (newMsgs) => {
+				console.log('列表页新信息', newMsgs)
+				wx.showTabBarRedDot({index: 1})
+				// const sessMap = webim.MsgStore.sessMap()
+				// console.log('sessMap', sessMap)
+				this.sessionList.forEach(async (ele, index) => {
+					if (newMsgs[0].fromAccount == ele.id) {
+						ele.unread = ele.unread + 1
+						ele.time = '刚刚'
+						ele.content = await convertCustomMsgToHtml(newMsgs[0])
+						this.sessionList.splice(index, 1)
+						this.sessionList.unshift(ele)
+						wx.setStorageSync('sessionStorage', this.sessionList)
+						this.$apply()
+						return
+					}
+				})
+			}
+			await initIM(onMsgNotify)
+			resolve()
 		})
 	}
 	async dataController(data) {
-		return new Promise(resolve => {
-			let sameToStroage
-			if (data.length == this.sessionStorage.length) sameToStroage = true
-			data.forEach(async ele => {
+		return new Promise(async resolve => {
+			const mySessionList = []
+			data.forEach(async (ele, index) => {
 				const item = {}
-				if (!sameToStroage) {
-					const {data: {userInfo}} = await wepy.request({
-						url: api['userInfo'],
-						data: {
-							uid: ele.To_Account
-						}
-					})
-					if (this.isAgent) {
-						// 自己为经纪人，则列表对象为用户
-						item.avatar = userInfo.headimg
-						item.name = userInfo.nickname
-					} else {
-						// 列表对象为经纪人
-						item.avatar = userInfo.photoUrl
-						item.name = userInfo.name
+				const {data: {userInfo}} = await wepy.request({
+					url: api['userInfo'],
+					data: {
+						uid: ele.To_Account
 					}
+				})
+				if (this.isAgent) {
+					// 自己为经纪人，则列表对象为用户
+					item.avatar = userInfo.headimg
+					item.name = userInfo.nickname
 				} else {
-					console.log('无需重新获取头像，缓存中取')
-					this.sessionStorage.forEach(ses => {
-						if (ele.To_Account == ses.id) {
-							item.avatar = ses.avatar
-							item.name = ses.name
-						}
-					})
+					// 列表对象为经纪人
+					item.avatar = userInfo.agentAvatar
+					item.name = userInfo.agentName
 				}
 				item.id = ele.To_Account
+				item.unread = ele.unread
+				item.initIndex = index
 				item.time = getDateDiff(ele.MsgTimeStamp * 1000)
 				if (ele.MsgShow == '[其他]') {
 					ele.MsgShow = '[房源信息]'
@@ -219,19 +232,19 @@ export default class Message extends wepy.page {
 					ele.MsgShow = '[语音信息]'
 				}
 				item.content = ele.MsgShow
-				// 注入初始未读计数
-				this.unreadList.forEach(ele2 => {
-					if (ele2.fid == item.id) item.unread = ele2.number
-				})
-				this.sessionList.push(item)
-				this.$apply()
+				mySessionList.push(item)
+				if (data.length - 1 == index) {
+					// 防止时间错乱
+					mySessionList.sort((a, b) => {
+						return a.initIndex - b.initIndex
+					})
+					this.sessionList = mySessionList
+					console.log('sessionList', this.sessionList)
+					wx.setStorageSync('sessionStorage', this.sessionList)
+					resolve()
+					this.$apply()
+				}
 			})
-			console.log('sessionList', this.sessionList)
-			setTimeout(() => {
-				// 将sessionList写入缓存
-				wx.setStorageSync('sessionStorage', this.sessionList)
-			}, 500)
-			resolve()
 		})
 	}
 	methods = {

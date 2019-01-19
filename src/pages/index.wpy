@@ -175,8 +175,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import webim from '../utils/webim_wx'
-import {getUserInfo, getUserId, initIM, getUnread, getAllUnread} from '../utils/util'
+import {getUserInfo, getUserId, getSign} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -201,7 +200,6 @@ export default class Index extends wepy.page {
 		scrollTop: 0,
 		page: 1,
 		indexVIP: false,
-		onLoading: false,  // 处理onLoad事件中
 		isLoading: false,  // 列表页加载中
 	}
 
@@ -211,7 +209,6 @@ export default class Index extends wepy.page {
 	events = {
 		finishAuthor () {
 			wx.showTabBar()
-			this.myInitIM()
 		},
 		sortHouses (sortObj) {
 			this.page = 1
@@ -248,31 +245,7 @@ export default class Index extends wepy.page {
 			}
 		}
 	}
-
-	async myInitIM() {
-		const onMsgNotify = (newMsgs) => {
-			console.log('主页收到新消息', newMsgs)
-			// 更新未读数
-			const unreadList = wx.getStorageSync('unread')
-			const sessMap = webim.MsgStore.sessMap()
-			unreadList.forEach(ele => {
-				ele.number = sessMap[`C2C${ele.fid}`].unread()
-			})
-			wx.setStorageSync('unread', unreadList)
-			getAllUnread(unreadList)
-			this.$apply()
-		}
-		await initIM(onMsgNotify)
-		// 计算总未读数
-		const unreadList = await getUnread()
-		getAllUnread(unreadList)
-		this.$apply()
-	}
 	async onShow () {
-		// 得检查是否登录,如从后台再切入前台需再次登录
-		if (!webim.checkLogin() && !this.onLoading) {
-			this.myInitIM()
-		}
 		this.indexVIP = wx.getStorageSync('indexVIP')
 		if (this.indexVIP) {
 			// 经纪人的专属主页
@@ -281,7 +254,6 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onLoad() {
-		this.onLoading = true
 		wx.hideTabBar()
 		this.getHouseList(this.page)
 		this.getMarket()
@@ -292,9 +264,9 @@ export default class Index extends wepy.page {
 			wx.showTabBar()
 			await getUserInfo()
 		}
-		this.myInitIM()
+		wx.showTabBarRedDot({index: 1})
 		wx.showShareMenu()
-		this.onLoading = false
+		await getSign()
 		this.$apply()
 	}
 
