@@ -78,7 +78,9 @@
 <template>
 	<view class="container">
 		<!-- 房屋详情 -->
-		<panelHouseDetail :house.sync="currentHouse" :isDept.sync="isDept"  :hasPhone.sync="hasPhone"></panelHouseDetail>
+		<panelHouseDetail :house.sync="currentHouse" :isDept.sync="isDept"  
+		:hasPhone.sync="hasPhone" :imgPreIndex.sync="imgPreIndex">
+		</panelHouseDetail>
 		<!-- 小区详情 -->
 		<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
 		<!-- 同小区房源 -->
@@ -164,7 +166,8 @@ export default class Detail extends wepy.page {
 		isDept: false, // 经纪人是否为店铺
 		showPoster: false,
 		hasPhone: true,
-		userInfo: {}
+		userInfo: {},
+		imgPreIndex: 0
 	}
 
 	events = {
@@ -173,10 +176,10 @@ export default class Detail extends wepy.page {
 		}
 	}
 	onShareAppMessage(ops) {
-		console.log('ops', ops)
+		console.log('分享', ops)
 		return {
 			title: this.currentHouse.title,
-			path: 'pages/index', // 点击分享消息是打开的页面
+			path: `pages/index?houseId=${this.currentHouse.propertyUuid}`, // 点击分享消息是打开的页面
 			success: (res) => {
 			// 转发成功
 			console.log('转发成功:' + JSON.stringify(res))
@@ -190,21 +193,23 @@ export default class Detail extends wepy.page {
 	}
 	getHouseInfo(id) {
 		return new Promise(async resolve => {
+			const uid = wx.getStorageSync('uid')
 			const {data} = await wepy.request({
 				url: api['houseInfo'],
 				data: {
 					propertyUuid: id,
-					uid: wepy.$instance.globalData.myUserInfo.uid,
+					uid: uid,
 				}
 			})
 			this.currentHouse = data
-			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 6)
+			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 8)
 			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
 			this.sameEstateHouses = data.same_estate
 			this.recommendEstateHouses = data.recommend_estate
 			this.currentEstate = data.estate
 			// 获取原图链接
 			const previewImgs = []
+			this.imgPreIndex = this.currentHouse.photoUrl.length - 1
 			this.currentHouse.photoUrl.forEach(ele => {
 				previewImgs.push(ele.split('|')[0])
 			})
@@ -235,7 +240,8 @@ export default class Detail extends wepy.page {
 		}
 		this.$apply()
 	}
-	async onLoad(option) {
+	async onLoad({id}) {
+		console.log('id', id)
 		this.userInfo = wepy.$instance.globalData.myUserInfo
 		if (!this.userInfo) {
 			console.log('首页数据还未加载完成')
@@ -243,10 +249,10 @@ export default class Detail extends wepy.page {
 			setTimeout(() => {
 				wx.hideLoading()
 				this.userInfo = wepy.$instance.globalData.myUserInfo
-				this.refresh(option.id)
+				this.refresh(id)
 			}, 1000)
 		} else {
-			this.refresh(option.id)
+			this.refresh(id)
 		}
 		wx.showShareMenu()
 		this.$apply()
@@ -280,9 +286,13 @@ export default class Detail extends wepy.page {
 				return
 			}
 			// 头像路径过长，存入缓存带参
-			wx.setStorageSync('fAvatar', house.headimg)
 			this.clickCount(2)
-			wepy.navigateTo({url: `chat?fId=${house.agentId}&fName=${house.employeeName1}`})
+			if (house.agentId) {
+				wx.setStorageSync('fAvatar', house.headimg)
+				wepy.navigateTo({url: `chat?fId=${house.agentId}&fName=${house.employeeName1}`})
+			} else {
+				wepy.showToast({title: '该经纪人暂未绑定', icon: 'none'})
+			}
 		},
 		chatOnPhone () {
 			if (this.currentHouse.agentId == wepy.$instance.globalData.myUserInfo.uid) {
@@ -338,6 +348,7 @@ export default class Detail extends wepy.page {
 				this.hasPhone = true
 				this.methods.chatOnLine()
 			} else {
+				console.log('请求失败')
 				wx.showToast({
 					title: '请求失败',
 					icon: 'none'

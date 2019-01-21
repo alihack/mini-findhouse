@@ -160,7 +160,7 @@
 		</view>
 		<sortBar :scrollTop.sync="scrollTop"></sortBar>
 		<houseList :dataList.sync="dataList" from="index"></houseList>
-		<view class="loading" wx:if="{{isLoading}}">
+		<view class="loading" wx:if="{{isLoading && dataList.length}}">
 			<image src="../images/loading.png"></image>
 			<view>玩命加载中</view>
 		</view>
@@ -201,6 +201,8 @@ export default class Index extends wepy.page {
 		page: 1,
 		indexVIP: false,
 		isLoading: false,  // 列表页加载中
+		houseId: '', // 从房源详情页分享进来Id
+		estateId: '', // 从小区详情页分享进来Id
 	}
 
 	computed = {
@@ -208,6 +210,13 @@ export default class Index extends wepy.page {
 
 	events = {
 		finishAuthor () {
+			if (this.houseId) {
+				// 房源详情页分享进来的
+				wepy.navigateTo({url: `detail?id=${this.houseId}`})
+			} else if (this.estateId) {
+				// 小区详情页分享进来的
+				wepy.navigateTo({url: `detail_estate?id=${this.estateId}`})
+			}
 			wx.showTabBar()
 		},
 		sortHouses (sortObj) {
@@ -253,20 +262,41 @@ export default class Index extends wepy.page {
 			return
 		}
 	}
-	async onLoad() {
+	async onLoad(option) {
 		wx.hideTabBar()
 		this.getHouseList(this.page)
 		this.getMarket()
-		const uid = await getUserId()
-		if (!uid) {
-			this.showAuthorModal = true
+		// 从分享进来的
+		if (JSON.stringify(option) != '{}') {
+			const uid = await getUserId()
+			if (!uid) {
+				this.showAuthorModal = true
+			} else {
+				wx.showTabBar()
+				if (option.houseId) {
+					// 房源详情页分享进来的
+					this.houseId = option.houseId
+					wepy.navigateTo({url: `detail?id=${option.houseId}`})
+				} else {
+					// 小区详情页分享进来的
+					this.estateId = option.estateId
+					wepy.navigateTo({url: `detail_estate?id=${option.estateId}`})
+				}
+				await getUserInfo()
+			}
 		} else {
-			wx.showTabBar()
-			await getUserInfo()
+			// 正常进来
+			const uid = await getUserId()
+			if (!uid) {
+				this.showAuthorModal = true
+			} else {
+				wx.showTabBar()
+				await getUserInfo()
+			}
+			wx.showTabBarRedDot({index: 1})
+			wx.showShareMenu()
+			await getSign()
 		}
-		wx.showTabBarRedDot({index: 1})
-		wx.showShareMenu()
-		await getSign()
 		this.$apply()
 	}
 
@@ -327,7 +357,9 @@ export default class Index extends wepy.page {
 				url: api['houseList'],
 				data: form
 			})
-			this.dataList = [...this.dataList, ...list]
+			if (list) {
+				this.dataList = [...this.dataList, ...list]
+			}
 			this.isLoading = false
 			this.$apply()
 			resolve()

@@ -281,10 +281,12 @@ export default class Chat extends wepy.page {
 		sessionStorage.forEach((ele, index) => {
 			if (ele.id == this.friendId) {
 				ele.unread = 0
-				ele.time = '刚刚'
-				ele.content = this.lastContent
-				sessionStorage.splice(index, 1)
-				sessionStorage.unshift(ele)
+				if (this.lastContent) {
+					ele.time = '刚刚'
+					ele.content = this.lastContent
+					sessionStorage.splice(index, 1)
+					sessionStorage.unshift(ele)
+				}
 				wx.setStorageSync('sessionStorage', sessionStorage)
 			}
 		})

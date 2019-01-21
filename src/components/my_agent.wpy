@@ -101,9 +101,9 @@
 <template>
 	<view class="agent">
 		<view class="header">
-			<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg" class="avatar"></image>
+			<image src="{{userInfo.agentAvatar}}" class="avatar"></image>
 			<view class="detail">
-				<view class="name">{{userInfo.name}}</view>
+				<view class="name">{{userInfo.agentName}}</view>
 				<view class="phone">{{userInfo.mobile}}</view>
 			</view>
 			<form bindsubmit="submit" report-submit="true">

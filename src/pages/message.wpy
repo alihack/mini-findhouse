@@ -138,7 +138,7 @@ export default class Message extends wepy.page {
 		wx.hideTabBarRedDot({index: 1})
 		this.sessionList = []
 		wx.showLoading({title: '加载中'})
-		// 没有登录当前页面的IM时进行登录
+		// 没有登录当前页面的IM时进行
 		const IMByMessPage = wx.getStorageSync('IMByMessPage')
 		if (!webim.checkLogin() || !IMByMessPage) {
 			await this.myInitIM()
@@ -211,6 +211,11 @@ export default class Message extends wepy.page {
 						uid: ele.To_Account
 					}
 				})
+				if (!userInfo) {
+					// 修复对象为undefined
+					resolve()
+					return
+				}
 				if (this.isAgent) {
 					// 自己为经纪人，则列表对象为用户
 					item.avatar = userInfo.headimg

@@ -15,7 +15,6 @@ const getUserId = (isForced) => {
 		}
 		wx.login({
 			success: async (res) => {
-				console.log('wx.login登录')
 				if (res.code) {
 					console.log(res)
 					const {data} = await wepy.request({
@@ -301,13 +300,15 @@ const setSessionUnread = (contactList) => {
 						// 找到服务器最后一条时间与腾讯数据时间相同的一条
 						newMsgList.forEach((newItem, index) => {
 							if ((newItem.time + ':00') == serverMsgList[serverMsgList.length - 1].time) {
-								ele.unread = newMsgList.length - index
+								console.log('index', index)
+								ele.unread = newMsgList.length - 1 - index
 							}
 						})
 					}
 				}
 			}
 			if (contactIndex == contactList.length - 1) {
+				console.log('contactaList', contactList)
 				resolve(contactList)
 			}
 		})

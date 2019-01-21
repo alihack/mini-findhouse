@@ -81,7 +81,7 @@ export default class My extends wepy.page {
 		// 手机号脱敏处理
 		const mobile = this.userInfo.mobile
 		if (this.userInfo.mobile.length == 11) this.userInfo.mobile = mobile.replace(mobile.slice(3, 9), '****')
-		if (this.userInfo.deptName) this.isAgent = true
+		if (this.userInfo.type == '2') this.isAgent = true
 		this.$apply()
 	}
 	async waitIndex() {
@@ -113,7 +113,13 @@ export default class My extends wepy.page {
 		}
 		this.$apply()
 	}
-
+	onShow() {
+		// 在其他页面注册了
+		if (this.userInfo != wepy.$instance.globalData.myUserInfo) {
+			console.log('在其他页面注册了')
+			this.refresh()
+		}
+	}
 	methods = {
 	}
 }

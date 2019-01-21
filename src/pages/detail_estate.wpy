@@ -223,14 +223,31 @@ export default class detailEstate extends wepy.page {
 
 	events = {
 	}
+	onShareAppMessage(ops) {
+		console.log('分享', ops)
+		return {
+			title: this.currentEstate.estate_name,
+			path: `pages/index?estateId=${this.currentEstate.estate_uuid}`, // 点击分享消息是打开的页面
+			success: (res) => {
+			// 转发成功
+			console.log('转发成功:' + JSON.stringify(res))
+			//   var shareTickets = res.shareTickets
+			},
+			fail: (err) => {
+			// 转发失败
+			console.log('转发失败:' + JSON.stringify(err))
+			}
+		}
+	}
 
 	async onLoad({id}) {
 		console.log('id', id)
+		const uid = wx.getStorageSync('uid')
 		const {data} = await wepy.request({
 			url: api['estateInfo'],
 			data: {
 				estateUuid: id,
-				uid: wepy.$instance.globalData.myUserInfo.uid,
+				uid: uid,
 			}
 		})
 		this.currentEstate = data
