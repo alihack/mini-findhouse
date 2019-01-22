@@ -165,8 +165,7 @@ export default class Footer extends wepy.component {
 
 	methods = {
 		toHome() {
-			wepy.showToast({title: '正在开发中', icon: 'none'})
-			// wepy.navigateTo({url: 'agent_home'})
+			wepy.navigateTo({url: 'agent_home'})
 		},
 		async submit({detail}) {
 			console.log('detail', detail)

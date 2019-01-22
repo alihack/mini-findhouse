@@ -207,6 +207,7 @@ export default class barSort extends wepy.component {
 		this.getTop()
 	}
 	clearResult () {
+		console.log('重置搜索栏')
 		this.resultObj = {}
 		// 重置数据，深拷贝
 		this.sortData = []

@@ -125,7 +125,7 @@
 			</block>
 		</view>
 		<!-- 经纪人生成海报悬浮球 -->
-		<!-- <view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view> -->
+		<view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view>
 		<!-- 经纪人生成海报 -->
 		<poster wx:if="{{showPoster}}" :house.sync="currentHouse"></poster>
 	</view>
@@ -167,7 +167,8 @@ export default class Detail extends wepy.page {
 		showPoster: false,
 		hasPhone: true,
 		userInfo: {},
-		imgPreIndex: 0
+		imgPreIndex: 0,
+		agentId: '',
 	}
 
 	events = {
@@ -194,12 +195,17 @@ export default class Detail extends wepy.page {
 	getHouseInfo(id) {
 		return new Promise(async resolve => {
 			const uid = wx.getStorageSync('uid')
+			this.agentId = wx.getStorageSync('agentId')
+			let form = {
+				propertyUuid: id,
+				uid: uid,
+			}
+			if (this.agentId) {
+				form.agentId = this.agentId
+			}
 			const {data} = await wepy.request({
 				url: api['houseInfo'],
-				data: {
-					propertyUuid: id,
-					uid: uid,
-				}
+				data: form
 			})
 			this.currentHouse = data
 			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 8)
@@ -311,7 +317,6 @@ export default class Detail extends wepy.page {
 		},
 		getPoster() {
 			this.showPoster = true
-			console.log('点击海报')
 			this.$invoke('poster', 'getPoster')
 			this.$apply()
 		},

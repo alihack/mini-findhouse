@@ -125,9 +125,9 @@
 <template>
 	<view class="container">
 		<view class="header">
-			<image src="http://qimg.fangzi.xiaoyu.com/fangniu/lu.jpeg" class="avatar"></image>
+			<image src="{{userInfo.agentAvatar}}" class="avatar"></image>
 			<view class="detail">
-				<view class="name">{{userInfo.name}}</view>
+				<view class="name">{{userInfo.agentName}}</view>
 				<view class="phone">{{userInfo.mobile}}</view>
 			</view>
 		</view>
@@ -196,7 +196,7 @@ export default class AgentHome extends wepy.page {
 			const {data: {list}} = await wepy.request({
 				url: api['agentHouses'],
 				data: {
-					uid: wepy.$instance.globalData.myUserInfo.uid,
+					agentId: wepy.$instance.globalData.myUserInfo.uid,
 				}
 			})
 			if (list) {
@@ -324,7 +324,7 @@ export default class AgentHome extends wepy.page {
 				return
 			}
 			// 路径后不能带参数
-			wx.setStorageSync('indexVIP', true)
+			wx.setStorageSync('agentId', wepy.$instance.globalData.myUserInfo.uid)
 			wepy.switchTab({url: 'index'})
 		}
 	}

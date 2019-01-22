@@ -3,17 +3,17 @@
 .canvas {
 	width:100%;
 	.poster {
-		width: 100%;
-		height: 1334rpx;
+		width: 375px;
+		height: 600px;
 	}
 	.canvasImg {
 		position: fixed;
 		display: flex;
 		flex-direction: column;
-		width: 500rpx;
-		height: 800rpx;
+		width: 550rpx;
+		height: 880rpx;
 		top: 80rpx;
-		left: 135rpx;
+		left: 110rpx;
 		z-index: 2000;
 	}
 	.shade {
@@ -60,7 +60,7 @@
 </style>
 <template>
 <view class="canvas">
-	<block wx:if="{{showCanvas}}" >
+	<block wx:if="{{showCanvas}}">
 		<canvas class="poster" canvas-id="poster"></canvas>
 	</block>
 	<block>
@@ -86,52 +86,40 @@ import wepy from 'wepy'
 import api from '../utils/api'
 export default class Poster extends wepy.component {
 	props = {
-		house: Object
+		house: Object,
+		systemInfo: Object
 	}
 	data = {
 		userInfo: {},
 		codeUrl: '',
 		tempFilePath: '',
 		showCanvas: true,
-		backgroundImg: 'https://qimg.fangzi.xiaoyu.com/fangniu/poster.png',
+		houseImgs: [],
+		isCreated: false
 	}
-	onShareAppMessage(ops) {
-		console.log('ops', ops)
-		if (ops.from == 'button') {
-			// 来自页面内转发按钮
-			console.log(ops.target)
-		}
-		return {
-			title: '分享给好友',
-			path: 'pages/detail', // 点击分享消息是打开的页面
-			imageUrl: this.tempFilePath,
-			success: (res) => {
-			// 转发成功
-			console.log('转发成功:' + JSON.stringify(res))
-			//   var shareTickets = res.shareTickets
-			},
-			fail: (err) => {
-			// 转发失败
-			console.log('转发失败:' + JSON.stringify(err))
-			}
-		}
-	}
+
 	async getPoster () {
+		if (this.isCreated) return
 		wx.showLoading({
 			title: '急速生成中',
 		})
 		this.userInfo = wepy.$instance.globalData.myUserInfo
 		await this.getQRCode()
 		await this.getImagesInfo()
-		// await this.initCanvas()
+		await this.initCanvas()
 		wx.hideLoading()
+		this.isCreated = true
 		this.$apply()
 	}
 	async getImagesInfo () {
-		this.userInfo.headimg = await this.getImageInfo(this.userInfo.headimg)
-		this.backgroundImg = await this.getImageInfo(this.backgroundImg)
-		this.houseImgs.forEach(async ele => {
-			ele = await this.getImageInfo(ele)
+		return new Promise(async resolve => {
+			this.house.headimg = await this.getImageInfo(this.userInfo.headimg)
+			this.houseImgs = this.house.photoUrl.slice(0, 4)
+			this.houseImgs.forEach(async ele => {
+				ele = await this.getImageInfo(ele)
+			})
+			this.$apply()
+			resolve()
 		})
 	}
 	getImageInfo(src) {
@@ -140,8 +128,6 @@ export default class Poster extends wepy.component {
 			wx.getImageInfo({
 				src: src,
 				success: (res) => {
-					console.log('src')
-					console.log('res', res.path)
 					resolve(res.path)
 				}
 			})
@@ -150,17 +136,17 @@ export default class Poster extends wepy.component {
 	initCanvas() {
 		return new Promise(resolve => {
 			const ctx = wx.createCanvasContext('poster')
-			ctx.drawImage(this.userInfo.headimg, 132, 550, 35, 35) // 画经纪人头像
-			ctx.drawImage(this.backgroundImg, 0, 0, 375, 600)   // 画海报
-			ctx.drawImage(this.house.photoList[0].photoUrl, 40, 100, 142, 90) // 画房源图片1
-			ctx.drawImage(this.house.photoList[1].photoUrl, 193, 100, 142, 90) // 画房源图片2
-			ctx.drawImage(this.house.photoList[2].photoUrl, 40, 200, 142, 90) // 画房源图片3
-			ctx.drawImage(this.house.photoList[3].photoUrl, 193, 200, 142, 90) // 画房源图片4
+			ctx.drawImage(this.house.headimg, 131.5, 549, 35.5, 35.5) // 画经纪人头像
+			ctx.drawImage('../images/poster.png', 0, 0, 375, 600)   // 画海报
 			ctx.drawImage(this.codeUrl, 155, 400, 65, 65) // 小程序二维码
+			ctx.drawImage(this.houseImgs[0], 40, 100, 142, 90) // 画房源图片1
+			ctx.drawImage(this.houseImgs[1], 193, 100, 142, 90) // 画房源图片2
+			ctx.drawImage(this.houseImgs[2], 40, 200, 142, 90) // 画房源图片3
+			ctx.drawImage(this.houseImgs[3], 193, 200, 142, 90) // 画房源图片4
 			ctx.drawImage('../images/approve.png', 285, 280, 70, 60) // 画房源认证
 			ctx.setFontSize(14)
 			ctx.setTextAlign('center')
-			ctx.fillText('瑞景公园自主精装4房，看中区采光', 187, 320, 250)
+			ctx.fillText(this.house.title, 187, 320, 250)
 			ctx.save()
 			// 绘制详情标题
 			ctx.setFontSize(12)
@@ -173,23 +159,23 @@ export default class Poster extends wepy.component {
 			// 绘制详情内容
 			ctx.setFontSize(12)
 			ctx.setFillStyle('#ce864c')
-			ctx.fillText('1360万', 84, 382)
-			ctx.fillText('4室2厅2卫', 186, 382)
-			ctx.fillText('158.85m²', 280, 382)
+			ctx.fillText(`${this.house.sellPrice}`, 84, 382)
+			ctx.fillText(`${this.house.countF}室${this.house.countT}厅${this.house.countW}卫`, 186, 382)
+			ctx.fillText(`${this.house.square}m²`, 280, 382)
 			ctx.restore()
 			// 绘制经纪人信息
 			ctx.save()
 			ctx.setTextAlign('left')
 			ctx.setFillStyle('#fff')
 			ctx.setFontSize(13)
-			ctx.fillText('陈立', 174, 566)
+			ctx.fillText(`${this.house.employeeName1}`, 174, 566)
 			// ctx.fillText(this.userInfo.name, 174, 566)
 			ctx.restore()
 			ctx.save()
 			ctx.setFillStyle('#fff')
 			ctx.setTextAlign('left')
 			ctx.setFontSize(10)
-			ctx.fillText('小鱼网', 174, 580)
+			ctx.fillText(`${this.house.deptName1}`, 174, 580)
 			// ctx.fillText(this.userInfo.deptName, 174, 580)
 			ctx.restore()
 			// 在draw回调里才不会绘制空白

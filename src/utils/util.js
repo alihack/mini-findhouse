@@ -15,7 +15,6 @@ const getUserId = (isForced) => {
 		}
 		wx.login({
 			success: async (res) => {
-				console.log('调用一次wx.login')
 				if (res.code) {
 					console.log(res)
 					const {data} = await wepy.request({
@@ -66,7 +65,6 @@ const getUserInfo = () => {
 		wepy.$instance.globalData.myUserInfo = userInfo
 		loginInfo.identifierNick = userInfo.nickname
 		loginInfo.identifierAvatar = userInfo.headimg
-		console.log('loginInfo', loginInfo)
 		console.log('修改后的全局数据', wepy.$instance.globalData)
 		resolve()
 	})

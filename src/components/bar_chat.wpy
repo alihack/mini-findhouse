@@ -221,7 +221,6 @@ export default class barChat extends wepy.component {
 	onLoad() {
 		wx.getSystemInfo({
 			success: (res) => {
-				console.log('res.band', res.model)
 				if (res.model.indexOf('X') != -1) this.isXPhone = true
 				this.$apply()
 			}

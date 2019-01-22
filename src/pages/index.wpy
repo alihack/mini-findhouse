@@ -168,7 +168,7 @@
 		<!-- 授权弹窗 -->
 		<authorModal :showAuthorModal.sync="showAuthorModal"></authorModal>
 		<!-- 退出专属主页 -->
-		<view class="quitVIP" wx:if="{{indexVIP}}" @tap="quitVIP">退出</view>
+		<view class="quitVIP" wx:if="{{agentId}}" @tap="quitVIP">退出</view>
 	</view>
 </template>
 
@@ -199,10 +199,11 @@ export default class Index extends wepy.page {
 		showAuthorModal: false,
 		scrollTop: 0,
 		page: 1,
-		indexVIP: false,
 		isLoading: false,  // 列表页加载中
 		houseId: '', // 从房源详情页分享进来Id
 		estateId: '', // 从小区详情页分享进来Id
+		agentId: '', // 经纪人专属主页的经纪人Id
+		isShareFrom: false
 	}
 
 	computed = {
@@ -223,7 +224,7 @@ export default class Index extends wepy.page {
 			this.page = 1
 			this.sortObj = sortObj
 			this.dataList = []
-			this.getHouseList(this.page)
+			this.getHouseList()
 		}
 	}
 	// 监听页面滚动
@@ -240,9 +241,14 @@ export default class Index extends wepy.page {
 	}
 	onShareAppMessage(ops) {
 		console.log('ops', ops)
+		let path = 'pages/index'
+		if (this.agentId) {
+			// 经纪人专属主页
+			path = `pages/index?agentId=${this.agentId}`
+		}
 		return {
 			title: '真房源找房牛，省钱省时间',
-			path: 'pages/index', // 点击分享消息是打开的页面
+			path: path, // 点击分享消息是打开的页面
 			success: (res) => {
 			// 转发成功
 			console.log('转发成功:' + JSON.stringify(res))
@@ -255,20 +261,28 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onShow () {
-		this.indexVIP = wx.getStorageSync('indexVIP')
-		if (this.indexVIP) {
+		// 分享进来的，不继续执行
+		if (this.isShareFrom) return
+		this.agentId = wx.getStorageSync('agentId')
+		if (this.agentId) {
 			// 经纪人的专属主页
-			await this.getAgentHouses()
+			this.sortObj = {}
+			this.dataList = []
+			this.$invoke('sortBar', 'clearResult')
+			await this.getHouseList(this.agentId)
+			this.$apply()
 			return
 		}
 	}
 	async onLoad(option) {
-		this.getHouseList(this.page)
 		this.getMarket()
+		this.getHouseList()
 		// 从分享进来的
 		if (JSON.stringify(option) != '{}') {
 			this.houseId = option.houseId
 			this.estateId = option.estateId
+			this.agentId = option.agentId
+			this.isShareFrom = true
 			const uid = await getUserId()
 			if (!uid) {
 				wx.hideTabBar()
@@ -277,9 +291,14 @@ export default class Index extends wepy.page {
 				if (option.houseId) {
 					// 房源详情页分享进来的
 					wepy.navigateTo({url: `detail?id=${option.houseId}`})
-				} else {
+				} else if (option.estateId) {
 					// 小区详情页分享进来的
 					wepy.navigateTo({url: `detail_estate?id=${option.estateId}`})
+				} else if (option.agentId) {
+					// 经纪人主页分享进来的
+					console.log('经纪人主页分享进来的')
+					this.dataList = []
+					this.getHouseList(this.agentId)
 				}
 				await getUserInfo()
 			}
@@ -318,39 +337,16 @@ export default class Index extends wepy.page {
 		})
 	}
 
-	getAgentHouses() {
+	getHouseList() {
 		return new Promise(async resolve => {
-			const {data: {list}} = await wepy.request({
-				url: api['agentHouses'],
-				data: {
-					uid: wepy.$instance.globalData.myUserInfo.uid,
-				}
-			})
-			this.dataList = list
-			this.dataList.forEach(ele => {
-				ele.propertyUuid = ele.property_uuid
-				this.$apply()
-			})
-			resolve()
-			this.$apply()
-		})
-	}
-
-	getHouseList(page) {
-		return new Promise(async resolve => {
-			let form
-			if (page != 1) {
-				form = {
-					page: page,
-					pagesize: 8
-				}
-			} else {
-				// 初次加载
-				form = {
-					page: page,
-					pagesize: 4
-				}
+			let form = {
+				page: this.page,
+				pagesize: 8,
 			}
+			if (this.agentId) {
+				form.agentId = this.agentId
+			}
+			if (this.page == 1) form.pagesize = 4
 			Object.assign(form, this.sortObj)
 			this.isLoading = true
 			const {data: {list}} = await wepy.request({
@@ -385,8 +381,8 @@ export default class Index extends wepy.page {
 			})
 		},
 		quitVIP() {
-			this.indexVIP = false
-			wx.setStorageSync('indexVIP', false)
+			this.agentId = ''
+			wx.setStorageSync('agentId', '')
 			this.myInitIM()
 		}
 	}
