@@ -134,7 +134,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {convertTime, getUserInfo, checkSession} from '../utils/util'
+import {convertTime, getUserInfo, getUserId} from '../utils/util'
 import panelHouseDetail from '../components/panel_houseDetail'
 import panelEstateDetail from '../components/panel_estateDetail'
 import panelSource from '../components/panel_source'
@@ -215,8 +215,10 @@ export default class Detail extends wepy.page {
 			})
 			this.currentHouse.previewImgs = previewImgs
 			// 对小区图片进行处理
-			const firstImg = this.currentEstate.photo_url[0]
-			if (!firstImg || firstImg == ' ') this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
+			if (this.currentEstate.photo_url == '暂无') {
+				this.currentEstate.photo_url = []
+				this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
+			}
 			if ((data.phoneList[0].indexOf('-') != -1) || data.phoneList[0].length < 11) this.isDept = true
 			// 如果是经纪人专属主页，修改底部联系人为自己
 			this.indexVIP = wx.getStorageSync('indexVIP')
@@ -331,7 +333,7 @@ export default class Detail extends wepy.page {
 			}
 			console.log(detail)
 			wx.showLoading({title: '授权中'})
-			await checkSession()
+			await getUserId(true)
 			const res = await wepy.request({
 				url: api['userMobile'],
 				method: 'POST',

@@ -210,6 +210,7 @@ export default class Index extends wepy.page {
 
 	events = {
 		finishAuthor () {
+			wx.showTabBar()
 			if (this.houseId) {
 				// 房源详情页分享进来的
 				wepy.navigateTo({url: `detail?id=${this.houseId}`})
@@ -217,7 +218,6 @@ export default class Index extends wepy.page {
 				// 小区详情页分享进来的
 				wepy.navigateTo({url: `detail_estate?id=${this.estateId}`})
 			}
-			wx.showTabBar()
 		},
 		sortHouses (sortObj) {
 			this.page = 1
@@ -263,23 +263,22 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onLoad(option) {
-		wx.hideTabBar()
 		this.getHouseList(this.page)
 		this.getMarket()
 		// 从分享进来的
 		if (JSON.stringify(option) != '{}') {
+			this.houseId = option.houseId
+			this.estateId = option.estateId
 			const uid = await getUserId()
 			if (!uid) {
+				wx.hideTabBar()
 				this.showAuthorModal = true
 			} else {
-				wx.showTabBar()
 				if (option.houseId) {
 					// 房源详情页分享进来的
-					this.houseId = option.houseId
 					wepy.navigateTo({url: `detail?id=${option.houseId}`})
 				} else {
 					// 小区详情页分享进来的
-					this.estateId = option.estateId
 					wepy.navigateTo({url: `detail_estate?id=${option.estateId}`})
 				}
 				await getUserInfo()
@@ -288,6 +287,7 @@ export default class Index extends wepy.page {
 			// 正常进来
 			const uid = await getUserId()
 			if (!uid) {
+				wx.hideTabBar()
 				this.showAuthorModal = true
 			} else {
 				wx.showTabBar()

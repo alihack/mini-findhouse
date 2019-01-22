@@ -15,6 +15,7 @@ const getUserId = (isForced) => {
 		}
 		wx.login({
 			success: async (res) => {
+				console.log('调用一次wx.login')
 				if (res.code) {
 					console.log(res)
 					const {data} = await wepy.request({

@@ -253,7 +253,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {checkSession, getUserInfo} from '../utils/util'
+import {getUserId, getUserInfo} from '../utils/util'
 export default class panelHouseDetail extends wepy.component {
 	props = {
 		house: Object,
@@ -362,9 +362,13 @@ export default class panelHouseDetail extends wepy.component {
 				return
 			}
 			// 头像路径过长，存入缓存带参
-			wx.setStorageSync('fAvatar', this.house.headimg)
 			this.clickCount(2)
-			wepy.navigateTo({url: `chat?fId=${this.house.agentId}&fName=${this.house.employeeName1}`})
+			if (this.house.agentId) {
+				wx.setStorageSync('fAvatar', this.house.headimg)
+				wepy.navigateTo({url: `chat?fId=${this.house.agentId}&fName=${this.house.employeeName1}`})
+			} else {
+				wepy.showToast({title: '该经纪人暂未绑定', icon: 'none'})
+			}
 		},
 		async submit({detail}) {
 			console.log('detail', detail)
@@ -384,7 +388,7 @@ export default class panelHouseDetail extends wepy.component {
 			}
 			console.log(detail)
 			wx.showLoading({title: '授权中'})
-			await checkSession()
+			await getUserId(true)
 			const res = await wepy.request({
 				url: api['userMobile'],
 				method: 'POST',
