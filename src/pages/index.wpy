@@ -168,7 +168,7 @@
 		<!-- 授权弹窗 -->
 		<authorModal :showAuthorModal.sync="showAuthorModal"></authorModal>
 		<!-- 退出专属主页 -->
-		<view class="quitVIP" wx:if="{{agentId}}" @tap="quitVIP">退出</view>
+		<view class="quitVIP" wx:if="{{showQuitVIP}}" @tap="quitVIP">退出</view>
 	</view>
 </template>
 
@@ -203,7 +203,8 @@ export default class Index extends wepy.page {
 		houseId: '', // 从房源详情页分享进来Id
 		estateId: '', // 从小区详情页分享进来Id
 		agentId: '', // 经纪人专属主页的经纪人Id
-		isShareFrom: false
+		isShareFrom: false,
+		showQuitVIP: false
 	}
 
 	computed = {
@@ -261,14 +262,20 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onShow () {
+		// 退出专属主页
+		const toQuitVIP = wx.getStorageSync('toQuitVIP')
+		if (toQuitVIP) this.getHouseList()
 		// 分享进来的，不继续执行
 		if (this.isShareFrom) return
+		// 经纪人自己的专属主页
 		this.agentId = wx.getStorageSync('agentId')
 		if (this.agentId) {
-			// 经纪人的专属主页
 			this.sortObj = {}
 			this.dataList = []
+			this.page = 1
+			this.showQuitVIP = true
 			this.$invoke('sortBar', 'clearResult')
+			console.log('onshow分享进来的')
 			await this.getHouseList(this.agentId)
 			this.$apply()
 			return
@@ -276,18 +283,25 @@ export default class Index extends wepy.page {
 	}
 	async onLoad(option) {
 		this.getMarket()
-		this.getHouseList()
 		// 从分享进来的
 		if (JSON.stringify(option) != '{}') {
+			this.isShareFrom = true
+			await this.getHouseList()
 			this.houseId = option.houseId
 			this.estateId = option.estateId
 			this.agentId = option.agentId
-			this.isShareFrom = true
 			const uid = await getUserId()
 			if (!uid) {
 				wx.hideTabBar()
 				this.showAuthorModal = true
 			} else {
+				// 海报分享进来的
+				if (option.houseId && option.agentId) {
+					wepy.navigateTo({url: `detail?id=${option.houseId}`})
+					wx.setStorageSync('agentId', this.agentId)
+					await getUserInfo()
+					return
+				}
 				if (option.houseId) {
 					// 房源详情页分享进来的
 					wepy.navigateTo({url: `detail?id=${option.houseId}`})
@@ -298,12 +312,15 @@ export default class Index extends wepy.page {
 					// 经纪人主页分享进来的
 					console.log('经纪人主页分享进来的')
 					this.dataList = []
+					this.page = 1
+					wx.setStorageSync('agentId', this.agentId)
 					this.getHouseList(this.agentId)
 				}
 				await getUserInfo()
 			}
 		} else {
 			// 正常进来
+			this.getHouseList()
 			const uid = await getUserId()
 			if (!uid) {
 				wx.hideTabBar()
@@ -383,7 +400,10 @@ export default class Index extends wepy.page {
 		quitVIP() {
 			this.agentId = ''
 			wx.setStorageSync('agentId', '')
-			this.myInitIM()
+			this.showQuitVIP = false
+			this.page = 1
+			this.dataList = []
+			this.getHouseList()
 		}
 	}
 }

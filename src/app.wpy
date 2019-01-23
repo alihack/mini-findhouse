@@ -147,7 +147,7 @@ export default class extends wepy.app {
 		myUserInfo: null
 	}
 	async onLaunch() {
-		wx.clearStorageSync()  // 清除缓存
+		// wx.clearStorageSync()  // 清除缓存
 		wx.setStorageSync('toQuitIM', true)
 	}
 
@@ -157,9 +157,13 @@ export default class extends wepy.app {
 		const quitIM = wx.getStorageSync('toQuitIM')
 		console.log('quitIm', quitIM)
 		if (quitIM) {
+			// 普通页面的退出
+			wx.setStorageSync('toQuitVIP', true)
 			webim.logout(res => {
 				console.log('退出', res)
 			})
+		} else {
+			// 预览照片的退出
 		}
 	}
 
