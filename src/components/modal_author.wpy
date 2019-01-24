@@ -101,8 +101,8 @@ export default class modalAuthor extends wepy.component {
 								}
 							})
 							wx.hideLoading()
-							await getUserId()
-							await getUserInfo()
+							await getUserId(true)
+							await getUserInfo(true)
 							this.$emit('finishAuthor')
 							this.showAuthorModal = false
 							this.$apply()

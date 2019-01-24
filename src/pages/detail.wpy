@@ -161,14 +161,12 @@ export default class Detail extends wepy.page {
 		currentEstate: {},
 		sameEstateHouses: [],
 		recommendEstateHouses: [],
-		indexVIP: false,
 		isAgent: false,
 		isDept: false, // 经纪人是否为店铺
 		showPoster: false,
 		hasPhone: true,
 		userInfo: {},
 		imgPreIndex: 0,
-		agentId: '',
 	}
 
 	events = {
@@ -195,13 +193,17 @@ export default class Detail extends wepy.page {
 	getHouseInfo(id) {
 		return new Promise(async resolve => {
 			const uid = wx.getStorageSync('uid')
-			this.agentId = wx.getStorageSync('agentId')
+			const aid = wx.getStorageSync('aid')
+			const aidByShare = wx.getStorageSync('aidByShare')
 			let form = {
 				propertyUuid: id,
 				uid: uid,
 			}
-			if (this.agentId) {
-				form.agentId = this.agentId
+			// 本身为经纪人，或者是经纪人分享进来的
+			if (aid) {
+				form.agentId = aid
+			} else if (aidByShare) {
+				form.agentId = aidByShare
 			}
 			const {data} = await wepy.request({
 				url: api['houseInfo'],
@@ -226,13 +228,6 @@ export default class Detail extends wepy.page {
 				this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
 			}
 			if ((data.phoneList[0].indexOf('-') != -1) || data.phoneList[0].length < 11) this.isDept = true
-			// 如果是经纪人专属主页，修改底部联系人为自己
-			this.indexVIP = wx.getStorageSync('indexVIP')
-			if (this.indexVIP) {
-				const userInfo = wepy.$instance.globalData.myUserInfo
-				this.currentHouse.employeeName1 = userInfo.name
-				this.currentHouse.deptName1 = userInfo.deptName
-			}
 			resolve()
 			this.$apply()
 		})
@@ -315,9 +310,23 @@ export default class Detail extends wepy.page {
 			})
 			this.clickCount(3)
 		},
-		getPoster() {
+		async getPoster() {
+			wx.showLoading({
+				title: '急速生成中',
+			})
+			// 获取房屋及头像HTTPS图片
+			const {data} = await wepy.request({
+				url: 'https://api.hd.xiaoyu.com/wxapp/fnzf/index/createPoster',
+				data: {
+					headimg: this.currentHouse.headimg,
+					propertyUuid: this.currentHouse.propertyUuid
+				}
+			})
+			this.currentHouse.posterImgs = data
+			console.log('this.curr', this.currentHouse.posterImgs)
 			this.showPoster = true
 			this.$invoke('poster', 'getPoster')
+			wx.hideLoading()
 			this.$apply()
 		},
 		async submit({detail}) {
@@ -351,7 +360,7 @@ export default class Detail extends wepy.page {
 			wx.hideLoading()
 			if (res.code != 400) {
 				wx.showToast({title: '登录成功'})
-				await getUserInfo()
+				await getUserInfo(true)
 				this.hasPhone = true
 				this.methods.chatOnLine()
 			} else {

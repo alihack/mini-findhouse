@@ -25,6 +25,9 @@ const getUserId = (isForced) => {
 					} else {
 						wx.setStorageSync('uid', data.uid)
 						wx.setStorageSync('type', data.type)  // 1-普通用户 2-经纪人
+						if (data.type == '2') {
+							wx.setStorageSync('aid', data.uid)
+						}
 						resolve(data.uid)
 					}
 				} else {
@@ -52,7 +55,7 @@ const checkSession = () => {
 	})
 }
 
-const getUserInfo = () => {
+const getUserInfo = (isForced) => {
 	return new Promise(async resolve => {
 		console.log('调用getUserInfo方法')
 		const uid = wx.getStorageSync('uid')

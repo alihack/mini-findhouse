@@ -80,7 +80,7 @@ export default class MyLoginWX extends wepy.component {
 			wx.hideLoading()
 			if (res.code != 400) {
 				wx.showToast({title: '登录成功'})
-				await getUserInfo()
+				await getUserInfo(true)
 				this.$emit('refresh')
 			} else {
 				wx.showToast({

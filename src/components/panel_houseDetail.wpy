@@ -401,7 +401,7 @@ export default class panelHouseDetail extends wepy.component {
 			wx.hideLoading()
 			if (res.code != 400) {
 				wx.showToast({title: '登录成功'})
-				await getUserInfo()
+				await getUserInfo(true)
 				this.hasPhone = true
 				this.methods.chatOnLine()
 			} else {

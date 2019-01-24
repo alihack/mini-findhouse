@@ -271,7 +271,7 @@ export default class MyLoginSMS extends wepy.component {
 				await this.userLogin()
 			}
 			// 更新用户信息
-			await getUserInfo()
+			await getUserInfo(true)
 			this.$emit('refresh')
 		},
 		onPhoneChange ({detail: {value}}) {

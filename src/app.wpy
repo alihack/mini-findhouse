@@ -104,7 +104,6 @@ export default class extends wepy.app {
 			'pages/agent_addSource',
 			'pages/chat',
 			'pages/my',
-			'pages/agent_home',
 			'pages/message',
 			'pages/detail_sameEstate',
 			'pages/detail_estate',
@@ -158,7 +157,6 @@ export default class extends wepy.app {
 		console.log('quitIm', quitIM)
 		if (quitIM) {
 			// 普通页面的退出
-			wx.setStorageSync('toQuitVIP', true)
 			webim.logout(res => {
 				console.log('退出', res)
 			})
