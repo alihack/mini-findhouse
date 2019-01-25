@@ -225,9 +225,12 @@ export default class detailEstate extends wepy.page {
 	}
 	onShareAppMessage(ops) {
 		console.log('分享', ops)
+		let path = `pages/index?estateId=${this.currentEstate.estate_uuid}`
+		const aid = wx.getStorageSync('aid')
+		if (aid) path += `&agentId=${this.aid}`
 		return {
 			title: this.currentEstate.estate_name,
-			path: `pages/index?estateId=${this.currentEstate.estate_uuid}`, // 点击分享消息是打开的页面
+			path: path, // 点击分享消息是打开的页面
 			success: (res) => {
 			// 转发成功
 			console.log('转发成功:' + JSON.stringify(res))

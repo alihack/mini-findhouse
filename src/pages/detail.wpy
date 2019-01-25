@@ -125,7 +125,7 @@
 			</block>
 		</view>
 		<!-- 经纪人生成海报悬浮球 -->
-		<view class="fixed-round" wx:if="{{isAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view>
+		<view class="fixed-round" wx:if="{{isMyAgent && !showPoster}}" @tap="getPoster"><view class="text">生成海报</view></view>
 		<!-- 经纪人生成海报 -->
 		<poster wx:if="{{showPoster}}" :house.sync="currentHouse"></poster>
 	</view>
@@ -161,12 +161,13 @@ export default class Detail extends wepy.page {
 		currentEstate: {},
 		sameEstateHouses: [],
 		recommendEstateHouses: [],
-		isAgent: false,
+		isMyAgent: false,
 		isDept: false, // 经纪人是否为店铺
 		showPoster: false,
 		hasPhone: true,
 		userInfo: {},
 		imgPreIndex: 0,
+		aid: ''
 	}
 
 	events = {
@@ -176,9 +177,11 @@ export default class Detail extends wepy.page {
 	}
 	onShareAppMessage(ops) {
 		console.log('分享', ops)
+		let path = `pages/index?houseId=${this.currentHouse.propertyUuid}`
+		if (this.aid) path += `&agentId=${this.aid}`
 		return {
 			title: this.currentHouse.title,
-			path: `pages/index?houseId=${this.currentHouse.propertyUuid}`, // 点击分享消息是打开的页面
+			path: path, // 点击分享消息是打开的页面
 			success: (res) => {
 			// 转发成功
 			console.log('转发成功:' + JSON.stringify(res))
@@ -194,16 +197,20 @@ export default class Detail extends wepy.page {
 		return new Promise(async resolve => {
 			const uid = wx.getStorageSync('uid')
 			const aid = wx.getStorageSync('aid')
+			this.aid = aid
 			const aidByShare = wx.getStorageSync('aidByShare')
 			let form = {
 				propertyUuid: id,
 				uid: uid,
 			}
 			// 本身为经纪人，或者是经纪人分享进来的
-			if (aid) {
-				form.agentId = aid
-			} else if (aidByShare) {
+			if (aidByShare && aid) {
+				if (aidByShare == aid) this.isMyAgent = true
+			}
+			if (aidByShare) {
 				form.agentId = aidByShare
+			} else if (aid) {
+				form.agentId = aid
 			}
 			const {data} = await wepy.request({
 				url: api['houseInfo'],
@@ -234,9 +241,6 @@ export default class Detail extends wepy.page {
 	}
 	async refresh(houseId) {
 		this.getHouseInfo(houseId)
-		if (this.userInfo.type == '2') {
-			this.isAgent = true
-		}
 		if (!this.userInfo.mobile) {
 			this.hasPhone = false
 			console.log('没有手机号')
@@ -314,12 +318,13 @@ export default class Detail extends wepy.page {
 			wx.showLoading({
 				title: '急速生成中',
 			})
-			// 获取房屋及头像HTTPS图片
+			// 获取海报所需HTTPS图片
 			const {data} = await wepy.request({
 				url: 'https://api.hd.xiaoyu.com/wxapp/fnzf/index/createPoster',
 				data: {
 					headimg: this.currentHouse.headimg,
-					propertyUuid: this.currentHouse.propertyUuid
+					propertyUuid: this.currentHouse.propertyUuid,
+					agentId: this.currentHouse.agentId
 				}
 			})
 			this.currentHouse.posterImgs = data

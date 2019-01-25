@@ -83,15 +83,12 @@
 
 <script>
 import wepy from 'wepy'
-import api from '../utils/api'
 export default class Poster extends wepy.component {
 	props = {
 		house: Object,
 		systemInfo: Object
 	}
 	data = {
-		userInfo: {},
-		codeUrl: '',
 		tempFilePath: '',
 		tempImgs: ['', '', '', '', '', ''],
 		showCanvas: true,
@@ -100,7 +97,6 @@ export default class Poster extends wepy.component {
 
 	async getPoster () {
 		if (this.isCreated) return
-		this.userInfo = wepy.$instance.globalData.myUserInfo
 		await this.getImagesInfo()
 		await this.initCanvas()
 		this.isCreated = true
@@ -127,6 +123,7 @@ export default class Poster extends wepy.component {
 				success: (res) => {
 					console.log(`生成第${index}张图片`, res.path)
 					this.tempImgs[index] = res.path
+					this.$apply()
 					resolve('ok')
 				}
 			})
@@ -136,8 +133,8 @@ export default class Poster extends wepy.component {
 		return new Promise(resolve => {
 			const ctx = wx.createCanvasContext('poster')
 			ctx.drawImage('../images/poster.png', 0, 0, 375, 600)   // 画海报
-			ctx.drawImage(this.tempImgs[0], 155, 400, 65, 65) // 小程序二维码
-			ctx.drawImage(this.tempImgs[1], 131.5, 549, 35.5, 35.5) // 画经纪人头像
+			ctx.drawImage(this.tempImgs[0], 131.5, 549, 35.5, 35.5) // 画经纪人头像
+			ctx.drawImage(this.tempImgs[1], 155, 400, 65, 65) // 小程序二维码
 			ctx.drawImage(this.tempImgs[2], 40, 100, 142, 90) // 画房源图片1
 			ctx.drawImage(this.tempImgs[3], 193, 100, 142, 90) // 画房源图片2
 			ctx.drawImage(this.tempImgs[4], 40, 200, 142, 90) // 画房源图片3
@@ -168,14 +165,12 @@ export default class Poster extends wepy.component {
 			ctx.setFillStyle('#fff')
 			ctx.setFontSize(13)
 			ctx.fillText(`${this.house.employeeName1}`, 174, 566)
-			// ctx.fillText(this.userInfo.name, 174, 566)
 			ctx.restore()
 			ctx.save()
 			ctx.setFillStyle('#fff')
 			ctx.setTextAlign('left')
 			ctx.setFontSize(10)
 			ctx.fillText(`${this.house.deptName1}`, 174, 580)
-			// ctx.fillText(this.userInfo.deptName, 174, 580)
 			ctx.restore()
 			// 在draw回调里才不会绘制空白
 			ctx.draw(false, async (res) => {
@@ -206,6 +201,7 @@ export default class Poster extends wepy.component {
 				filePath: this.tempFilePath,
 				success: (res) => {
 					console.log('保存成功')
+					this.$emit('closePoster')
 				},
 				fail: (err) => {
 					console.log('err', err)

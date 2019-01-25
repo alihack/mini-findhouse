@@ -265,6 +265,7 @@ export default class Index extends wepy.page {
 		if (this.isShareFrom) return
 	}
 	async onLoad(option) {
+		console.log('options', option)
 		this.getMarket()
 		this.getHouseList()
 		// 从分享进来的
@@ -275,30 +276,32 @@ export default class Index extends wepy.page {
 			this.aidByShare = option.agentId
 			wx.setStorageSync('aidByShare', option.agentId)
 			const uid = await getUserId()
+			const aid = wx.getStorageSync('aid')
 			if (!uid) {
 				wx.hideTabBar()
 				this.showAuthorModal = true
 			} else {
-				// 海报分享进来的
+				// 经纪人海报或房源详情分享进来的
 				if (option.houseId && option.agentId) {
 					wepy.navigateTo({url: `detail?id=${option.houseId}`})
 					await getUserInfo()
 					return
 				}
 				if (option.houseId) {
-					// 房源详情页分享进来的
+					// 用户房源详情页分享进来的
 					wepy.navigateTo({url: `detail?id=${option.houseId}`})
 				} else if (option.estateId) {
-					// 小区详情页分享进来的
+					// 用户小区详情页分享进来的
 					wepy.navigateTo({url: `detail_estate?id=${option.estateId}`})
 				} else if (option.agentId) {
 					// 经纪人主页分享进来的
 					console.log('经纪人主页分享进来的')
 				}
 				// 分享进来的经纪人ID与自己经纪人ID不同，显示退出
-				const aid = wx.getStorageSync('aid')
-				if (aid != option.agentId) {
-					this.showQuitVIP = true
+				if (aid && option.agentId) {
+					if (aid != option.agentId) {
+						this.showQuitVIP = true
+					}
 				}
 				await getUserInfo()
 			}
@@ -377,6 +380,15 @@ export default class Index extends wepy.page {
 				}
 			})
 		},
+		quitVIP () {
+			wx.removeStorageSync('aidByShare')
+			this.page = 1
+			this.dataList = []
+			this.sortObj = {}
+			this.showQuitVIP = false
+			this.getHouseList()
+			this.$apply()
+		}
 	}
 }
 </script>
