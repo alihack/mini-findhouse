@@ -27,7 +27,7 @@
 					color:black;
 					margin-top:5rpx;
 					width: 376rpx;
-					height: 90rpx;
+					height: 86rpx;
 					overflow: hidden;
 				}
 				.txt2 {

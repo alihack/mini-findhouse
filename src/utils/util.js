@@ -59,17 +59,50 @@ const getUserInfo = (isForced) => {
 	return new Promise(async resolve => {
 		console.log('调用getUserInfo方法')
 		const uid = wx.getStorageSync('uid')
+		const myInfo = wx.getStorageSync('userInfo')
+		// 有uid则不重新获取
+		if (myInfo && !isForced) {
+			console.log('有myInfo不重新获取')
+			wepy.$instance.globalData.myUserInfo = myInfo
+			resolve(myInfo)
+			return
+		}
 		const {data: {userInfo}} = await wepy.request({
 			url: api['userInfo'],
 			data: {
 				uid
 			}
 		})
+		wx.setStorageSync('userInfo', userInfo)
 		wepy.$instance.globalData.myUserInfo = userInfo
 		loginInfo.identifierNick = userInfo.nickname
 		loginInfo.identifierAvatar = userInfo.headimg
-		console.log('修改后的全局数据', wepy.$instance.globalData)
-		resolve()
+		resolve(userInfo)
+	})
+}
+
+const getMarket = () => {
+	return new Promise(async resolve => {
+		let market = {}
+		const myMarket = wx.getStorageSync('market')
+		if (myMarket) {
+			console.log('有market不重新获取')
+			resolve(myMarket)
+			return
+		}
+		const {data} = await wepy.request({
+			url: api['getMarket'],
+		})
+		market.price = data.total_price
+		if (data.ratio.indexOf('-') != -1) {
+			market.ratio = data.ratio.slice(1)
+			market.isDecline = true
+		} else {
+			market.ratio = data.ratio
+			market.isDecline = false
+		}
+		resolve(market)
+		wx.setStorageSync('market', market)
 	})
 }
 
@@ -569,6 +602,7 @@ const getMsgsFromServer = (fid) => {
 module.exports = {
 	getUserId,
 	getUserInfo,
+	getMarket,
 	getSign,
 	getLocation,
 	dataController,

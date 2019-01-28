@@ -165,6 +165,7 @@ export default class Detail extends wepy.page {
 		isDept: false, // 经纪人是否为店铺
 		showPoster: false,
 		hasPhone: true,
+		isProNo: false, // 是否是房源编号
 		userInfo: {},
 		imgPreIndex: 0,
 		aid: ''
@@ -205,8 +206,13 @@ export default class Detail extends wepy.page {
 			this.aid = aid
 			const aidByShare = wx.getStorageSync('aidByShare')
 			let form = {
-				propertyUuid: id,
-				uid: uid,
+				uid: uid
+			}
+			// 扫码海报带参是房源编号
+			if (this.isProNo) {
+				form.propertyNo = id
+			} else {
+				form.propertyUuid = id
 			}
 			// 本身为经纪人，或者是经纪人分享进来的
 			if (aidByShare && aid) {
@@ -253,9 +259,17 @@ export default class Detail extends wepy.page {
 		}
 		this.$apply()
 	}
-	async onLoad({id}) {
-		console.log('id', id)
+	async onLoad(option) {
+		console.log('详情页所带参数', option)
 		this.userInfo = wepy.$instance.globalData.myUserInfo
+		let id
+		if (option.proNo) {
+			id = option.proNo
+			this.isProNo = true
+		}
+		if (option.id) {
+			id = option.id
+		}
 		if (!this.userInfo) {
 			console.log('首页数据还未加载完成')
 			wx.showLoading({title: '加载中'})
@@ -334,7 +348,6 @@ export default class Detail extends wepy.page {
 				}
 			})
 			this.currentHouse.posterImgs = data
-			console.log('this.curr', this.currentHouse.posterImgs)
 			this.showPoster = true
 			this.$invoke('poster', 'getPoster')
 			wx.hideLoading()

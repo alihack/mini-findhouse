@@ -146,7 +146,12 @@ export default class extends wepy.app {
 		myUserInfo: null
 	}
 	async onLaunch() {
-		// wx.clearStorageSync()  // 清除缓存
+		// 到每月一号自动清一次缓存
+		const date = new Date()
+		if (date.getDate() == 1) {
+			console.log('到1号自动清缓存')
+			wx.clearStorageSync()
+		}
 		wx.setStorageSync('toQuitIM', true)
 	}
 
