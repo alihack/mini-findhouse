@@ -178,7 +178,12 @@ export default class Detail extends wepy.page {
 	onShareAppMessage(ops) {
 		console.log('分享', ops)
 		let path = `pages/index?houseId=${this.currentHouse.propertyUuid}`
-		if (this.aid) path += `&agentId=${this.aid}`
+		const aidByShare = wx.getStorageSync('aidByShare')
+		if (aidByShare) {
+			path += `&agentId=${aidByShare}`
+		} else if (this.aid) {
+			path += `&agentId=${this.aid}`
+		}
 		return {
 			title: this.currentHouse.title,
 			path: path, // 点击分享消息是打开的页面
@@ -205,11 +210,12 @@ export default class Detail extends wepy.page {
 			}
 			// 本身为经纪人，或者是经纪人分享进来的
 			if (aidByShare && aid) {
+				form.agentId = aidByShare
 				if (aidByShare == aid) this.isMyAgent = true
-			}
-			if (aidByShare) {
+			} else if (aidByShare) {
 				form.agentId = aidByShare
 			} else if (aid) {
+				this.isMyAgent = true
 				form.agentId = aid
 			}
 			const {data} = await wepy.request({

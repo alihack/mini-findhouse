@@ -243,8 +243,10 @@ export default class Index extends wepy.page {
 		let path = 'pages/index'
 		this.pageIsShared = true
 		const aid = wx.getStorageSync('aid')
-		if (aid) {
-			// 经纪人专属主页
+		const aidByShare = wx.getStorageSync('aidByShare')
+		if (aidByShare) {
+			path = `pages/index?agentId=${aidByShare}`
+		} else if (aid) {
 			path = `pages/index?agentId=${aid}`
 		}
 		return {
@@ -265,7 +267,7 @@ export default class Index extends wepy.page {
 		if (this.isShareFrom) return
 	}
 	async onLoad(option) {
-		console.log('options', option)
+		console.log('主页所带参数', option)
 		this.getMarket()
 		this.getHouseList()
 		// 从分享进来的
@@ -287,11 +289,17 @@ export default class Index extends wepy.page {
 					await getUserInfo()
 					return
 				}
+				// 经纪人小区详情分享进来的
+				if (option.estateId && option.agentId) {
+					wepy.navigateTo({url: `detail_estate?id=${option.estateId}`})
+					await getUserInfo()
+					return
+				}
 				if (option.houseId) {
 					// 用户房源详情页分享进来的
 					wepy.navigateTo({url: `detail?id=${option.houseId}`})
 				} else if (option.estateId) {
-					// 用户小区详情页分享进来的
+					// 小区详情页分享进来的
 					wepy.navigateTo({url: `detail_estate?id=${option.estateId}`})
 				} else if (option.agentId) {
 					// 经纪人主页分享进来的

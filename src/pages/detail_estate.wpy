@@ -227,7 +227,12 @@ export default class detailEstate extends wepy.page {
 		console.log('分享', ops)
 		let path = `pages/index?estateId=${this.currentEstate.estate_uuid}`
 		const aid = wx.getStorageSync('aid')
-		if (aid) path += `&agentId=${this.aid}`
+		const aidByShare = wx.getStorageSync('aidByShare')
+		if (aidByShare) {
+			path += `&agentId=${aidByShare}`
+		} else if (aid) {
+			path += `&agentId=${aid}`
+		}
 		return {
 			title: this.currentEstate.estate_name,
 			path: path, // 点击分享消息是打开的页面

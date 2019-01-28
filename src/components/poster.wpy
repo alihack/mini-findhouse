@@ -200,7 +200,9 @@ export default class Poster extends wepy.component {
 			wx.saveImageToPhotosAlbum({
 				filePath: this.tempFilePath,
 				success: (res) => {
-					console.log('保存成功')
+					wx.showToast({
+						title: '保存成功'
+					})
 					this.$emit('closePoster')
 				},
 				fail: (err) => {
