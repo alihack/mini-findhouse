@@ -177,7 +177,6 @@ export default class Detail extends wepy.page {
 		}
 	}
 	onShareAppMessage(ops) {
-		console.log('分享', ops)
 		let path = `pages/index?houseId=${this.currentHouse.propertyUuid}`
 		const aidByShare = wx.getStorageSync('aidByShare')
 		if (aidByShare) {
@@ -185,18 +184,10 @@ export default class Detail extends wepy.page {
 		} else if (this.aid) {
 			path += `&agentId=${this.aid}`
 		}
+		if (ops.from == 'button') this.showPoster = false
 		return {
 			title: this.currentHouse.title,
 			path: path, // 点击分享消息是打开的页面
-			success: (res) => {
-			// 转发成功
-			console.log('转发成功:' + JSON.stringify(res))
-			//   var shareTickets = res.shareTickets
-			},
-			fail: (err) => {
-			// 转发失败
-			console.log('转发失败:' + JSON.stringify(err))
-			}
 		}
 	}
 	getHouseInfo(id) {
@@ -229,7 +220,7 @@ export default class Detail extends wepy.page {
 				data: form
 			})
 			this.currentHouse = data
-			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 8)
+			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 10)
 			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
 			this.sameEstateHouses = data.same_estate
 			this.recommendEstateHouses = data.recommend_estate
@@ -252,11 +243,12 @@ export default class Detail extends wepy.page {
 		})
 	}
 	async refresh(houseId) {
-		this.getHouseInfo(houseId)
 		if (!this.userInfo.mobile) {
 			this.hasPhone = false
 			console.log('没有手机号')
 		}
+		await this.getHouseInfo(houseId)
+		if (this.isMyAgent) this.getPosterImgs()
 		this.$apply()
 	}
 	async onLoad(option) {
@@ -294,6 +286,21 @@ export default class Detail extends wepy.page {
 				agentId: this.currentHouse.agentId,
 				property_uuid: this.currentHouse.propertyUuid
 			}
+		})
+	}
+	getPosterImgs() {
+		return new Promise(async resolve => {
+			// 获取海报所需HTTPS图片
+			const {data} = await wepy.request({
+				url: 'https://api.hd.xiaoyu.com/wxapp/fnzf/index/createPoster',
+				data: {
+					headimg: this.currentHouse.headimg,
+					propertyNo: this.currentHouse.propertyNo,
+					agentId: this.currentHouse.agentId
+				}
+			})
+			this.currentHouse.posterImgs = data
+			resolve()
 		})
 	}
 	methods = {
@@ -335,22 +342,27 @@ export default class Detail extends wepy.page {
 			this.clickCount(3)
 		},
 		async getPoster() {
+			const waitData = () => {
+				return new Promise(resolve => {
+					setTimeout(async () => {
+						console.log('等待中')
+						if (!this.currentHouse.posterImgs) {
+							await waitData()
+							resolve()
+						} else {
+							resolve()
+						}
+					}, 300)
+				})
+			}
 			wx.showLoading({
 				title: '急速生成中',
 			})
-			// 获取海报所需HTTPS图片
-			const {data} = await wepy.request({
-				url: 'https://api.hd.xiaoyu.com/wxapp/fnzf/index/createPoster',
-				data: {
-					headimg: this.currentHouse.headimg,
-					propertyUuid: this.currentHouse.propertyUuid,
-					agentId: this.currentHouse.agentId
-				}
-			})
-			this.currentHouse.posterImgs = data
+			if (!this.currentHouse.posterImgs) {
+				await waitData()
+			}
 			this.showPoster = true
 			this.$invoke('poster', 'getPoster')
-			wx.hideLoading()
 			this.$apply()
 		},
 		async submit({detail}) {

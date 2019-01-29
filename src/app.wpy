@@ -101,7 +101,6 @@ export default class extends wepy.app {
 			'pages/detail_support',
 			'pages/detail',
 			'pages/index_search',
-			'pages/agent_addSource',
 			'pages/chat',
 			'pages/my',
 			'pages/message',

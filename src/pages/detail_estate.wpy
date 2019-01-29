@@ -236,15 +236,6 @@ export default class detailEstate extends wepy.page {
 		return {
 			title: this.currentEstate.estate_name,
 			path: path, // 点击分享消息是打开的页面
-			success: (res) => {
-			// 转发成功
-			console.log('转发成功:' + JSON.stringify(res))
-			//   var shareTickets = res.shareTickets
-			},
-			fail: (err) => {
-			// 转发失败
-			console.log('转发失败:' + JSON.stringify(err))
-			}
 		}
 	}
 

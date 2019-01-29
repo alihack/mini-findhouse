@@ -68,12 +68,12 @@
 		<image src="{{tempFilePath}}" class="canvasImg"></image>
 		<view class="bar">
 			<view class="item">
-				<image src="../images/wxchat.png"></image>
+				<image src="http://qimg.fangzi.xiaoyu.com/fangniu/wxchat.png"></image>
 				<button class='bar-btn' open-type="share"></button>
 				<text>发送给好友</text>
 			</view>
 			<view class="item" @tap="saveToAblum">
-				<image src="../images/download.png"></image>
+				<image src="http://qimg.fangzi.xiaoyu.com/fangniu/download.png"></image>
 				<text>保存卡片</text>
 			</view>
 		</view>
@@ -90,15 +90,28 @@ export default class Poster extends wepy.component {
 	}
 	data = {
 		tempFilePath: '',
-		tempImgs: ['', '', '', '', '', ''],
+		tempImgs: [],
+		tempBg: '',
 		showCanvas: true,
 		isCreated: false
 	}
-
+	onLoad() {
+		wx.getImageInfo({
+			src: 'https://api.hd.xiaoyu.com/img/wechatapp/poster.png',
+			success: (res) => {
+				this.tempBg = res.path
+				this.$apply()
+			}
+		})
+	}
 	async getPoster () {
-		if (this.isCreated) return
+		if (this.isCreated) {
+			wx.hideLoading()
+			return
+		}
 		await this.getImagesInfo()
 		await this.initCanvas()
+		wx.hideLoading()
 		this.isCreated = true
 		this.$apply()
 	}
@@ -107,6 +120,13 @@ export default class Poster extends wepy.component {
 			const p1 = this.getImageInfo(this.house.posterImgs[0], 0)
 			const p2 = this.getImageInfo(this.house.posterImgs[1], 1)
 			const p3 = this.getImageInfo(this.house.posterImgs[2], 2)
+			if (this.house.posterImgs.length < 6) {
+				// 取房源第一张
+				Promise.all([p1, p2, p3]).then((res) => {
+					resolve()
+				})
+				return
+			}
 			const p4 = this.getImageInfo(this.house.posterImgs[3], 3)
 			const p5 = this.getImageInfo(this.house.posterImgs[4], 4)
 			const p6 = this.getImageInfo(this.house.posterImgs[5], 5)
@@ -121,7 +141,6 @@ export default class Poster extends wepy.component {
 			wx.getImageInfo({
 				src: src,
 				success: (res) => {
-					console.log(`生成第${index}张图片`, res.path)
 					this.tempImgs[index] = res.path
 					this.$apply()
 					resolve('ok')
@@ -132,17 +151,26 @@ export default class Poster extends wepy.component {
 	initCanvas() {
 		return new Promise(resolve => {
 			const ctx = wx.createCanvasContext('poster')
-			ctx.drawImage('../images/poster.png', 0, 0, 375, 600)   // 画海报
-			ctx.drawImage(this.tempImgs[0], 131.5, 549, 35.5, 35.5) // 画经纪人头像
+			ctx.drawImage(this.tempBg, 0, 0, 375, 600)   // 画海报
+			ctx.drawImage(this.tempImgs[0], 131.5, 548.5, 35.5, 35.5) // 画经纪人头像
 			ctx.drawImage(this.tempImgs[1], 155, 400, 65, 65) // 小程序二维码
-			ctx.drawImage(this.tempImgs[2], 40, 100, 142, 90) // 画房源图片1
-			ctx.drawImage(this.tempImgs[3], 193, 100, 142, 90) // 画房源图片2
-			ctx.drawImage(this.tempImgs[4], 40, 200, 142, 90) // 画房源图片3
-			ctx.drawImage(this.tempImgs[5], 193, 200, 142, 90) // 画房源图片4
+			if (this.tempImgs.length == 3) {
+				ctx.drawImage(this.tempImgs[2], 40, 100, 294, 190) // 画房源图片1
+			} else {
+				ctx.drawImage(this.tempImgs[2], 40, 100, 142, 90) // 画房源图片1
+				ctx.drawImage(this.tempImgs[3], 193, 100, 142, 90) // 画房源图片2
+				ctx.drawImage(this.tempImgs[4], 40, 200, 142, 90) // 画房源图片3
+				ctx.drawImage(this.tempImgs[5], 193, 200, 142, 90) // 画房源图片4
+			}
 			ctx.drawImage('../images/approve.png', 285, 280, 70, 60) // 画房源认证
 			ctx.setFontSize(14)
 			ctx.setTextAlign('center')
-			ctx.fillText(this.house.title, 187, 320, 250)
+			if (this.house.title.length < 20) {
+				ctx.fillText(this.house.title, 187, 320)
+			} else {
+				ctx.fillText(this.house.title.slice(0, 20), 187, 310)
+				ctx.fillText(this.house.title.slice(20, 40), 187, 330)
+			}
 			ctx.save()
 			// 绘制详情标题
 			ctx.setFontSize(12)
@@ -155,7 +183,7 @@ export default class Poster extends wepy.component {
 			// 绘制详情内容
 			ctx.setFontSize(12)
 			ctx.setFillStyle('#ce864c')
-			ctx.fillText(`${this.house.sellPrice}`, 84, 382)
+			ctx.fillText(`${this.house.sellPrice}万`, 84, 382)
 			ctx.fillText(`${this.house.countF}室${this.house.countT}厅${this.house.countW}卫`, 186, 382)
 			ctx.fillText(`${this.house.square}m²`, 280, 382)
 			ctx.restore()
@@ -174,7 +202,6 @@ export default class Poster extends wepy.component {
 			ctx.restore()
 			// 在draw回调里才不会绘制空白
 			ctx.draw(false, async (res) => {
-				console.log('res')
 				await this.saveCanvas()
 				this.showCanvas = false
 			})
@@ -185,9 +212,9 @@ export default class Poster extends wepy.component {
 		return new Promise(resolve => {
 			wx.canvasToTempFilePath({
 				canvasId: 'poster',
+				quality: 1,
 				success: (res) => {
 					this.tempFilePath = res.tempFilePath
-					console.log(res.tempFilePath)
 					this.$apply()
 					resolve()
 				}
@@ -206,7 +233,6 @@ export default class Poster extends wepy.component {
 					this.$emit('closePoster')
 				},
 				fail: (err) => {
-					console.log('err', err)
 					if (err.errMsg == 'saveImageToPhotosAlbum:fail cancel') {
 						wx.showToast({
 							title: '您已取消保存',
@@ -217,7 +243,6 @@ export default class Poster extends wepy.component {
 							title: '提示',
 							content: '保存图片失败，您可以点击确定设置获取相册权限后再尝试保存！',
 							complete: (res) => {
-								console.log(res)
 								if (res.confirm) {
 									wx.openSetting({}) // 打开小程序设置页面，可以设置权限
 								}

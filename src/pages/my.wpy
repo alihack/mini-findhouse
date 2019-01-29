@@ -72,15 +72,12 @@ export default class My extends wepy.page {
 		this.isAgent = false
 		this.isLoginBySMS = false
 		this.isSMSByAgent = false
-		this.userInfo = wepy.$instance.globalData.myUserInfo
+		this.userInfo = wx.getStorageSync('userInfo')
 		if (!this.userInfo.mobile) {
 			this.isQuit = true
 			this.$apply()
 			return
 		}
-		// 手机号脱敏处理
-		const mobile = this.userInfo.mobile
-		if (this.userInfo.mobile.length == 11) this.userInfo.mobile = mobile.replace(mobile.slice(3, 9), '****')
 		if (this.userInfo.type == '2') this.isAgent = true
 		this.$apply()
 	}
@@ -88,13 +85,13 @@ export default class My extends wepy.page {
 		return new Promise(resolve => {
 			setTimeout(async () => {
 				wx.showLoading({title: '加载中'})
-				this.userInfo = wepy.$instance.globalData.myUserInfo
+				this.userInfo = wx.getStorageSync('userInfo')
 				if (!this.userInfo) {
 					console.log('等待中。。。')
 					await this.waitIndex()
 					resolve()
 				} else {
-					this.userInfo = wepy.$instance.globalData.myUserInfo
+					this.userInfo = wx.getStorageSync('userInfo')
 					console.log('获取到首页数据了')
 					wx.hideLoading()
 					this.$apply()
@@ -104,7 +101,7 @@ export default class My extends wepy.page {
 		})
 	}
 	async onLoad() {
-		this.userInfo = wepy.$instance.globalData.myUserInfo
+		this.userInfo = wx.getStorageSync('userInfo')
 		if (!this.userInfo) {
 			await this.waitIndex()
 			this.refresh()
@@ -115,7 +112,7 @@ export default class My extends wepy.page {
 	}
 	onShow() {
 		// 在其他页面注册了
-		if (this.userInfo != wepy.$instance.globalData.myUserInfo) {
+		if (JSON.stringify(this.userInfo) != JSON.stringify(wx.getStorageSync('userInfo'))) {
 			console.log('在其他页面注册了')
 			this.refresh()
 		}

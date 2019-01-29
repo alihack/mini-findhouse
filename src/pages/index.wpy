@@ -1,5 +1,8 @@
 <style lang="less">
-@import '../styles/base.less';
+	.flex {
+		display: flex;
+		align-items: center;
+	}
 	.container {
 		.banner {
 			width: 100%;
@@ -104,7 +107,7 @@
 					height: 90rpx;
 				}
 				text {
-					color: @gray;
+					color: #666666;
 				}
 			}
 		}
@@ -248,13 +251,6 @@ export default class Index extends wepy.page {
 		return {
 			title: '真房源找房牛，省钱省时间',
 			path: path, // 点击分享消息是打开的页面
-			success: () => {
-				this.$apply()
-				console.log('转发成功')
-			},
-			fail: () => {
-				console.log('转发失败')
-			}
 		}
 	}
 	async onShow () {
@@ -272,7 +268,11 @@ export default class Index extends wepy.page {
 			this.houseId = option.houseId
 			this.estateId = option.estateId
 			this.aidByShare = option.agentId
-			this.proNo = option.proNo
+			if (option.scene) {
+				// 扫码海报二维码带参
+				this.proNo = option.scene.split('_')[0]
+				this.aidByShare = option.scene.split('_')[1]
+			}
 			wx.setStorageSync('aidByShare', option.agentId)
 			const uid = await getUserId()
 			this.aid = wx.getStorageSync('aid')
@@ -323,6 +323,12 @@ export default class Index extends wepy.page {
 	}
 
 	async shareController() {
+		// 分享进来的经纪人ID与自己经纪人ID不同，显示退出
+		if (this.aid && this.aidByShare) {
+			if (this.aid != this.aidByShare) {
+				this.showQuitVIP = true
+			}
+		}
 		// 经纪人房源详情分享进来的
 		if (this.houseId && this.aidByShare) {
 			wepy.navigateTo({url: `detail?id=${this.houseId}`})
@@ -350,12 +356,6 @@ export default class Index extends wepy.page {
 		} else if (this.aidByShare) {
 			// 经纪人主页分享进来的
 			console.log('经纪人主页分享进来的')
-		}
-		// 分享进来的经纪人ID与自己经纪人ID不同，显示退出
-		if (this.aid && this.aidByShare) {
-			if (this.aid != this.aidByShare) {
-				this.showQuitVIP = true
-			}
 		}
 		await getUserInfo()
 	}

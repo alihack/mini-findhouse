@@ -73,10 +73,19 @@ const getUserInfo = (isForced) => {
 				uid
 			}
 		})
+		// 手机号脱敏处理
+		const mobile = userInfo.mobile.replace(/(^\s*)|(\s*$)/g, '')
+		if (mobile.length == 11) userInfo.mobile = mobile.replace(mobile.slice(3, 9), '****')
 		wx.setStorageSync('userInfo', userInfo)
 		wepy.$instance.globalData.myUserInfo = userInfo
 		loginInfo.identifierNick = userInfo.nickname
 		loginInfo.identifierAvatar = userInfo.headimg
+		// 如果是经纪人登录，需要设置aid缓存
+		if (isForced) {
+			if (userInfo.type == '2') {
+				wx.setStorageSync('aid', userInfo.uid)
+			}
+		}
 		resolve(userInfo)
 	})
 }
@@ -149,11 +158,20 @@ const getLocation = () => {
 	})
 }
 
-const dataController = (ele) => {
-	return new Promise(async resolve => {
-	})
-}
+/*
+	以下为云通信所需自定义方法
+*/
 
+// 当前用户身份
+var loginInfo = {
+	'sdkAppID': 1400175041, // 用户所属应用id
+	'appIDAt3rd': 1400175041, // 用户所属应用id
+	'accountType': 36862, // 用户所属应用帐号类型
+	'identifier': '', // 当前用户ID
+	'identifierNick': '', // 当前用户昵昵称
+	'identifierAvatar': '', // 用户头像
+	'userSig': ''
+}
 const getSign = () => {
 	return new Promise(async resolve => {
 		const uid = wx.getStorageSync('uid')
@@ -168,17 +186,6 @@ const getSign = () => {
 		loginInfo.userSig = data
 		resolve()
 	})
-}
-// 当前用户身份
-var loginInfo = {
-	'sdkAppID': 1400175041, // 用户所属应用id
-	'appIDAt3rd': 1400175041, // 用户所属应用id
-	'accountType': 36862, // 用户所属应用帐号类型
-	'identifier': '', // 当前用户ID
-	'identifierNick': '', // 当前用户昵昵称
-	'identifierAvatar': '', // 用户头像
-	// 'Tag_Profile_Custom_avatar': '' // 用户头像
-	'userSig': ''
 }
 const initIM = (onMsgNotify) => {
 	return new Promise(async resolve => {
@@ -605,7 +612,6 @@ module.exports = {
 	getMarket,
 	getSign,
 	getLocation,
-	dataController,
 	checkSession,
 	initIM,
 	quitIM,

@@ -286,7 +286,6 @@ export default class barSort extends wepy.component {
 			this.$apply()
 		},
 		onInputMin({detail: {value}}) {
-			console.log('min', value)
 			this.minPrice = value
 			this.$apply()
 		},
@@ -302,6 +301,7 @@ export default class barSort extends wepy.component {
 				} else {
 					this.resultObj.sellPrice = this.minPrice + '-' + this.maxPrice
 					this.sortData[index].title = this.resultObj.sellPrice
+					this.sortData[index].isConfirmed = true
 				}
 			}
 			switch (index) {
@@ -397,6 +397,8 @@ export default class barSort extends wepy.component {
 					}
 					break
 			}
+			this.minPrice = ''
+			this.maxPrice = ''
 			this.showSortBarPanel = false
 			this.isTabFixed = false
 			for (let i in this.resultObj) {
