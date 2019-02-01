@@ -605,7 +605,6 @@ const getMsgsFromServer = (fid) => {
 		resolve(msgList)
 	})
 }
-
 module.exports = {
 	getUserId,
 	getUserInfo,
@@ -626,5 +625,5 @@ module.exports = {
 	convertCustomMsgToHtml,
 	uploadQiNiu,
 	sendMsgsToServer,
-	getMsgsFromServer
+	getMsgsFromServer,
 }

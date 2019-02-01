@@ -84,13 +84,15 @@
 		<!-- 小区详情 -->
 		<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
 		<!-- 同小区房源 -->
-		<block wx:if="{{sameEstateHouses.length > 2}}">
+		<block wx:if="{{sameEstateHouses.length > 1}}">
 			<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
 		</block>
 		<!-- 周边配套 -->
 		<panelSupport  :estate.sync="currentEstate"></panelSupport>
 		<!-- 推荐房源 -->
-		<recommendSource  :sourceList.sync="recommendEstateHouses" type="recommend"></recommendSource>
+		<block wx:if="{{recommendEstateHouses.length > 1}}">
+			<recommendSource  :sourceList.sync="recommendEstateHouses" type="recommend"></recommendSource>
+		</block>
 		<!-- 尾部广告 -->
 		<footer></footer>
 		<!-- 固定尾部 -->
