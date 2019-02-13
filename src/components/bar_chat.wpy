@@ -278,13 +278,14 @@ export default class barChat extends wepy.component {
 	}
 	methods = {
 		sendMessage: async () => {
-			this.$emit('addMessage', this.msgText)
 			const data = await sendMessage(this.msgText, this.friendId)
 			if (data != 'ok') {
 				wepy.showToast({
 					title: '发送失败',
 					icon: 'none'
 				})
+			} else {
+				this.$emit('addMessage', this.msgText)
 			}
 			this.msgText = ''
 			this.showSend = false

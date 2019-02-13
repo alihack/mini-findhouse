@@ -254,7 +254,6 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onShow () {
-		// 退出专属主页
 		// 分享进来的，不继续执行
 		if (this.isShareFrom) return
 	}
@@ -273,7 +272,7 @@ export default class Index extends wepy.page {
 				this.proNo = option.scene.split('_')[0]
 				this.aidByShare = option.scene.split('_')[1]
 			}
-			wx.setStorageSync('aidByShare', option.agentId)
+			wx.setStorageSync('aidByShare', this.aidByShare)
 			const uid = await getUserId()
 			this.aid = wx.getStorageSync('aid')
 			if (!uid) {
@@ -294,6 +293,14 @@ export default class Index extends wepy.page {
 				await getUserInfo()
 			}
 			wx.showTabBarRedDot({index: 1})
+			// 如缓存中有分享经纪人ID，分享进来的经纪人ID与自己经纪人ID不同，显示退出
+			this.aidByShare = wx.getStorageSync('aidByShare')
+			this.aid = wx.getStorageSync('aid')
+			if (this.aid && this.aidByShare) {
+				if (this.aid != this.aidByShare) {
+					this.showQuitVIP = true
+				}
+			}
 			await getSign()
 		}
 		wx.showShareMenu()

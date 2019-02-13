@@ -159,20 +159,26 @@ export default class Message extends wepy.page {
 		const sessionStorage = wx.getStorageSync('sessionStorage')
 		console.log('sessionStorage', sessionStorage)
 		console.log('contalist', contactList)
-		if (sessionStorage) {
+		const refreshContact = wx.getStorageSync('refreshContact')
+		if (sessionStorage && !refreshContact) {
 			// 有数据缓存非第一次进来，且会话列表长度与缓存一致，无需重复进行数据处理
 			if (sessionStorage.length == contactList.length) {
-				console.log('会话列表长度与缓存一致，无需重复进行数据处理')
+				console.log('会话列表长度与缓存一致，更新时间即可')
 				this.sessionList = sessionStorage
+				this.sessionList.forEach(ele => {
+					ele.time = getDateDiff(ele.timeStamp * 1000)
+				})
 				wx.hideLoading()
 				this.$apply()
 				return
 			}
 		}
+		// 与后端服务器对比获取未读数
 		const initSessionList = await setSessionUnread(contactList)
 		console.log('初始会话列表数据', initSessionList)
 		// 进一步数据处理（头像，文字，时间）
 		await this.dataController(initSessionList)
+		wx.setStorageSync('refreshContact', false)
 		wx.hideLoading()
 		this.$apply()
 	}
@@ -187,6 +193,7 @@ export default class Message extends wepy.page {
 					if (newMsgs[0].fromAccount == ele.id) {
 						ele.unread = ele.unread + 1
 						ele.time = '刚刚'
+						ele.timeStamp = ele.MsgTimeStamp
 						ele.content = await convertCustomMsgToHtml(newMsgs[0])
 						this.sessionList.splice(index, 1)
 						this.sessionList.unshift(ele)
@@ -229,6 +236,7 @@ export default class Message extends wepy.page {
 				item.unread = ele.unread
 				item.initIndex = index
 				item.time = getDateDiff(ele.MsgTimeStamp * 1000)
+				item.timeStamp = ele.MsgTimeStamp
 				if (ele.MsgShow == '[其他]') {
 					ele.MsgShow = '[房源信息]'
 				} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {

@@ -222,6 +222,9 @@ export default class Chat extends wepy.page {
 							this.lastContent = '[房源信息]'
 							await this.msgController(value.houseCard, false, type)
 						}
+					} else {
+						// 更新其他聊天对象的信息
+						wx.setStorageSync('refreshContact', true)
 					}
 				})
 			}

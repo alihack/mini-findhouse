@@ -171,7 +171,8 @@
 			</view>
 			<view class="cell2-center">
 				<view class="cell2-title">房型</view>
-				<view class="cell2-text">{{house.countF}}室 | {{house.countT}}厅 | {{house.countW}}卫</view>
+				<view class="cell2-text" wx:if="{{house.countF != '暂无'}}">{{house.countF}}室 | {{house.countT}}厅 | {{house.countW}}卫</view>
+				<view class="cell2-text" wx:else>暂无</view>
 			</view>
 			<view class="cell2-right">
 				<view class="cell2-title">面积</view>
