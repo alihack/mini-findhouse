@@ -54,6 +54,9 @@
 				}
 			}
 		}
+		.cell:active{
+			background: #DCDCDC;
+		}
 	}
 }
 .nochat {
@@ -82,7 +85,7 @@
 			<view class="cell" 
 				@tap="toChat" 
 				wx:for="{{sessionList}}" wx:key="index" 
-				data-id="{{item.id}}" data-avatar="{{item.avatar}}" data-name="{{item.name}}">
+				data-id="{{item.id}}" data-avatar="{{item.avatar}}" data-name="{{item.name}}" data-index="{{index}}">
 				<view class="cell-left">
 					<image src="{{item.avatar}}"></image>
 					<view class="main">
@@ -110,7 +113,7 @@
 import wepy from 'wepy'
 import api from '../utils/api'
 import webim from '../utils/webim_wx'
-import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml, setSessionUnread} from '../utils/util'
+import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml, setSessionUnread, getC2CHistoryMsgs} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
@@ -122,7 +125,8 @@ export default class Message extends wepy.page {
 	data = {
 		sessionList: [],
 		isNoData: true,
-		isAgent: false
+		isAgent: false,
+		toSaveMsgList: [] // 需要保存到后端的数据，点击对应列表时保存
 	}
 
 	computed = {
@@ -136,13 +140,10 @@ export default class Message extends wepy.page {
 	}
 	async onShow() {
 		wx.hideTabBarRedDot({index: 1})
-		this.sessionList = []
 		wx.showLoading({title: '加载中'})
 		// 没有登录当前页面的IM时进行
-		const IMByMessPage = wx.getStorageSync('IMByMessPage')
-		if (!webim.checkLogin() || !IMByMessPage) {
+		if (!webim.checkLogin() || wx.getStorageSync('IMByChatPage')) {
 			await this.myInitIM()
-			wx.setStorageSync('IMByMessPage', true)
 		}
 		// 首先判断有无会话列表
 		const contactList = await getRecentContactList()
@@ -159,8 +160,7 @@ export default class Message extends wepy.page {
 		const sessionStorage = wx.getStorageSync('sessionStorage')
 		console.log('sessionStorage', sessionStorage)
 		console.log('contalist', contactList)
-		const refreshContact = wx.getStorageSync('refreshContact')
-		if (sessionStorage && !refreshContact) {
+		if (sessionStorage) {
 			// 有数据缓存非第一次进来，且会话列表长度与缓存一致，无需重复进行数据处理
 			if (sessionStorage.length == contactList.length) {
 				console.log('会话列表长度与缓存一致，更新时间即可')
@@ -178,7 +178,6 @@ export default class Message extends wepy.page {
 		console.log('初始会话列表数据', initSessionList)
 		// 进一步数据处理（头像，文字，时间）
 		await this.dataController(initSessionList)
-		wx.setStorageSync('refreshContact', false)
 		wx.hideLoading()
 		this.$apply()
 	}
@@ -186,21 +185,24 @@ export default class Message extends wepy.page {
 		return new Promise(async resolve => {
 			const onMsgNotify = (newMsgs) => {
 				console.log('列表页新信息', newMsgs)
+				wepy.$instance.globalData.newMsgs = newMsgs
 				wx.showTabBarRedDot({index: 1})
-				// const sessMap = webim.MsgStore.sessMap()
-				// console.log('sessMap', sessMap)
 				this.sessionList.forEach(async (ele, index) => {
-					if (newMsgs[0].fromAccount == ele.id) {
-						ele.unread = ele.unread + 1
-						ele.time = '刚刚'
-						ele.timeStamp = ele.MsgTimeStamp
-						ele.content = await convertCustomMsgToHtml(newMsgs[0])
-						this.sessionList.splice(index, 1)
-						this.sessionList.unshift(ele)
-						wx.setStorageSync('sessionStorage', this.sessionList)
-						this.$apply()
-						return
-					}
+					newMsgs.forEach(async (msg, msgIndex) => {
+						if (msg.fromAccount == ele.id) {
+							ele.unread = ele.unread + 1
+							ele.time = '刚刚'
+							ele.timeStamp = ele.MsgTimeStamp
+							ele.content = await convertCustomMsgToHtml(msg)
+							this.sessionList.splice(index, 1)
+							this.sessionList.unshift(ele)
+							if (index == this.sessionList.length - 1 && msgIndex == newMsgs.length - 1) {
+								wx.setStorageSync('sessionStorage', this.sessionList)
+								this.$apply()
+								return
+							}
+						}
+					})
 				})
 			}
 			await initIM(onMsgNotify)
@@ -251,18 +253,22 @@ export default class Message extends wepy.page {
 					mySessionList.sort((a, b) => {
 						return a.initIndex - b.initIndex
 					})
+					console.log('sessionList', mySessionList)
 					this.sessionList = mySessionList
-					console.log('sessionList', this.sessionList)
 					wx.setStorageSync('sessionStorage', this.sessionList)
-					resolve()
 					this.$apply()
+					resolve()
 				}
 			})
 		})
 	}
 	methods = {
-		toChat({currentTarget: {dataset}}) {
+		async toChat({currentTarget: {dataset}}) {
 			console.log('dataset', dataset)
+			// 如有未读消息，需保存新消息到后端服务器
+			if (this.sessionList[dataset.index].unread != 0) {
+				await getC2CHistoryMsgs(dataset.id, true)
+			}
 			// 头像路径过长，存入缓存带参
 			wx.setStorageSync('fAvatar', dataset.avatar)
 			wepy.navigateTo({url: `chat?fId=${dataset.id}&fName=${dataset.name}`})

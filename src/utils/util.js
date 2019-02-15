@@ -341,8 +341,7 @@ const setSessionUnread = (contactList) => {
 					} else {
 						// 找到服务器最后一条时间与腾讯数据时间相同的一条
 						newMsgList.forEach((newItem, index) => {
-							if ((newItem.time + ':00') == serverMsgList[serverMsgList.length - 1].time) {
-								console.log('index', index)
+							if (newItem.time == serverMsgList[serverMsgList.length - 1].time) {
 								ele.unread = newMsgList.length - 1 - index
 							}
 						})
@@ -397,7 +396,7 @@ const getC2CHistoryMsgs = (friendID, setRead = false) => {
 							item.html = html
 						}
 					}
-					item.time = convertTime(MsgList[i].time * 1000)
+					item.time = convertTime(MsgList[i].time * 1000, false, true)
 					item.isSelfSend = MsgList[i].isSend
 					data.push(item)
 				}
@@ -500,17 +499,20 @@ const convertCustomMsgToHtml = (msg) => {
 	})
 }
 
-const convertTime = (timeStamp, noHour = false) => {
+const convertTime = (timeStamp, noHour = false, noSec = false) => {
 	const date = new Date(timeStamp)
 	const year = date.getFullYear()
 	const month = formatNumber(date.getMonth() + 1)
 	const day = formatNumber(date.getDate())
 	const hour = formatNumber(date.getHours())
 	const minute = formatNumber(date.getMinutes())
+	const second = formatNumber(date.getSeconds())
 	if (noHour) {
 		return year + '-' + month + '-' + day
-	} else {
+	} else if (noSec) {
 		return year + '-' + month + '-' + day + ' ' + hour + ':' + minute
+	} else {
+		return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second
 	}
 }
 
@@ -593,14 +595,16 @@ const sendMsgsToServer = (fid, msg) => {
 		resolve()
 	})
 }
-const getMsgsFromServer = (fid) => {
+const getMsgsFromServer = (fid, page) => {
 	return new Promise(async resolve => {
+		let form = {
+			uid: loginInfo.identifier,
+			fid,
+		}
+		if (page) form.page = page
 		const msgList = await wepy.request({
 			url: api['getMsgs'],
-			data: {
-				uid: loginInfo.identifier,
-				fid,
-			}
+			data: form
 		})
 		resolve(msgList)
 	})

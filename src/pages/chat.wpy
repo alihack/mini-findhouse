@@ -104,7 +104,6 @@
 		width: 100%;
 		height: 2rpx;
 	}
-
 }
 </style>
 <template>
@@ -114,18 +113,18 @@
 				<view class="chat-item">
 					<view class='time'>{{msg.time}}</view>
 					<view wx:for="{{msg.data}}" class="main {{item.isSelfSend ? 'reverse' : ''}}"  wx:key="index">
-						<image class="avatar" src="{{item.isSelfSend ? myAvatar: friendAvatar}}"></image>
+						<image class="avatar" src="{{item.isSelfSend ? myAvatar: friendAvatar}}" lazy-load="{{true}}"></image>
 						<!-- 房屋卡片 -->
 						<view wx:if="{{item.houseCard}}" @tap="houseDetail({{item.houseCard.houseId}})">
 							<view class="card">
-								<image mode= "scaleToFill" src="{{item.houseCard.img}}"></image>
+								<image mode= "scaleToFill" src="{{item.houseCard.img}}" lazy-load="{{true}}"></image>
 								<view class="title">{{item.houseCard.title}}</view>
 								<view class="detail">{{item.houseCard.detail}}</view>
 								<view class="price">{{item.houseCard.price}}</view>
 							</view>
 						</view>
 						<!-- 图片 -->
-						<image wx:if="{{item.img}}" src="{{item.img}}" class="photo" @tap="previewImg({{item.img}})"/>
+						<image wx:if="{{item.img}}" src="{{item.img}}" class="photo" @tap="previewImg({{item.img}})" lazy-load="{{true}}"/>
 						<!-- 语音 -->
 						<view wx:if="{{item.audio && item.isSelfSend}}" class="audio" @tap="playAudio({{item.audio}})">
 							<view class="audio-second"> "</view>
@@ -150,7 +149,7 @@
 import wepy from 'wepy'
 import webim from '../utils/webim_wx'
 import chatBar from '../components/bar_chat'
-import {getC2CHistoryMsgs, convertTime, convertCustomMsgToHtml, initIM, sendMessage, sendMsgsToServer} from '../utils/util'
+import {convertTime, convertCustomMsgToHtml, initIM, sendMessage, sendMsgsToServer, getMsgsFromServer, getC2CHistoryMsgs} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -173,13 +172,16 @@ export default class Chat extends wepy.page {
 		friendName: '',
 		myAvatar: '',
 		myUid: '',
-		scrollInto: '',
+		scrollInto: 0,
 		scrollHeight: '',
 		msgList: [],
 		msgLength: 1,
+		page: 1,
 		innerAudio: wepy.createInnerAudioContext(), // 播放语音实例
 		onLoading: false,
-		lastContent: '' // 最后一条消息记录
+		lastContent: '', // 最后一条消息记录,
+		intervalId: '',
+		toSaveMsgList: [] // 需要保存到后端的数据，离开页面时保存
 	}
 
 	computed = {
@@ -198,41 +200,44 @@ export default class Chat extends wepy.page {
 			await this.msgController(value, true, type)
 		}
 	}
+	newMsgController (newMsgList) {
+		newMsgList.forEach(async ele => {
+			if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
+				const value = await convertCustomMsgToHtml(ele)
+				console.log('value', value)
+				var type
+				if (!value.houseCard) {
+					if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
+						type = 'img'
+						this.lastContent = '[图片信息]'
+					} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
+						type = 'audio'
+						this.lastContent = '[语音信息]'
+					}
+					await this.msgController(value, false, type)
+				} else {
+					this.lastContent = '[房源信息]'
+					await this.msgController(value.houseCard, false, type)
+				}
+			}
+		})
+	}
 	async myInitIM() {
 		return new Promise(async resolve => {
 			if (!this.friendId) return
 			const onMsgNotify = (newMsgList) => {
-				console.log('新消息', newMsgList)
+				console.log('聊天页获取的新消息', newMsgList)
 				// 判断是否为当前聊天对象,是的话插入
-				newMsgList.forEach(async ele => {
-					if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
-						const value = await convertCustomMsgToHtml(ele)
-						console.log('value', value)
-						var type
-						if (!value.houseCard) {
-							if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
-								type = 'img'
-								this.lastContent = '[图片信息]'
-							} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
-								type = 'audio'
-								this.lastContent = '[语音信息]'
-							}
-							await this.msgController(value, false, type)
-						} else {
-							this.lastContent = '[房源信息]'
-							await this.msgController(value.houseCard, false, type)
-						}
-					} else {
-						// 更新其他聊天对象的信息
-						wx.setStorageSync('refreshContact', true)
-					}
-				})
+				this.newMsgController(newMsgList)
 			}
 			await initIM(onMsgNotify)
-			wx.setStorageSync('IMByMessPage', false)
-			const data = await getC2CHistoryMsgs(this.friendId, true)
-			this.msgList = data.newMsgList
-			this.msgLength = data.Msglength
+			await getC2CHistoryMsgs(this.friendId, true)
+			// 获取历史记录
+			const {data} = await getMsgsFromServer(this.friendId, 1)
+			console.log('data', data)
+			this.msgList = data
+			this.msgLength = data.length
+			wx.setStorageSync('IMByChatPage', true)
 			resolve()
 			this.$apply()
 		})
@@ -241,6 +246,15 @@ export default class Chat extends wepy.page {
 		// 得检查是否登录,如从后台再切入前台需再次登录
 		if (!webim.checkLogin() && !this.onLoading) {
 			await this.myInitIM()
+		} else {
+			wepy.$instance.globalData.newMsgs = []
+			this.intervalId = setInterval(() => {
+				const newMsgList = wepy.$instance.globalData.newMsgs
+				if (newMsgList.length != 0) {
+					this.newMsgController(newMsgList)
+					wepy.$instance.globalData.newMsgs = []
+				}
+			}, 1200)
 		}
 	}
 	async onLoad({fId, fAvatar, fName}) {
@@ -256,13 +270,13 @@ export default class Chat extends wepy.page {
 		this.myUid = wepy.$instance.globalData.myUserInfo.uid
 		wx.setNavigationBarTitle({title: fName})
 		this.scrollHeight = wx.getSystemInfoSync().windowHeight
-		await this.myInitIM()
 		// 向经纪人发送房源信息
 		const pages = getCurrentPages()
 		const prevPage = pages[pages.length - 2]
 		const currentHouse = prevPage.data.currentHouse
 		if (currentHouse) {
 			console.log('从咨询来的')
+			await this.myInitIM()
 			this.houseCard.img = currentHouse.photoUrl[0]
 			this.houseCard.title = currentHouse.title
 			this.houseCard.houseId = currentHouse.propertyUuid
@@ -274,11 +288,19 @@ export default class Chat extends wepy.page {
 			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
 			await this.msgController(this.houseCard, true)
 		}
+		// 获取历史记录
+		const {data} = await getMsgsFromServer(this.friendId)
+		console.log('data', data)
+		this.msgList = data
+		this.msgLength = data.length
 		this.onLoading = false
 		this.$apply()
 	}
 	onUnload () {
 		console.log('页面离开')
+		this.toSaveMsgList.forEach(ele => {
+			ele.data = JSON.stringify(ele.data)
+		})
 		// 更新sessionStorage缓存
 		const sessionStorage = wx.getStorageSync('sessionStorage')
 		sessionStorage.forEach((ele, index) => {
@@ -293,7 +315,9 @@ export default class Chat extends wepy.page {
 				wx.setStorageSync('sessionStorage', sessionStorage)
 			}
 		})
+		sendMsgsToServer(this.friendId, this.toSaveMsgList)
 		this.innerAudio.stop()
+		clearInterval(this.intervalId)
 	}
 	msgController(value, isSelfSend, type) {
 		return new Promise(resolve => {
@@ -314,27 +338,34 @@ export default class Chat extends wepy.page {
 					this.lastContent = value
 				}
 			}
-			item.time = nowTime
 			item.isSelfSend = isSelfSend
-			// 如果当前时间跟最后一条时间一样，并入最后一数组
+			// 如果当前时间跟最后一条时间分一样，并入最后一数组
+			let delSecTime = nowTime.length < 17 ? nowTime : nowTime.substring(0, nowTime.length - 3)
+			item.time = delSecTime
 			if (this.msgList.length != 0) {
-				if (this.msgList[this.msgList.length - 1].time == nowTime) {
+				if (this.msgList[this.msgList.length - 1].time == delSecTime) {
 					this.msgList[this.msgList.length - 1].data.push(item)
 				} else {
-					this.msgList.push({time: nowTime, data: [item]})
+					this.msgList.push({time: delSecTime, data: [item]})
 				}
 			} else {
-				this.msgList.push({time: nowTime, data: [item]})
+				this.msgList.push({time: delSecTime, data: [item]})
 			}
 			this.msgLength ++
-			this.$apply()
 			resolve()
-			// 保存消息到后端服务器
-			const msgToServerItem = {time: nowTime, data: JSON.stringify([item])}
-			sendMsgsToServer(this.friendId, [msgToServerItem])
+			// 暂存新消息
+			if (this.toSaveMsgList.length != 0) {
+				if (this.toSaveMsgList[this.toSaveMsgList.length - 1].time.substring(0, nowTime.length - 3) == delSecTime) {
+					this.toSaveMsgList[this.toSaveMsgList.length - 1].data.push(item)
+				} else {
+					this.toSaveMsgList.push({time: nowTime, data: [item]})
+				}
+			} else {
+				this.toSaveMsgList.push({time: nowTime, data: [item]})
+			}
+			this.$apply()
 		})
 	}
-
 	methods = {
 		toMessage() {
 			wepy.navigateTo({url: 'agent_message'})
