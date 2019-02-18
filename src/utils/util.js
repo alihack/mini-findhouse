@@ -316,7 +316,7 @@ const setSessionUnread = (contactList) => {
 		// 将腾讯返回历史记录与后端服务器比较，获取未读数
 		contactList.forEach(async (ele, contactIndex) => {
 			const {newMsgList} = await getC2CHistoryMsgs(ele.To_Account)
-			const {data} = await getMsgsFromServer(ele.To_Account)
+			const {data} = await getMsgsFromServer(ele.To_Account, 1)
 			const serverMsgList = data
 			console.log('腾讯数据', newMsgList)
 			console.log('服务器数据', serverMsgList)
@@ -396,7 +396,7 @@ const getC2CHistoryMsgs = (friendID, setRead = false) => {
 							item.html = html
 						}
 					}
-					item.time = convertTime(MsgList[i].time * 1000, false, true)
+					item.time = convertTime(MsgList[i].time * 1000)
 					item.isSelfSend = MsgList[i].isSend
 					data.push(item)
 				}
@@ -420,7 +420,6 @@ const getC2CHistoryMsgs = (friendID, setRead = false) => {
 					}
 				})
 				console.log('新历史记录', newMsgList)
-				resolve({newMsgList, Msglength})
 				// 将新历史记录处理后发送给后端服务器,标记已读
 				if (setRead) {
 					const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
@@ -429,7 +428,10 @@ const getC2CHistoryMsgs = (friendID, setRead = false) => {
 						ele.data = JSON.stringify(ele.data)
 						msgsToServerList.push(ele)
 					})
-					sendMsgsToServer(friendID, msgsToServerList)
+					await sendMsgsToServer(friendID, msgsToServerList)
+					resolve({newMsgList, Msglength})
+				} else {
+					resolve({newMsgList, Msglength})
 				}
 			},
 			(err) => {
@@ -595,13 +597,14 @@ const sendMsgsToServer = (fid, msg) => {
 		resolve()
 	})
 }
-const getMsgsFromServer = (fid, page) => {
+const getMsgsFromServer = (fid, hasSec = 0) => {
 	return new Promise(async resolve => {
 		let form = {
 			uid: loginInfo.identifier,
 			fid,
+			hasSec
 		}
-		if (page) form.page = page
+		// if (page) form.page = page
 		const msgList = await wepy.request({
 			url: api['getMsgs'],
 			data: form

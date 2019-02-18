@@ -172,7 +172,7 @@ export default class Chat extends wepy.page {
 		friendName: '',
 		myAvatar: '',
 		myUid: '',
-		scrollInto: 0,
+		scrollInto: 999999,
 		scrollHeight: '',
 		msgList: [],
 		msgLength: 1,
@@ -190,7 +190,7 @@ export default class Chat extends wepy.page {
 	watch = {
 		msgLength() {
 			// 自动滚动到底部,只要srcollInto的值大于窗口，就能到底部
-			this.scrollInto = 60 + this.msgLength * 250
+			this.scrollInto = 60 + this.msgLength * 500
 			this.$apply()
 		}
 	}
@@ -233,7 +233,7 @@ export default class Chat extends wepy.page {
 			await initIM(onMsgNotify)
 			await getC2CHistoryMsgs(this.friendId, true)
 			// 获取历史记录
-			const {data} = await getMsgsFromServer(this.friendId, 1)
+			const {data} = await getMsgsFromServer(this.friendId)
 			console.log('data', data)
 			this.msgList = data
 			this.msgLength = data.length
@@ -287,13 +287,14 @@ export default class Chat extends wepy.page {
 			this.houseCard.detail = houseType + ' | ' + houseSquare + ' | ' + direction
 			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
 			await this.msgController(this.houseCard, true)
+		} else {
+			// 获取历史记录
+			const {data} = await getMsgsFromServer(this.friendId)
+			console.log('data', data)
+			this.msgList = data
+			this.msgLength = data.length
+			this.onLoading = false
 		}
-		// 获取历史记录
-		const {data} = await getMsgsFromServer(this.friendId)
-		console.log('data', data)
-		this.msgList = data
-		this.msgLength = data.length
-		this.onLoading = false
 		this.$apply()
 	}
 	onUnload () {
@@ -326,6 +327,7 @@ export default class Chat extends wepy.page {
 			const item = {}
 			if (typeof value == 'object') {
 				item.houseCard = value
+				var isHouseCard = true
 			} else {
 				if (type == 'img') {
 					item.img = 'http://' + value
@@ -353,8 +355,14 @@ export default class Chat extends wepy.page {
 			}
 			this.msgLength ++
 			resolve()
-			// 暂存新消息
-			if (this.toSaveMsgList.length != 0) {
+			// 如果是卡片的话，单独一条发送，不然后端保存会有问题
+			if (isHouseCard) {
+				sendMsgsToServer(this.friendId, [{time: nowTime, data: JSON.stringify([item])}])
+				return
+			}
+			// 不是卡片的暂存新消息，离开时一起发送
+			item.time = nowTime
+			if (this.toSaveMsgList.length != 0 && !isHouseCard) {
 				if (this.toSaveMsgList[this.toSaveMsgList.length - 1].time.substring(0, nowTime.length - 3) == delSecTime) {
 					this.toSaveMsgList[this.toSaveMsgList.length - 1].data.push(item)
 				} else {
