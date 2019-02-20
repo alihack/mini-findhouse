@@ -22,11 +22,12 @@
 				font-size: 24rpx;
 				width: 376rpx;
 				height: 486rpx;
+				box-sizing: border-box;
 				.txt1 {
 					font-size: 30rpx;
 					color:black;
 					margin-top:5rpx;
-					width: 376rpx;
+					width: 346rpx;
 					height: 86rpx;
 					overflow: hidden;
 				}
@@ -40,7 +41,7 @@
 				}
 			}
 			image {
-				width: 376rpx;
+				width: 346rpx;
 				height: 290rpx;
 			}
 		}
@@ -60,14 +61,14 @@
 			<swiper
 				class="panel-main"
 				display-multiple-items="2"
-				circular
 			>
 			<block wx:for="{{sourceList}}" wx:key="index">
 				<swiper-item class="item" @tap="toHouseDetail({{item.propertyUuid}})">
 					<image wx:if="{{item.photoList.length > 2}}" src="{{item.photoList[2]}}"/>
 					<image wx:else src="{{item.photoList[0]}}"/>
 					<view class="txt1">{{item.title}}</view>
-					<view class="txt2">南北朝向 | {{item.countF}}室{{item.countT}}厅 | {{item.square}}m²</view>
+					<view class="txt2" wx:if="{{item.countF}}">南北朝向 | {{item.countF}}室{{item.countT}}厅 | {{item.square}}m²</view>
+					<view class="txt2" wx:else>南北朝向 | {{item.square}}m²</view>
 					<view class="txt3"><text class="price">{{item.sellPrice}}万</text><text class="unit">63626元/m²</text></view>
 				</swiper-item>
 			</block>

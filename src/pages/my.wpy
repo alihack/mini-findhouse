@@ -30,6 +30,7 @@ import myAgent from '../components/my_agent'
 import myUser from '../components/my_user'
 import mySMSLogin from '../components/my_login_sms'
 import myWXLogin from '../components/my_login_wx'
+import {getUserInfo} from '../utils/util'
 export default class My extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的',
@@ -115,6 +116,13 @@ export default class My extends wepy.page {
 		if (JSON.stringify(this.userInfo) != JSON.stringify(wx.getStorageSync('userInfo'))) {
 			console.log('在其他页面注册了')
 			this.refresh()
+		}
+		// 本页面逻辑跑完后，更新一次经纪人数据（咨询次数）
+		if (this.isAgent) {
+			setTimeout(async () => {
+				this.userInfo = await getUserInfo(true)
+				this.$apply()
+			}, 5000)
 		}
 	}
 	methods = {

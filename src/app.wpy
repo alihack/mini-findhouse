@@ -162,7 +162,7 @@ export default class extends wepy.app {
 		if (quitIM) {
 			// 普通页面的退出
 			webim.logout(res => {
-				console.log('退出', res)
+				console.log('退出IM', res)
 			})
 		} else {
 			// 预览照片的退出

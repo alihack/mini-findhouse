@@ -306,7 +306,18 @@ export default class Index extends wepy.page {
 		wx.showShareMenu()
 		this.$apply()
 	}
-
+	async clickCount() {
+		if (!this.aidByShare) return
+		await wepy.request({
+			url: api['clickCount'],
+			method: 'POST',
+			data: {
+				uid: wepy.$instance.globalData.myUserInfo.uid,
+				type: 4,
+				agentId: this.aidByShare,
+			}
+		})
+	}
 	getHouseList() {
 		return new Promise(async resolve => {
 			let form = {
@@ -340,18 +351,21 @@ export default class Index extends wepy.page {
 		if (this.houseId && this.aidByShare) {
 			wepy.navigateTo({url: `detail?id=${this.houseId}`})
 			await getUserInfo()
+			this.clickCount()
 			return
 		}
 		// 扫码经纪人海报进来的
 		if (this.proNo && this.aidByShare) {
 			wepy.navigateTo({url: `detail?proNo=${this.proNo}`})
 			await getUserInfo()
+			this.clickCount()
 			return
 		}
 		// 经纪人小区详情分享进来的
 		if (this.estateId && this.aidByShare) {
 			wepy.navigateTo({url: `detail_estate?id=${this.estateId}`})
 			await getUserInfo()
+			this.clickCount()
 			return
 		}
 		if (this.houseId) {
@@ -365,6 +379,7 @@ export default class Index extends wepy.page {
 			console.log('经纪人主页分享进来的')
 		}
 		await getUserInfo()
+		this.clickCount()
 	}
 	methods = {
 		address() {

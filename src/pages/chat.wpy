@@ -297,11 +297,20 @@ export default class Chat extends wepy.page {
 		}
 		this.$apply()
 	}
+	async onHide () {
+		console.log('页面隐藏')
+		// 发送暂存的新消息到后端
+		if (this.toSaveMsgList.length) {
+			this.toSaveMsgList.forEach(ele => {
+				ele.data = JSON.stringify(ele.data)
+			})
+			await sendMsgsToServer(this.friendId, this.toSaveMsgList)
+			this.toSaveMsgList = []
+			this.$apply()
+		}
+	}
 	onUnload () {
 		console.log('页面离开')
-		this.toSaveMsgList.forEach(ele => {
-			ele.data = JSON.stringify(ele.data)
-		})
 		// 更新sessionStorage缓存
 		const sessionStorage = wx.getStorageSync('sessionStorage')
 		sessionStorage.forEach((ele, index) => {
@@ -316,7 +325,13 @@ export default class Chat extends wepy.page {
 				wx.setStorageSync('sessionStorage', sessionStorage)
 			}
 		})
-		sendMsgsToServer(this.friendId, this.toSaveMsgList)
+		// 发送暂存的新消息到后端
+		if (this.toSaveMsgList.length) {
+			this.toSaveMsgList.forEach(ele => {
+				ele.data = JSON.stringify(ele.data)
+			})
+			sendMsgsToServer(this.friendId, this.toSaveMsgList)
+		}
 		this.innerAudio.stop()
 		clearInterval(this.intervalId)
 	}
