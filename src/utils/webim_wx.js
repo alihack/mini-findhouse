@@ -1324,7 +1324,6 @@ module.exports = function() {
         //检查是否登录
         var checkLogin = function(cbErr, isNeedCallBack) {
             if (!isLogin()) {
-                console.info(isNeedCallBack)
                 if (isNeedCallBack) {
                     var errInfo = "请登录";
                     var error = tool.getReturnError(errInfo, -4);
@@ -1915,7 +1914,8 @@ module.exports = function() {
             for (var i in c2CMsgReadedItem) {
                 var item = {
                     'To_Account': c2CMsgReadedItem[i].toAccount,
-                    'LastedMsgTime': c2CMsgReadedItem[i].lastedMsgTime
+                    'LastedMsgTime': c2CMsgReadedItem[i].lastedMsgTime,
+                    "Receipt": isPeerRead
                 };
                 tmpC2CMsgReadedItem.push(item);
             }
@@ -3817,6 +3817,404 @@ module.exports = function() {
                     );
                 };
 
+                //补拉群消息
+                var getLostGroupMsgs = function(groupId, reqMsgSeq, reqMsgNumber) {
+                    getLostGroupMsgCount++;
+                    //发起一个拉群群消息请求
+                    var tempOpts = {
+                        'GroupId': groupId,
+                        'ReqMsgSeq': reqMsgSeq,
+                        'ReqMsgNumber': reqMsgNumber
+                    };
+                    //发起一个拉群群消息请求
+                    log.warn("第" + getLostGroupMsgCount + "次补齐群消息,参数=" + JSON.stringify(tempOpts));
+                    MsgManager.syncGroupMsgs(tempOpts);
+                };
+
+                //更新群当前最大消息seq
+                var updateMyGroupCurMaxSeq = function(groupId, msgSeq) {
+                    //更新myGroupMaxSeqs中的群最大seq
+                    var curMsgSeq = myGroupMaxSeqs[groupId]
+                    if (curMsgSeq) { //如果存在，比较大小
+                        if (msgSeq > curMsgSeq) {
+                            myGroupMaxSeqs[groupId] = msgSeq;
+                        }
+                    } else { //不存在，新增
+                        myGroupMaxSeqs[groupId] = msgSeq;
+                    }
+                };
+
+                //添加群消息列表
+                var addGroupMsgList = function(msgs, new_group_msgs) {
+                    for (var p in msgs) {
+                        var newGroupMsg = msgs[p];
+                        //发群消息时，长轮询接口会返回用户自己发的群消息
+                        //if(newGroupMsg.From_Account && newGroupMsg.From_Account!=ctx.identifier ){
+                        if (newGroupMsg.From_Account) {
+                            //false-不是主动拉取的历史消息
+                            //true-需要保存到sdk本地session,并且需要判重
+                            var msg = handlerGroupMsg(newGroupMsg, false, true);
+                            if (msg) { //不为空，加到新消息里
+                                new_group_msgs.push(msg);
+                            }
+                            //更新myGroupMaxSeqs中的群最大seq
+                            updateMyGroupCurMaxSeq(newGroupMsg.ToGroupId, newGroupMsg.MsgSeq);
+                        }
+                    }
+                    return new_group_msgs;
+                };
+
+                //处理收到的群普通和提示消息
+                var handlerOrdinaryAndTipC2cMsgs = function(eventType, groupMsgArray) {
+                    var groupMsgMap = {}; //保存收到的C2c消息信息（群号，最小，最大消息seq，消息列表）
+                    var new_group_msgs = [];
+                    var minGroupMsgSeq = 99999999;
+                    var maxGroupMsgSeq = -1;
+                    for (var j in groupMsgArray) {
+
+                        var groupMsgs = groupMsgMap[groupMsgArray[j].ToGroupId];
+                        if (!groupMsgs) {
+                            groupMsgs = groupMsgMap[groupMsgArray[j].ToGroupId] = {
+                                "min": minGroupMsgSeq, //收到新消息最小seq
+                                "max": maxGroupMsgSeq, //收到新消息最大seq
+                                "msgs": [] //收到的新消息
+                            };
+                        }
+                        //更新长轮询的群NoticeSeq
+                        if (groupMsgArray[j].NoticeSeq > noticeSeq) {
+                            log.warn("noticeSeq=" + noticeSeq + ",msgNoticeSeq=" + groupMsgArray[j].NoticeSeq);
+                            noticeSeq = groupMsgArray[j].NoticeSeq;
+                        }
+                        groupMsgArray[j].Event = eventType;
+                        groupMsgMap[groupMsgArray[j].ToGroupId].msgs.push(groupMsgArray[j]); //新增一条消息
+                        if (groupMsgArray[j].MsgSeq < groupMsgs.min) { //记录最小的消息seq
+                            groupMsgMap[groupMsgArray[j].ToGroupId].min = groupMsgArray[j].MsgSeq;
+                        }
+                        if (groupMsgArray[j].MsgSeq > groupMsgs.max) { //记录最大的消息seq
+                            groupMsgMap[groupMsgArray[j].ToGroupId].max = groupMsgArray[j].MsgSeq;
+                        }
+                    }
+
+                    for (var groupId in groupMsgMap) {
+                        new_group_msgs = addGroupMsgList(groupMsgMap[groupId].msgs, new_group_msgs);
+                    }
+                    if (new_group_msgs.length) {
+                        MsgStore.updateTimeline();
+                    }
+                    if (onMsgCallback && new_group_msgs.length) onMsgCallback(new_group_msgs);
+
+                };
+
+                //处理收到的群普通和提示消息
+                var handlerOrdinaryAndTipGroupMsgs = function(eventType, groupMsgArray) {
+                    var groupMsgMap = {}; //保存收到的群消息信息（群号，最小，最大消息seq，消息列表）
+                    var new_group_msgs = [];
+                    var minGroupMsgSeq = 99999999;
+                    var maxGroupMsgSeq = -1;
+                    for (var j in groupMsgArray) {
+
+                        var groupMsgs = groupMsgMap[groupMsgArray[j].ToGroupId];
+                        if (!groupMsgs) {
+                            groupMsgs = groupMsgMap[groupMsgArray[j].ToGroupId] = {
+                                "min": minGroupMsgSeq, //收到新消息最小seq
+                                "max": maxGroupMsgSeq, //收到新消息最大seq
+                                "msgs": [] //收到的新消息
+                            };
+                        }
+                        //更新长轮询的群NoticeSeq
+                        if (groupMsgArray[j].NoticeSeq > noticeSeq) {
+                            log.warn("noticeSeq=" + noticeSeq + ",msgNoticeSeq=" + groupMsgArray[j].NoticeSeq);
+                            noticeSeq = groupMsgArray[j].NoticeSeq;
+                        }
+                        groupMsgArray[j].Event = eventType;
+                        groupMsgMap[groupMsgArray[j].ToGroupId].msgs.push(groupMsgArray[j]); //新增一条消息
+                        if (groupMsgArray[j].MsgSeq < groupMsgs.min) { //记录最小的消息seq
+                            groupMsgMap[groupMsgArray[j].ToGroupId].min = groupMsgArray[j].MsgSeq;
+                        }
+                        if (groupMsgArray[j].MsgSeq > groupMsgs.max) { //记录最大的消息seq
+                            groupMsgMap[groupMsgArray[j].ToGroupId].max = groupMsgArray[j].MsgSeq;
+                        }
+                    }
+
+                    for (var groupId in groupMsgMap) {
+                        new_group_msgs = addGroupMsgList(groupMsgMap[groupId].msgs, new_group_msgs);
+                    }
+                    if (new_group_msgs.length) {
+                        MsgStore.updateTimeline();
+                    }
+                    if (onMsgCallback && new_group_msgs.length) onMsgCallback(new_group_msgs);
+
+                };
+
+                //处理新的群提示消息
+                var handlerGroupTips = function(groupTips) {
+                    var new_group_msgs = [];
+                    for (var o in groupTips) {
+                        var groupTip = groupTips[o];
+                        //添加event字段
+                        groupTip.Event = LONG_POLLINNG_EVENT_TYPE.GROUP_TIP;
+                        //更新群消息通知seq
+                        if (groupTip.NoticeSeq > noticeSeq) {
+                            noticeSeq = groupTip.NoticeSeq;
+                        }
+                        var msg = handlerGroupMsg(groupTip, false, true);
+                        if (msg) {
+                            new_group_msgs.push(msg);
+                        }
+                    }
+                    if (new_group_msgs.length) {
+                        MsgStore.updateTimeline();
+                    }
+                    if (onMsgCallback && new_group_msgs.length) onMsgCallback(new_group_msgs);
+                };
+
+                //处理新的群系统消息
+                //isNeedValidRepeatMsg 是否需要判重
+                var handlerGroupSystemMsgs = function(groupSystemMsgs, isNeedValidRepeatMsg) {
+                    for (var k in groupSystemMsgs) {
+                        var groupTip = groupSystemMsgs[k];
+                        var groupReportTypeMsg = groupTip.MsgBody;
+                        var reportType = groupReportTypeMsg.ReportType;
+                        //当长轮询返回的群系统消息，才需要更新群消息通知seq
+                        if (isNeedValidRepeatMsg == false && groupTip.NoticeSeq && groupTip.NoticeSeq > noticeSeq) {
+                            noticeSeq = groupTip.NoticeSeq;
+                        }
+                        var toAccount = groupTip.GroupInfo.To_Account;
+                        //过滤本不应该给自己的系统消息
+                        /*if (!toAccount || toAccount != ctx.identifier) {
+                 log.error("收到本不应该给自己的系统消息: To_Account=" + toAccount);
+                 continue;
+                 }*/
+                        if (isNeedValidRepeatMsg) {
+                            //var key=groupTip.ToGroupId+"_"+reportType+"_"+groupTip.MsgTimeStamp+"_"+groupReportTypeMsg.Operator_Account;
+                            var key = groupTip.ToGroupId + "_" + reportType + "_" + groupReportTypeMsg.Operator_Account;
+                            var isExist = groupSystemMsgsCache[key];
+                            if (isExist) {
+                                log.warn("收到重复的群系统消息：key=" + key);
+                                continue;
+                            }
+                            groupSystemMsgsCache[key] = true;
+                        }
+
+                        var notify = {
+                            "SrcFlag": 0,
+                            "ReportType": reportType,
+                            "GroupId": groupTip.ToGroupId,
+                            "GroupName": groupTip.GroupInfo.GroupName,
+                            "Operator_Account": groupReportTypeMsg.Operator_Account,
+                            "MsgTime": groupTip.MsgTimeStamp,
+                            "groupReportTypeMsg": groupReportTypeMsg
+                        };
+                        switch (reportType) {
+                            case GROUP_SYSTEM_TYPE.JOIN_GROUP_REQUEST: //申请加群(只有管理员会接收到)
+                                notify["RemarkInfo"] = groupReportTypeMsg.RemarkInfo;
+                                notify["MsgKey"] = groupReportTypeMsg.MsgKey;
+                                notify["Authentication"] = groupReportTypeMsg.Authentication;
+                                notify["UserDefinedField"] = groupTip.UserDefinedField;
+                                notify["From_Account"] = groupTip.From_Account;
+                                notify["MsgSeq"] = groupTip.ClientSeq;
+                                notify["MsgRandom"] = groupTip.MsgRandom;
+                                break;
+                            case GROUP_SYSTEM_TYPE.JOIN_GROUP_ACCEPT: //申请加群被同意(只有申请人自己接收到)
+                            case GROUP_SYSTEM_TYPE.JOIN_GROUP_REFUSE: //申请加群被拒绝(只有申请人自己接收到)
+                                notify["RemarkInfo"] = groupReportTypeMsg.RemarkInfo;
+                                break;
+                            case GROUP_SYSTEM_TYPE.KICK: //被管理员踢出群(只有被踢者接收到)
+                            case GROUP_SYSTEM_TYPE.DESTORY: //群被解散(全员接收)
+                            case GROUP_SYSTEM_TYPE.CREATE: //创建群(创建者接收, 不展示)
+                            case GROUP_SYSTEM_TYPE.INVITED_JOIN_GROUP_REQUEST: //邀请加群(被邀请者接收)
+                            case GROUP_SYSTEM_TYPE.INVITED_JOIN_GROUP_REQUEST_AGREE: //邀请加群(被邀请者需同意)
+                            case GROUP_SYSTEM_TYPE.QUIT: //主动退群(主动退出者接收, 不展示)
+                            case GROUP_SYSTEM_TYPE.SET_ADMIN: //群设置管理员(被设置者接收)
+                            case GROUP_SYSTEM_TYPE.CANCEL_ADMIN: //取消管理员(被取消者接收)
+                            case GROUP_SYSTEM_TYPE.REVOKE: //群已被回收(全员接收, 不展示)
+                                break;
+                            case GROUP_SYSTEM_TYPE.READED: //群消息已读同步
+                                break;
+                            case GROUP_SYSTEM_TYPE.CUSTOM: //用户自定义通知(默认全员接收)
+                                notify["MsgSeq"] = groupTip.MsgSeq;
+                                notify["UserDefinedField"] = groupReportTypeMsg.UserDefinedField;
+                                break;
+                            default:
+                                log.error("未知群系统消息类型：reportType=" + reportType);
+                                break;
+                        }
+
+                        if (isNeedValidRepeatMsg) {
+                            //注释只收取一种通知
+                            // if (reportType == GROUP_SYSTEM_TYPE.JOIN_GROUP_REQUEST) {
+                            //回调
+                            if (onGroupSystemNotifyCallbacks[reportType]) {
+                                onGroupSystemNotifyCallbacks[reportType](notify);
+                            } else {
+                                log.error("未知群系统消息类型：reportType=" + reportType);
+                            }
+                            //}
+                        } else {
+                            //回调
+                            if (onGroupSystemNotifyCallbacks[reportType]) {
+                                if (reportType == GROUP_SYSTEM_TYPE.READED) {
+                                    var arr = notify.groupReportTypeMsg.GroupReadInfoArray;
+                                    for (var i = 0, l = arr.length; i < l; i++) {
+                                        var item = arr[i];
+                                        onGroupSystemNotifyCallbacks[reportType](item);
+                                    }
+                                } else {
+                                    onGroupSystemNotifyCallbacks[reportType](notify);
+                                }
+                            }
+                        }
+                    } //loop
+                };
+
+
+                //处理新的好友系统通知
+                //isNeedValidRepeatMsg 是否需要判重
+                var handlerFriendSystemNotices = function(friendSystemNotices, isNeedValidRepeatMsg) {
+                    var friendNotice, type, notify;
+                    for (var k in friendSystemNotices) {
+                        friendNotice = friendSystemNotices[k];
+                        type = friendNotice.PushType;
+                        //当长轮询返回的群系统消息，才需要更新通知seq
+                        if (isNeedValidRepeatMsg == false && friendNotice.NoticeSeq && friendNotice.NoticeSeq > noticeSeq) {
+                            noticeSeq = friendNotice.NoticeSeq;
+                        }
+                        notify = {
+                            'Type': type
+                        };
+                        switch (type) {
+                            case FRIEND_NOTICE_TYPE.FRIEND_ADD: //好友表增加
+                                notify["Accounts"] = friendNotice.FriendAdd_Account;
+                                break;
+                            case FRIEND_NOTICE_TYPE.FRIEND_DELETE: //好友表删除
+                                notify["Accounts"] = friendNotice.FriendDel_Account;
+                                break;
+                            case FRIEND_NOTICE_TYPE.PENDENCY_ADD: //未决增加
+                                notify["PendencyList"] = friendNotice.PendencyAdd;
+                                break;
+                            case FRIEND_NOTICE_TYPE.PENDENCY_DELETE: //未决删除
+                                notify["Accounts"] = friendNotice.FrienPencydDel_Account;
+                                break;
+                            case FRIEND_NOTICE_TYPE.BLACK_LIST_ADD: //黑名单增加
+                                notify["Accounts"] = friendNotice.BlackListAdd_Account;
+                                break;
+                            case FRIEND_NOTICE_TYPE.BLACK_LIST_DELETE: //黑名单删除
+                                notify["Accounts"] = friendNotice.BlackListDel_Account;
+                                break;
+                                /*case FRIEND_NOTICE_TYPE.PENDENCY_REPORT://未决已读上报
+
+                     break;
+                     case FRIEND_NOTICE_TYPE.FRIEND_UPDATE://好友数据更新
+
+                     break;
+                     */
+                            default:
+                                log.error("未知好友系统通知类型：friendNotice=" + JSON.stringify(friendNotice));
+                                break;
+                        }
+
+                        if (isNeedValidRepeatMsg) {
+                            if (type == FRIEND_NOTICE_TYPE.PENDENCY_ADD) {
+                                //回调
+                                if (onFriendSystemNotifyCallbacks[type]) onFriendSystemNotifyCallbacks[type](notify);
+                            }
+                        } else {
+                            //回调
+                            if (onFriendSystemNotifyCallbacks[type]) onFriendSystemNotifyCallbacks[type](notify);
+                        }
+                    } //loop
+                };
+
+                //处理新的资料系统通知
+                //isNeedValidRepeatMsg 是否需要判重
+                var handlerProfileSystemNotices = function(profileSystemNotices, isNeedValidRepeatMsg) {
+                    var profileNotice, type, notify;
+                    for (var k in profileSystemNotices) {
+                        profileNotice = profileSystemNotices[k];
+                        type = profileNotice.PushType;
+                        //当长轮询返回的群系统消息，才需要更新通知seq
+                        if (isNeedValidRepeatMsg == false && profileNotice.NoticeSeq && profileNotice.NoticeSeq > noticeSeq) {
+                            noticeSeq = profileNotice.NoticeSeq;
+                        }
+                        notify = {
+                            'Type': type
+                        };
+                        switch (type) {
+                            case PROFILE_NOTICE_TYPE.PROFILE_MODIFY: //资料修改
+                                notify["Profile_Account"] = profileNotice.Profile_Account;
+                                notify["ProfileList"] = profileNotice.ProfileList;
+                                break;
+                            default:
+                                log.error("未知资料系统通知类型：profileNotice=" + JSON.stringify(profileNotice));
+                                break;
+                        }
+
+                        if (isNeedValidRepeatMsg) {
+                            if (type == PROFILE_NOTICE_TYPE.PROFILE_MODIFY) {
+                                //回调
+                                if (onProfileSystemNotifyCallbacks[type]) onProfileSystemNotifyCallbacks[type](notify);
+                            }
+                        } else {
+                            //回调
+                            if (onProfileSystemNotifyCallbacks[type]) onProfileSystemNotifyCallbacks[type](notify);
+                        }
+                    } //loop
+                };
+
+                //处理新的群系统消息(用于直播大群长轮询)
+                var handlerGroupSystemMsg = function(groupTip) {
+                    var groupReportTypeMsg = groupTip.MsgBody;
+                    var reportType = groupReportTypeMsg.ReportType;
+                    var toAccount = groupTip.GroupInfo.To_Account;
+                    //过滤本不应该给自己的系统消息
+                    //if(!toAccount || toAccount!=ctx.identifier){
+                    //    log.error("收到本不应该给自己的系统消息: To_Account="+toAccount);
+                    //    continue;
+                    //}
+                    var notify = {
+                        "SrcFlag": 1,
+                        "ReportType": reportType,
+                        "GroupId": groupTip.ToGroupId,
+                        "GroupName": groupTip.GroupInfo.GroupName,
+                        "Operator_Account": groupReportTypeMsg.Operator_Account,
+                        "MsgTime": groupTip.MsgTimeStamp
+                    };
+                    switch (reportType) {
+                        case GROUP_SYSTEM_TYPE.JOIN_GROUP_REQUEST: //申请加群(只有管理员会接收到)
+                            notify["RemarkInfo"] = groupReportTypeMsg.RemarkInfo;
+                            notify["MsgKey"] = groupReportTypeMsg.MsgKey;
+                            notify["Authentication"] = groupReportTypeMsg.Authentication;
+                            notify["UserDefinedField"] = groupTip.UserDefinedField;
+                            notify["From_Account"] = groupTip.From_Account;
+                            notify["MsgSeq"] = groupTip.ClientSeq;
+                            notify["MsgRandom"] = groupTip.MsgRandom;
+                            break;
+                        case GROUP_SYSTEM_TYPE.JOIN_GROUP_ACCEPT: //申请加群被同意(只有申请人自己接收到)
+                        case GROUP_SYSTEM_TYPE.JOIN_GROUP_REFUSE: //申请加群被拒绝(只有申请人自己接收到)
+                            notify["RemarkInfo"] = groupReportTypeMsg.RemarkInfo;
+                            break;
+                        case GROUP_SYSTEM_TYPE.KICK: //被管理员踢出群(只有被踢者接收到)
+                        case GROUP_SYSTEM_TYPE.DESTORY: //群被解散(全员接收)
+                        case GROUP_SYSTEM_TYPE.CREATE: //创建群(创建者接收, 不展示)
+                        case GROUP_SYSTEM_TYPE.INVITED_JOIN_GROUP_REQUEST: //邀请加群(被邀请者接收)
+                        case GROUP_SYSTEM_TYPE.INVITED_JOIN_GROUP_REQUEST_AGREE: //邀请加群(被邀请者需要同意)
+                        case GROUP_SYSTEM_TYPE.QUIT: //主动退群(主动退出者接收, 不展示)
+                        case GROUP_SYSTEM_TYPE.SET_ADMIN: //群设置管理员(被设置者接收)
+                        case GROUP_SYSTEM_TYPE.CANCEL_ADMIN: //取消管理员(被取消者接收)
+                        case GROUP_SYSTEM_TYPE.REVOKE: //群已被回收(全员接收, 不展示)
+                            break;
+                        case GROUP_SYSTEM_TYPE.CUSTOM: //用户自定义通知(默认全员接收)
+                            notify["MsgSeq"] = groupTip.MsgSeq;
+                            notify["UserDefinedField"] = groupReportTypeMsg.UserDefinedField;
+                            break;
+                        default:
+                            log.error("未知群系统消息类型：reportType=" + reportType);
+                            break;
+                    }
+                    //回调
+                    if (onGroupSystemNotifyCallbacks[reportType]) onGroupSystemNotifyCallbacks[reportType](notify);
+
+                };
 
                 //处理C2C EVENT 消息通道Array
                 var handlerC2cNotifyMsgArray = function(arr) {

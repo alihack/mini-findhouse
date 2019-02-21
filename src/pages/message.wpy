@@ -192,8 +192,13 @@ export default class Message extends wepy.page {
 		return new Promise(async resolve => {
 			const onMsgNotify = (newMsgs) => {
 				console.log('列表页新信息', newMsgs)
+				var sessMap = webim.MsgStore.sessMap()
+				setTimeout(() => {
+					console.log('sessMap', sessMap)
+					console.log('未读数', sessMap['C2C98'].unread())
+				}, 1000)
 				wepy.$instance.globalData.newMsgs = newMsgs
-				wx.showTabBarRedDot({index: 1})
+				wx.showTabBarRedDot({index: 1, success: (res) => console.log('设置红点成功')})
 				// 先判断是否有新增对象
 				let sessionIds = []
 				let newMsgIds = []

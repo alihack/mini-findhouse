@@ -88,6 +88,7 @@
 					image {
 						margin-right: 8rpx;
 					}
+					.word {width:105rpx}
 					.green{color:#5bca39}
 					.red{color:#f95640}
 				}
@@ -259,8 +260,8 @@ export default class Index extends wepy.page {
 	}
 	async onLoad(option) {
 		console.log('主页所带参数', option)
-		this.market = await getMarket()
 		this.getHouseList()
+		this.market = await getMarket()
 		// 从分享进来的
 		if (JSON.stringify(option) != '{}') {
 			this.isShareFrom = true
@@ -292,7 +293,6 @@ export default class Index extends wepy.page {
 				wx.showTabBar()
 				await getUserInfo()
 			}
-			wx.showTabBarRedDot({index: 1})
 			// 如缓存中有分享经纪人ID，分享进来的经纪人ID与自己经纪人ID不同，显示退出
 			this.aidByShare = wx.getStorageSync('aidByShare')
 			this.aid = wx.getStorageSync('aid')
@@ -304,6 +304,7 @@ export default class Index extends wepy.page {
 			await getSign()
 		}
 		wx.showShareMenu()
+		wx.showTabBarRedDot({index: 1})
 		this.$apply()
 	}
 	async clickCount() {

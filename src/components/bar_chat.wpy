@@ -210,7 +210,8 @@ export default class barChat extends wepy.component {
 			encodeBitRate: 192000
 		},
 		msgText: '',
-		isXPhone: false
+		isXPhone: false,
+		isSending: false // 防止连点
 	}
 	watch = {
 		isRecording() {
@@ -278,6 +279,8 @@ export default class barChat extends wepy.component {
 	}
 	methods = {
 		sendMessage: async () => {
+			if (this.isSending) return
+			this.isSending = true
 			const data = await sendMessage(this.msgText, this.friendId)
 			if (data != 'ok') {
 				wepy.showToast({
@@ -289,6 +292,7 @@ export default class barChat extends wepy.component {
 			}
 			this.msgText = ''
 			this.showSend = false
+			this.isSending = false
 			this.$apply()
 		},
 		onInput({detail: {value}}) {

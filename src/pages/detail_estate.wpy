@@ -251,8 +251,11 @@ export default class detailEstate extends wepy.page {
 		})
 		this.currentEstate = data
 		// 对小区图片进行处理
-		const firstImg = this.currentEstate.photo_url[0]
-		if (!firstImg || firstImg == ' ') this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
+		const firstImg = this.currentEstate.photo_url
+		if (!firstImg || firstImg == '暂无') {
+			this.currentEstate.photo_url = []
+			this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
+		}
 		this.currentEstate.photo_url = this.currentEstate.photo_url.slice(0, 10)
 		// 对环比数据进行处理
 		if (data.ratio.indexOf('-') != -1) {

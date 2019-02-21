@@ -254,7 +254,7 @@ export default class Chat extends wepy.page {
 					this.newMsgController(newMsgList)
 					wepy.$instance.globalData.newMsgs = []
 				}
-			}, 1200)
+			}, 1100)
 		}
 	}
 	async onLoad({fId, fAvatar, fName}) {
@@ -373,6 +373,7 @@ export default class Chat extends wepy.page {
 			// 如果是卡片的话，单独一条发送，不然后端保存会有问题
 			if (isHouseCard) {
 				sendMsgsToServer(this.friendId, [{time: nowTime, data: JSON.stringify([item])}])
+				this.$apply()
 				return
 			}
 			// 不是卡片的暂存新消息，离开时一起发送

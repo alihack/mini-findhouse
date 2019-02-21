@@ -93,12 +93,6 @@ const getUserInfo = (isForced) => {
 const getMarket = () => {
 	return new Promise(async resolve => {
 		let market = {}
-		const myMarket = wx.getStorageSync('market')
-		if (myMarket) {
-			console.log('有market不重新获取')
-			resolve(myMarket)
-			return
-		}
 		const {data} = await wepy.request({
 			url: api['getMarket'],
 		})
@@ -111,7 +105,6 @@ const getMarket = () => {
 			market.isDecline = false
 		}
 		resolve(market)
-		wx.setStorageSync('market', market)
 	})
 }
 
@@ -227,6 +220,11 @@ const initIM = (onMsgNotify) => {
 		}
 		const cbOk = (e) => {
 			console.log('登录成功', e)
+			var sessMap = webim.MsgStore.sessMap()
+			setTimeout(() => {
+				console.log('sessMap', sessMap)
+				console.log('未读数', sessMap['C2C98'].unread())
+			}, 3000)
 			resolve()
 		}
 		const cbErr = (e) => {
