@@ -48,14 +48,15 @@
 			<view class="panel-main">
 				<image src="{{estate.photo_url[0]}}"></image>
 				<view class="detail">
-					<view class="title">
+					<!-- <view class="title">
 						<view class="title-left">参考均价：</view>
 						<view class="title-right" wx:if="{{estate.estate_price != '暂无'}}">{{estate.estate_price}}元/m²</view>
 						<view class="title-right" wx:else>暂无</view>
-					</view>
+					</view> -->
 					<view class="detail-text">建筑年代：{{estate.estate_age}}</view>
 					<view class="detail-text">产权年数：{{estate.own_year}}</view>
 					<view class="detail-text">房屋总数：{{estate.total_house}}</view>
+					<view class="detail-text">物业公司：{{estate.management_company}}</view>
 				</view>
 			</view>
 		</view>

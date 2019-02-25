@@ -220,11 +220,6 @@ const initIM = (onMsgNotify) => {
 		}
 		const cbOk = (e) => {
 			console.log('登录成功', e)
-			var sessMap = webim.MsgStore.sessMap()
-			setTimeout(() => {
-				console.log('sessMap', sessMap)
-				console.log('未读数', sessMap['C2C98'].unread())
-			}, 3000)
 			resolve()
 		}
 		const cbErr = (e) => {
@@ -445,7 +440,18 @@ const getRecentContactList = () => {
 		webim.getRecentContactList(
 			{'Count': 20},
 			({SessionItem}) => {
-				console.log('最近联系人', SessionItem)
+				// console.log('最近联系人', SessionItem)
+				// webim.syncMsgs(res => {
+				// 	console.log('res', res)
+				// 	var sessMap = webim.MsgStore.sessMap()
+				// 	setTimeout(() => {
+				// 		console.log('sessMap', sessMap)
+				// 		for (let i in sessMap) {
+				// 			let sess = sessMap[i]
+				// 			console.log(`账号${i}未读数`, sess.unread())
+				// 		}
+				// 	}, 1000)
+				// })
 				resolve(SessionItem)
 			},
 			(err) => {

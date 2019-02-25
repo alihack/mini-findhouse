@@ -88,7 +88,7 @@
 			<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
 		</block>
 		<!-- 周边配套 -->
-		<panelSupport  :estate.sync="currentEstate"></panelSupport>
+		<panelSupport wx:if="{{currentEstate.lat != '暂无'}}" :estate.sync="currentEstate"></panelSupport>
 		<!-- 推荐房源 -->
 		<block wx:if="{{recommendEstateHouses.length > 1}}">
 			<recommendSource  :sourceList.sync="recommendEstateHouses" type="recommend"></recommendSource>
