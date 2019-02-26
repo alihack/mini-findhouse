@@ -279,16 +279,16 @@ export default class barChat extends wepy.component {
 	}
 	methods = {
 		sendMessage: async () => {
-			if (this.isSending) return
+			if (this.isSending || !this.msgText) return
 			this.isSending = true
 			const data = await sendMessage(this.msgText, this.friendId)
-			if (data != 'ok') {
+			if (data == 'fail') {
 				wepy.showToast({
 					title: '发送失败',
 					icon: 'none'
 				})
 			} else {
-				this.$emit('addMessage', this.msgText)
+				this.$emit('addMessage', this.msgText, 'text', data)
 			}
 			this.msgText = ''
 			this.showSend = false
@@ -326,7 +326,6 @@ export default class barChat extends wepy.component {
 			this.recorderManager.stop()
 		},
 		addPhoto(type) {
-			wx.setStorageSync('toQuitIM', false)
 			wx.chooseImage({
 				sourceType: [type],
 				success: async (res) => {
@@ -337,7 +336,6 @@ export default class barChat extends wepy.component {
 						this.$emit('addMessage', imageURL, 'img')
 						await sendMessage(imageURL, this.friendId)
 						this.showMore = false
-						wx.setStorageSync('toQuitIM', true)
 						this.$apply()
 					})
 				}

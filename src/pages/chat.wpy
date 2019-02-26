@@ -147,9 +147,8 @@
 
 <script>
 import wepy from 'wepy'
-import webim from '../utils/webim_wx'
 import chatBar from '../components/bar_chat'
-import {convertTime, convertCustomMsgToHtml, initIM, sendMessage, sendMsgsToServer, getMsgsFromServer, getC2CHistoryMsgs} from '../utils/util'
+import {convertTime, convertCustomMsgToHtml, sendMessage, sendMsgsToServer, getMsgsFromServer, getC2CHistoryMsgs} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -196,8 +195,8 @@ export default class Chat extends wepy.page {
 	}
 
 	events = {
-		async addMessage(value, type) {
-			await this.msgController(value, true, type)
+		async addMessage(value, type, time) {
+			await this.msgController(value, true, type, time)
 		}
 	}
 	newMsgController (newMsgList) {
@@ -217,44 +216,30 @@ export default class Chat extends wepy.page {
 					await this.msgController(value, false, type)
 				} else {
 					this.lastContent = '[房源信息]'
-					await this.msgController(value.houseCard, false, type)
+					const time = new Date().getTime() / 1000
+					await this.msgController(value.houseCard, false, 'houseCard', time)
 				}
 			}
-		})
-	}
-	async myInitIM() {
-		return new Promise(async resolve => {
-			if (!this.friendId) return
-			const onMsgNotify = (newMsgList) => {
-				console.log('聊天页获取的新消息', newMsgList)
-				// 判断是否为当前聊天对象,是的话插入
-				this.newMsgController(newMsgList)
-			}
-			await initIM(onMsgNotify)
-			await getC2CHistoryMsgs(this.friendId, true)
-			// 获取历史记录
-			const {data} = await getMsgsFromServer(this.friendId)
-			console.log('data', data)
-			this.msgList = data
-			this.msgLength = data.length
-			wx.setStorageSync('IMByChatPage', true)
-			resolve()
-			this.$apply()
 		})
 	}
 	async onShow () {
-		// 得检查是否登录,如从后台再切入前台需再次登录
-		if (!webim.checkLogin() && !this.onLoading) {
-			await this.myInitIM()
-		} else {
-			wepy.$instance.globalData.newMsgs = []
-			this.intervalId = setInterval(() => {
-				const newMsgList = wepy.$instance.globalData.newMsgs
-				if (newMsgList.length != 0) {
-					this.newMsgController(newMsgList)
-					wepy.$instance.globalData.newMsgs = []
-				}
-			}, 1100)
+		wepy.$instance.globalData.newMsgs = []
+		this.intervalId = setInterval(() => {
+			const newMsgList = wepy.$instance.globalData.newMsgs
+			if (newMsgList.length != 0) {
+				this.newMsgController(newMsgList)
+				wepy.$instance.globalData.newMsgs = []
+			}
+		}, 1000)
+		if (!this.onLoading) {
+			// 在聊天页面退出并重新进的时候，等待IM登录完成后执行
+			setTimeout(async () => {
+				await getC2CHistoryMsgs(this.friendId, true)
+				const {data} = await getMsgsFromServer(this.friendId)
+				this.msgList = data
+				this.msgLength = data.length
+				this.$apply()
+			}, 3000)
 		}
 	}
 	async onLoad({fId, fAvatar, fName}) {
@@ -270,13 +255,21 @@ export default class Chat extends wepy.page {
 		this.myUid = wepy.$instance.globalData.myUserInfo.uid
 		wx.setNavigationBarTitle({title: fName})
 		this.scrollHeight = wx.getSystemInfoSync().windowHeight
+		// 获取历史记录,如有未读消息，需先保存新消息到后端服务器
+		const sessionStorage = wx.getStorageSync('sessionStorage')
+		const currentObj = sessionStorage.filter(ele => ele.id == fId)[0]
+		if (currentObj.unread != 0) await getC2CHistoryMsgs(fId, true)
+		const {data} = await getMsgsFromServer(this.friendId)
+		if (data) {
+			this.msgList = data
+			this.msgLength = data.length
+		}
 		// 向经纪人发送房源信息
 		const pages = getCurrentPages()
 		const prevPage = pages[pages.length - 2]
 		const currentHouse = prevPage.data.currentHouse
 		if (currentHouse) {
 			console.log('从咨询来的')
-			await this.myInitIM()
 			this.houseCard.img = currentHouse.photoUrl[0]
 			this.houseCard.title = currentHouse.title
 			this.houseCard.houseId = currentHouse.propertyUuid
@@ -285,20 +278,14 @@ export default class Chat extends wepy.page {
 			const direction = currentHouse.direction
 			this.houseCard.price = currentHouse.sellPrice + '万'
 			this.houseCard.detail = houseType + ' | ' + houseSquare + ' | ' + direction
-			await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
-			await this.msgController(this.houseCard, true)
-		} else {
-			// 获取历史记录
-			const {data} = await getMsgsFromServer(this.friendId)
-			console.log('data', data)
-			this.msgList = data
-			this.msgLength = data.length
-			this.onLoading = false
+			const time = await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
+			if (time != 'fail') await this.msgController(this.houseCard, true, 'houseCard', time)
 		}
+		this.onLoading = false
 		this.$apply()
 	}
 	async onHide () {
-		console.log('页面隐藏')
+		console.log('聊天页面隐藏')
 		// 发送暂存的新消息到后端
 		if (this.toSaveMsgList.length) {
 			this.toSaveMsgList.forEach(ele => {
@@ -335,25 +322,23 @@ export default class Chat extends wepy.page {
 		this.innerAudio.stop()
 		clearInterval(this.intervalId)
 	}
-	msgController(value, isSelfSend, type) {
-		return new Promise(resolve => {
+	msgController(value, isSelfSend, type, time) {
+		return new Promise(async resolve => {
 			// 向窗口添加一条消息
-			const nowTime = convertTime(new Date().getTime())
+			const nowTime = await convertTime(time * 1000)
 			const item = {}
-			if (typeof value == 'object') {
+			if (type == 'img') {
+				item.img = 'http://' + value
+				this.lastContent = '[图片信息]'
+			} else if (type == 'audio') {
+				item.audio = 'http://' + value
+				this.lastContent = '[语音信息]'
+			} else if (type == 'houseCard') {
 				item.houseCard = value
 				var isHouseCard = true
 			} else {
-				if (type == 'img') {
-					item.img = 'http://' + value
-					this.lastContent = '[图片信息]'
-				} else if (type == 'audio') {
-					item.audio = 'http://' + value
-					this.lastContent = '[语音信息]'
-				} else {
-					item.html = value
-					this.lastContent = value
-				}
+				item.html = value
+				this.lastContent = value
 			}
 			item.isSelfSend = isSelfSend
 			// 如果当前时间跟最后一条时间分一样，并入最后一数组
@@ -409,14 +394,9 @@ export default class Chat extends wepy.page {
 			wepy.navigateTo({url: `detail?id=${id}`})
 		},
 		previewImg(item) {
-			wx.setStorageSync('toQuitIM', false)
 			wx.previewImage({
 				current: item, // 当前显示图片的http链接
 				urls: [item], // 需要预览的图片http链接列表
-				complete: res => {
-					console.log('res')
-					wx.setStorageSync('toQuitIM', true)
-				}
 			})
 		},
 	}

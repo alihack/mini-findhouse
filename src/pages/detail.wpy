@@ -223,7 +223,7 @@ export default class Detail extends wepy.page {
 			})
 			this.currentHouse = data
 			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 10)
-			this.currentHouse.createdTime = convertTime(this.currentHouse.createdTime, true)
+			this.currentHouse.createdTime = await convertTime(this.currentHouse.createdTime, true)
 			this.sameEstateHouses = data.same_estate
 			this.recommendEstateHouses = data.recommend_estate
 			this.currentEstate = data.estate

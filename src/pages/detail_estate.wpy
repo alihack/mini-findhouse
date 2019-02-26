@@ -313,13 +313,9 @@ export default class detailEstate extends wepy.page {
 			this.$apply()
 		},
 		previewImg(index) {
-			wx.setStorageSync('toQuitIM', false)
 			wx.previewImage({
 				current: this.currentEstate.previewImgs[index], // 当前显示图片的http链接
 				urls: this.currentEstate.previewImgs, // 需要预览的图片http链接列表
-				complete: res => {
-					wx.setStorageSync('toQuitIM', true)
-				}
 			})
 		},
 	}

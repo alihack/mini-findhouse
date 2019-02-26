@@ -112,8 +112,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import webim from '../utils/webim_wx'
-import {getRecentContactList, getDateDiff, initIM, convertCustomMsgToHtml, setSessionUnread, getC2CHistoryMsgs} from '../utils/util'
+import {getAllUnread} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
@@ -125,9 +124,7 @@ export default class Message extends wepy.page {
 	data = {
 		sessionList: [],
 		isNoData: true,
-		isAgent: false,
 		toSaveMsgList: [], // 需要保存到后端的数据，点击对应列表时保存
-		firstLoginIM: false, // 如果是初次登录IM，不用缓存，重新获取列表数据
 		isToChating: false // 防止连续点击聊天对象
 	}
 
@@ -136,196 +133,26 @@ export default class Message extends wepy.page {
 
 	events = {
 	}
-	async refresh () {
-		wx.hideTabBarRedDot({index: 1})
-		wx.showLoading({title: '加载中'})
-		this.firstLoginIM = false
-		// 没有登录当前页面的IM时进行
-		if (!webim.checkLogin() || wx.getStorageSync('IMByChatPage')) {
-			await this.myInitIM()
-			this.firstLoginIM = true
-		}
-		// 首先判断有无会话列表
-		const contactList = await getRecentContactList()
-		if (contactList == undefined) {
-			console.log('无聊天记录')
-			this.isNoData = true
-			this.$apply()
-			wx.hideLoading()
-			return
-		} else {
-			this.isNoData = false
-		}
-		// 有会话列表继续执行
-		const sessionStorage = wx.getStorageSync('sessionStorage')
-		console.log('sessionStorage', sessionStorage)
-		console.log('contalist', contactList)
-		if (sessionStorage && !this.firstLoginIM) {
-			// 有数据缓存非第一次进来，且会话列表长度与缓存一致，无需重复进行数据处理
-			if (sessionStorage.length == contactList.length) {
-				console.log('非第一次登录IM，会话列表长度与缓存一致，更新时间即可')
-				this.sessionList = sessionStorage
-				this.sessionList.forEach(ele => {
-					ele.time = getDateDiff(ele.timeStamp * 1000)
-				})
-				wx.hideLoading()
-				this.$apply()
-				return
-			}
-		}
-		// 与后端服务器对比获取未读数
-		const initSessionList = await setSessionUnread(contactList)
-		console.log('初始会话列表数据', initSessionList)
-		// 进一步数据处理（头像，文字，时间）
-		await this.dataController(initSessionList)
-		wx.hideLoading()
-		this.$apply()
-	}
-	async onLoad() {
-		if (wepy.$instance.globalData.myUserInfo.type == '2') this.isAgent = true
-		this.$apply()
-	}
 	async onShow() {
-		this.refresh()
-	}
-	async myInitIM() {
-		return new Promise(async resolve => {
-			const onMsgNotify = (newMsgs) => {
-				console.log('列表页新信息', newMsgs)
-				var sessMap = webim.MsgStore.sessMap()
-				setTimeout(() => {
-					console.log('sessMap', sessMap)
-					console.log('未读数', sessMap['C2C98'].unread())
-				}, 1000)
-				wepy.$instance.globalData.newMsgs = newMsgs
-				wx.showTabBarRedDot({index: 1, success: (res) => console.log('设置红点成功')})
-				// 先判断是否有新增对象
-				let sessionIds = []
-				let newMsgIds = []
-				this.sessionList.forEach(ele => {
-					sessionIds.push(ele.id)
-				})
-				newMsgs.forEach(ele => {
-					newMsgIds.push(ele.fromAccount)
-				})
-				console.log('sessionIds', sessionIds)
-				console.log('newMsgids', newMsgIds)
-				newMsgIds.forEach(ele => {
-					if (!sessionIds.includes(ele)) {
-						console.log('新增聊天对象', ele)
-						this.refresh()
-						return
-					}
-				})
-				// 无新增聊天对象继续执行
-				this.sessionList.forEach(async (ele, index) => {
-					let promises = newMsgs.map(async (msg, msgIndex) => {
-						return new Promise(async resolve => {
-							if (msg.fromAccount == ele.id) {
-								ele.unread = ele.unread ? ele.unread + 1 : 1
-								ele.time = '刚刚'
-								ele.timeStamp = ele.MsgTimeStamp
-								ele.content = await convertCustomMsgToHtml(msg)
-								if (ele.content.houseCard) {
-									// 自定义房源消息
-									ele.content = '[房源信息]'
-								} else {
-									if (ele.content.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
-										// 图片消息
-										ele.content = '[图片信息]'
-									} else if (ele.content.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
-										// 语音消息
-										ele.content = '[语音信息]'
-									}
-								}
-								this.sessionList.splice(index, 1)
-								this.sessionList.unshift(ele)
-							}
-							resolve()
-						})
-					})
-					Promise.all(promises).then(() => {
-						console.log('sessinList2', this.sessionList)
-						if (index == this.sessionList.length - 1) {
-							wx.setStorageSync('sessionStorage', this.sessionList)
-							this.$apply()
-							return
-						}
-					})
-				})
-			}
-			await initIM(onMsgNotify)
-			resolve()
-		})
-	}
-	async dataController(data) {
-		return new Promise(async resolve => {
-			let mySessionList = []
-			let promises = data.map(async (ele, index) => {
-				return new Promise(async resolve => {
-					const item = {}
-					const {data: {userInfo}} = await wepy.request({
-						url: api['userInfo'],
-						data: {
-							uid: ele.To_Account
-						}
-					})
-					if (!userInfo) {
-						// 修复对象为undefined
-						resolve()
-						return
-					}
-					if (this.isAgent) {
-						// 自己为经纪人，则列表对象为用户
-						item.avatar = userInfo.headimg
-						item.name = userInfo.nickname
-					} else {
-						// 列表对象为经纪人
-						item.avatar = userInfo.agentAvatar
-						item.name = userInfo.agentName
-					}
-					item.id = ele.To_Account
-					item.unread = ele.unread
-					item.initIndex = index
-					item.time = getDateDiff(ele.MsgTimeStamp * 1000)
-					item.timeStamp = ele.MsgTimeStamp
-					if (ele.MsgShow == '[其他]') {
-						ele.MsgShow = '[房源信息]'
-					} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
-						ele.MsgShow = '[图片信息]'
-					} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
-						ele.MsgShow = '[语音信息]'
-					}
-					item.content = ele.MsgShow
-					mySessionList.push(item)
-					resolve()
-				})
-			})
-			Promise.all(promises).then(() => {
-				// 防止时间错乱
-				mySessionList = mySessionList.sort((a, b) => a.initIndex - b.initIndex)
-				console.log('sessionList', mySessionList)
-				this.sessionList = mySessionList
-				wx.setStorageSync('sessionStorage', this.sessionList)
-				this.$apply()
-				resolve()
-			})
-		})
+		this.sessionList = wx.getStorageSync('sessionStorage')
+		if (this.sessionList) this.isNoData = false
+		getAllUnread(this.sessionList)
+		setInterval(() => {
+			this.sessionList = wx.getStorageSync('sessionStorage')
+			if (this.sessionList) this.isNoData = false
+			this.$apply()
+		}, 1000)
+		this.$apply()
 	}
 	methods = {
 		async toChat({currentTarget: {dataset}}) {
-			console.log('dataset', dataset)
 			// 防止连续点击
 			if (this.isToChating) return
 			this.isToChating = true
-			// 如有未读消息，需保存新消息到后端服务器
-			if (this.sessionList[dataset.index].unread != 0) {
-				await getC2CHistoryMsgs(dataset.id, true)
-			}
 			// 头像路径过长，存入缓存带参
 			wx.setStorageSync('fAvatar', dataset.avatar)
-			this.isToChating = false
 			wepy.navigateTo({url: `chat?fId=${dataset.id}&fName=${dataset.name}`})
+			this.isToChating = false
 			this.$apply()
 		},
 		async submit({detail}) {

@@ -323,27 +323,14 @@ export default class panelHouseDetail extends wepy.component {
 			this.$apply()
 		},
 		previewImg(index) {
-			wx.setStorageSync('toQuitIM', false)
 			wx.previewImage({
 				current: this.house.previewImgs[index], // 当前显示图片的http链接
 				urls: this.house.previewImgs, // 需要预览的图片http链接列表
-				complete: res => {
-					wx.setStorageSync('toQuitIM', true)
-				}
 			})
 		},
 		onSwiperChange ({detail: {current}}) {
 			// 懒加载
 			this.currentIndex = current
-			// const imgsLength = this.house.photoUrl.length
-			// this.imgPreIndex = current - 1
-			// this.imgNextIndex = current + 1
-			// if (this.imgPreIndex == -1) {
-			// 	this.imgPreIndex = imgsLength - 1
-			// }
-			// if (this.imgNextIndex == imgsLength) {
-			// 	this.imgNextIndex = 0
-			// }
 			this.$apply()
 		},
 		chatOnLine: () => {

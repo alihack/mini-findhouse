@@ -179,7 +179,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo, getUserId, getSign, getMarket} from '../utils/util'
+import {getUserInfo, getUserId, getMarket} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -209,7 +209,6 @@ export default class Index extends wepy.page {
 		houseId: '', // 从房源详情页分享进来Id
 		estateId: '', // 从小区详情页分享进来Id
 		aidByShare: '', // 从专属主页分享进来的经纪人Id
-		isShareFrom: false, // 是否是分享进来的
 		pageIsShared: false, // 当前页是否分享过
 		showQuitVIP: false
 	}
@@ -255,8 +254,6 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onShow () {
-		// 分享进来的，不继续执行
-		if (this.isShareFrom) return
 	}
 	async onLoad(option) {
 		console.log('主页所带参数', option)
@@ -264,7 +261,6 @@ export default class Index extends wepy.page {
 		this.market = await getMarket()
 		// 从分享进来的
 		if (JSON.stringify(option) != '{}') {
-			this.isShareFrom = true
 			this.houseId = option.houseId
 			this.estateId = option.estateId
 			this.aidByShare = option.agentId
@@ -301,10 +297,8 @@ export default class Index extends wepy.page {
 					this.showQuitVIP = true
 				}
 			}
-			await getSign()
 		}
 		wx.showShareMenu()
-		wx.showTabBarRedDot({index: 1})
 		this.$apply()
 	}
 	async clickCount() {

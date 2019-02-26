@@ -92,6 +92,7 @@ page {
 <script>
 import wepy from 'wepy'
 import webim from './utils/webim_wx'
+import {myInitIM} from './utils/util'
 import 'wepy-async-function'
 
 export default class extends wepy.app {
@@ -145,28 +146,24 @@ export default class extends wepy.app {
 		myUserInfo: null
 	}
 	async onLaunch() {
-		// 到每月一号自动清一次缓存
-		const date = new Date()
-		if (date.getDate() == 1) {
-			console.log('到1号自动清缓存')
-			wx.clearStorageSync()
-		}
-		wx.setStorageSync('toQuitIM', true)
+	}
+
+	async onShow() {
+		const intervalId = setInterval(async () => {
+			console.log('准备进行IM登录。。')
+			if (wepy.$instance.globalData.myUserInfo) {
+				await myInitIM()
+				clearInterval(intervalId)
+			}
+		}, 2000)
 	}
 
 	onHide() {
 		// 从前台进入后台
 		console.log('从前台切入后台')
-		const quitIM = wx.getStorageSync('toQuitIM')
-		console.log('quitIm', quitIM)
-		if (quitIM) {
-			// 普通页面的退出
-			webim.logout(res => {
-				console.log('退出IM', res)
-			})
-		} else {
-			// 预览照片的退出
-		}
+		webim.logout(res => {
+			console.log('退出IM', res)
+		})
 	}
 
 	constructor() {
