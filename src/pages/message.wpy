@@ -112,7 +112,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getAllUnread} from '../utils/util'
+import {getAllUnread, myInitIM} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的消息',
@@ -134,9 +134,16 @@ export default class Message extends wepy.page {
 	events = {
 	}
 	async onShow() {
+		// 用户初次登录无聊天列表缓存后发送信息，得重新获取聊天列表
+		const reSessStorage = wx.getStorageSync('reSessStorage')
+		if (reSessStorage) {
+			await myInitIM()
+			wx.removeStorageSync('reSessStorage')
+		}
 		this.sessionList = wx.getStorageSync('sessionStorage')
 		if (this.sessionList) this.isNoData = false
 		getAllUnread(this.sessionList)
+		// 持续监听
 		setInterval(() => {
 			this.sessionList = wx.getStorageSync('sessionStorage')
 			if (this.sessionList) this.isNoData = false

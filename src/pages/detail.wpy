@@ -81,20 +81,22 @@
 		<panelHouseDetail :house.sync="currentHouse" :isDept.sync="isDept"  
 		:hasPhone.sync="hasPhone" :imgPreIndex.sync="imgPreIndex">
 		</panelHouseDetail>
-		<!-- 小区详情 -->
-		<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
-		<!-- 同小区房源 -->
-		<block wx:if="{{sameEstateHouses.length > 1}}">
-			<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
+		<block wx:if="{{!hiddenXML}}">
+			<!-- 小区详情 -->
+			<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
+			<!-- 同小区房源 -->
+			<block wx:if="{{sameEstateHouses.length > 1}}">
+				<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
+			</block>
+			<!-- 周边配套 -->
+			<panelSupport wx:if="{{currentEstate.lat != '暂无'}}" :estate.sync="currentEstate"></panelSupport>
+			<!-- 推荐房源 -->
+			<block wx:if="{{recommendEstateHouses.length > 1}}">
+				<recommendSource  :sourceList.sync="recommendEstateHouses" type="recommend"></recommendSource>
+			</block>
+			<!-- 尾部广告 -->
+			<footer></footer>
 		</block>
-		<!-- 周边配套 -->
-		<panelSupport wx:if="{{currentEstate.lat != '暂无'}}" :estate.sync="currentEstate"></panelSupport>
-		<!-- 推荐房源 -->
-		<block wx:if="{{recommendEstateHouses.length > 1}}">
-			<recommendSource  :sourceList.sync="recommendEstateHouses" type="recommend"></recommendSource>
-		</block>
-		<!-- 尾部广告 -->
-		<footer></footer>
 		<!-- 固定尾部 -->
 		<view class="fixed-bottom">
 			<block wx:if="{{!isDept}}">
@@ -170,7 +172,8 @@ export default class Detail extends wepy.page {
 		isProNo: false, // 是否是房源编号
 		userInfo: {},
 		imgPreIndex: 0,
-		aid: ''
+		aid: '',
+		hiddenXML: true // 刚进入详情时，下面节点先不渲染
 	}
 
 	events = {
@@ -227,6 +230,12 @@ export default class Detail extends wepy.page {
 			this.sameEstateHouses = data.same_estate
 			this.recommendEstateHouses = data.recommend_estate
 			this.currentEstate = data.estate
+			// 对小区图片进行处理
+			if (this.currentEstate.photo_url == '暂无') {
+				this.currentEstate.photo_url = []
+				this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
+			}
+			if ((data.phoneList[0].indexOf('-') != -1) || data.phoneList[0].length < 11) this.isDept = true
 			// 获取原图链接
 			const previewImgs = []
 			this.imgPreIndex = this.currentHouse.photoUrl.length - 1
@@ -234,12 +243,6 @@ export default class Detail extends wepy.page {
 				previewImgs.push(ele.split('|')[0])
 			})
 			this.currentHouse.previewImgs = previewImgs
-			// 对小区图片进行处理
-			if (this.currentEstate.photo_url == '暂无') {
-				this.currentEstate.photo_url = []
-				this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
-			}
-			if ((data.phoneList[0].indexOf('-') != -1) || data.phoneList[0].length < 11) this.isDept = true
 			resolve()
 			this.$apply()
 		})
@@ -252,6 +255,12 @@ export default class Detail extends wepy.page {
 		await this.getHouseInfo(houseId)
 		if (this.isMyAgent) this.getPosterImgs()
 		this.$apply()
+	}
+	onShow () {
+		setTimeout(() => {
+			this.hiddenXML = false
+			this.$apply()
+		}, 1500)
 	}
 	async onLoad(option) {
 		console.log('详情页所带参数', option)

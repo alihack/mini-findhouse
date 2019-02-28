@@ -142,31 +142,31 @@ const initIM = (onMsgNotify) => {
 		// 获取sign
 		if (!loginInfo.userSig) await getSign()
 		// 监听事件
-		const onConnNotify = (resp) => {
-			// 监听连接状态回调变化事件
-			var info
-			switch (resp.ErrorCode) { // 链接状态码
-				case webim.CONNECTION_STATUS.ON:
-					webim.Log.warn('建立连接成功: ' + resp.ErrorInfo)
-					break
-				case webim.CONNECTION_STATUS.OFF:
-					info = '连接已断开，无法收到新消息，请检查下您的网络是否正常: ' + resp.ErrorInfo
-					alert(info)
-					webim.Log.warn(info)
-					break
-				case webim.CONNECTION_STATUS.RECONNECT:
-					info = '连接状态恢复正常: ' + resp.ErrorInfo
-					alert(info)
-					webim.Log.warn(info)
-					break
-				default:
-					webim.Log.error('未知连接状态: =' + resp.ErrorInfo) // 错误信息
-					break
-			}
-		}
+		// const onConnNotify = (resp) => {
+		// 	// 监听连接状态回调变化事件
+		// 	var info
+		// 	switch (resp.ErrorCode) { // 链接状态码
+		// 		case webim.CONNECTION_STATUS.ON:
+		// 			webim.Log.warn('建立连接成功: ' + resp.ErrorInfo)
+		// 			break
+		// 		case webim.CONNECTION_STATUS.OFF:
+		// 			info = '连接已断开，无法收到新消息，请检查下您的网络是否正常: ' + resp.ErrorInfo
+		// 			alert(info)
+		// 			webim.Log.warn(info)
+		// 			break
+		// 		case webim.CONNECTION_STATUS.RECONNECT:
+		// 			info = '连接状态恢复正常: ' + resp.ErrorInfo
+		// 			alert(info)
+		// 			webim.Log.warn(info)
+		// 			break
+		// 		default:
+		// 			webim.Log.error('未知连接状态: =' + resp.ErrorInfo) // 错误信息
+		// 			break
+		// 	}
+		// }
 
 		var listeners = {
-			'onConnNotify': onConnNotify, // 监听连接状态回调变化事件,必填
+			// 'onConnNotify': onConnNotify, // 监听连接状态回调变化事件,必填
 			'onMsgNotify': onMsgNotify, // 监听新消息(私聊(包括普通消息和全员推送消息)，普通群(非直播聊天室)消息)事件，必填
 		}
 
@@ -312,21 +312,41 @@ const getAllUnread = (contactList) => {
 }
 const setSessionUnread = (contactList) => {
 	return new Promise(async resolve => {
+		const newContactList = await getUnreadFromTx(contactList)
+		// 将unread与unreadTx对比,前者大于后者说明腾讯存在历史数据丢失，反之说明有新增未读数
+		let promises = newContactList.map(ele => {
+			return new Promise(resolve => {
+				ele.unread = ele.unreadTx + ele.unread
+				delete ele.unreadTx
+				resolve()
+			})
+		})
+		Promise.all(promises).then(() => {
+			resolve(newContactList)
+			getAllUnread(newContactList)
+			// 保存列表未读数到后端
+			saveContactList(newContactList, true)
+		})
+	})
+}
+const getUnreadFromTx = (contactList) => {
+	return new Promise(async resolve => {
 		// 将腾讯返回历史记录与后端服务器比较，获取未读数
 		let promises = contactList.map(async (ele, contactIndex) => {
 			return new Promise(async resolve => {
-				const {newMsgList} = await getC2CHistoryMsgs(ele.To_Account)
-				const {data} = await getMsgsFromServer(ele.To_Account, 1)
+				const {data} = await getMsgsFromServer(ele.id, 1)
+				// 将腾讯所有数据保存至后端
+				const {newMsgList} = await getC2CHistoryMsgs(ele.id)
 				const serverMsgList = data
 				if (newMsgList.length == 0) {
 					// 腾讯无历史记录
-					ele.unread = 0
+					ele.unreadTx = 0
 				} else {
 					// 腾讯有历史记录
 					if (serverMsgList.length == 0) {
 						// 服务器无数据，为初次
 						console.log('初次，全为新消息')
-						ele.unread = newMsgList.length
+						ele.unreadTx = newMsgList.length
 					} else {
 						const firstNewMsgDate = new Date(newMsgList[0].time)
 						const firstNewMsgTime = firstNewMsgDate.getTime()
@@ -334,12 +354,12 @@ const setSessionUnread = (contactList) => {
 						const lastServerMsgTime = lastServerMsgDate.getTime()
 						if (firstNewMsgTime > lastServerMsgTime) {
 							// 如果腾讯返回第一条数据时间比服务器最后一条时间晚，即后面全是新消息
-							ele.unread = newMsgList.length
+							ele.unreadTx = newMsgList.length
 						} else {
 							// 找到服务器最后一条时间与腾讯数据时间相同的一条
 							newMsgList.forEach((newItem, index) => {
 								if (newItem.time == serverMsgList[serverMsgList.length - 1].time) {
-									ele.unread = newMsgList.length - 1 - index
+									ele.unreadTx = newMsgList.length - 1 - index
 								}
 							})
 						}
@@ -349,19 +369,36 @@ const setSessionUnread = (contactList) => {
 			})
 		})
 		Promise.all(promises).then(() => {
-			getAllUnread(contactList)
 			resolve(contactList)
 		})
 	})
 }
 // =========聊天列表页========
 
-const getRecentContactList = () => {
+const getContactFromTx = () => {
 	return new Promise(resolve => {
 		webim.getRecentContactList(
-			{'Count': 20},
-			({SessionItem}) => {
-				resolve(SessionItem)
+			{'Count': 100},
+			async ({SessionItem}) => {
+				// 将腾讯返回的最近联系人传给后端（腾讯时效性只有七天）
+				let newSessions = []
+				if (SessionItem) {
+					SessionItem.forEach(ele => {
+						let item = {}
+						item.id = ele.To_Account
+						if (ele.MsgShow == '[其他]') {
+							ele.MsgShow = '[房源信息]'
+						} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
+							ele.MsgShow = '[图片信息]'
+						} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
+							ele.MsgShow = '[语音信息]'
+						}
+						item.content = ele.MsgShow
+						item.timeStamp = ele.MsgTimeStamp
+						newSessions.push(item)
+					})
+				}
+				resolve(JSON.stringify(newSessions))
 			},
 			(err) => {
 				console.log('err', err)
@@ -371,33 +408,68 @@ const getRecentContactList = () => {
 	})
 }
 
-// const getContactList = () => {
-// 	return new Promise(async resolve => {
-// 		const uid = wx.getStorageSync('uid')
-// 		const {data} = await wepy.request({
-// 			url: api['contactList'],
-// 			data: {
-// 				uid,
-// 			}
-// 		})
-// 		console.log('data', data)
-// 	})
-// }
+const saveContactList = (contactList, setUnread = false) => {
+	return new Promise(async resolve => {
+		const uid = wx.getStorageSync('uid')
+		if (setUnread) {
+			let newContactList = []
+			let promises = contactList.map(ele => {
+				return new Promise(resolve => {
+					let item = {}
+					item.id = ele.id
+					item.unread = ele.unread
+					newContactList.push(item)
+					resolve()
+				})
+			})
+			Promise.all(promises).then(async () => {
+				await wepy.request({
+					url: api['c2cMsgsList'],
+					method: 'POST',
+					data: {
+						uid,
+						contactList: JSON.stringify(newContactList)
+					}
+				})
+				resolve()
+			})
+		} else {
+			await wepy.request({
+				url: api['c2cMsgsList'],
+				method: 'POST',
+				data: {
+					uid,
+					contactList
+				}
+			})
+			resolve()
+		}
+	})
+}
 
-// const saveContactList = () => {
-// 	return new Promise(async resolve => {
-// 		const uid = wx.getStorageSync('uid')
-// 		const {data} = await wepy.request({
-// 			url: api['contactList'],
-// 			method: 'POST',
-// 			data: {
-// 				uid,
-// 				contactList: [{avatar: '', name: '', id: '', content: '', timeStamp: 1551083724}]
-// 			}
-// 		})
-// 		console.log('contactListdata', data)
-// 	})
-// }
+const getContactFromServer = () => {
+	return new Promise(async resolve => {
+		// 先从腾讯获取最近聊天列表
+		const contactFromTx = await getContactFromTx() // 耗时0.12
+		// 保存至后端
+		if (contactFromTx == '[]') {
+			resolve('')
+			return
+		}
+		await saveContactList(contactFromTx)
+		// 再从后端获取全部列表
+		const uid = wx.getStorageSync('uid')
+		const {data} = await wepy.request({
+			url: api['getMsgsList'],
+			data: {
+				uid
+			}
+		})
+		// 按时间排序
+		const newData = data.sort((a, b) => b.timeStamp - a.timeStamp)
+		resolve(newData)
+	})
+}
 
 // =======与服务器的数据请求=========
 
@@ -462,7 +534,7 @@ const sendMessage = (msgtosend, selToID, isCustomMsg) => {
 	})
 }
 
-const getC2CHistoryMsgs = (friendID, setRead = false) => {
+const getC2CHistoryMsgs = (friendID) => {
 	return new Promise(resolve => {
 		var lastMsgTime = 0 // 第一次拉取好友历史消息时，必须传 0
 		var msgKey = ''
@@ -526,18 +598,14 @@ const getC2CHistoryMsgs = (friendID, setRead = false) => {
 					}
 				})
 				// 将新历史记录处理后发送给后端服务器,标记已读
-				if (setRead) {
-					const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
-					const msgsToServerList = []
-					newMsgList2.forEach(ele => {
-						ele.data = JSON.stringify(ele.data)
-						msgsToServerList.push(ele)
-					})
-					await sendMsgsToServer(friendID, msgsToServerList)
-					resolve({newMsgList, Msglength})
-				} else {
-					resolve({newMsgList, Msglength})
-				}
+				const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
+				const msgsToServerList = []
+				newMsgList2.forEach(ele => {
+					ele.data = JSON.stringify(ele.data)
+					msgsToServerList.push(ele)
+				})
+				await sendMsgsToServer(friendID, msgsToServerList)
+				resolve({newMsgList, Msglength})
 			},
 			(err) => {
 				console.log('获取历史记录失败', err)
@@ -555,7 +623,6 @@ const sendMsgsToServer = (fid, msg) => {
 				uid: loginInfo.identifier,
 				fid,
 				msg: JSON.stringify(msg),
-				unread: 3
 			}
 		})
 		resolve()
@@ -629,6 +696,8 @@ const onMsgNotify = (newMsgs) => {
 			return new Promise(async resolve => {
 				if (msg.fromAccount == ele.id) {
 					ele.unread = ele.unread ? ele.unread + 1 : 1
+					// 保存列表未读数到后端
+					// saveContactList([{id: ele.id, unread: ele.unread}], true)
 					ele.time = '刚刚'
 					ele.timeStamp = ele.MsgTimeStamp
 					ele.content = await convertCustomMsgToHtml(msg)
@@ -651,7 +720,6 @@ const onMsgNotify = (newMsgs) => {
 			})
 		})
 		Promise.all(promises).then(() => {
-			console.log('sessinList2', sessionStorage)
 			if (index == sessionStorage.length - 1) {
 				getAllUnread(sessionStorage)
 				wx.setStorageSync('sessionStorage', sessionStorage)
@@ -663,73 +731,42 @@ const onMsgNotify = (newMsgs) => {
 
 const myInitIM = () => {
 	return new Promise(async resolve => {
-		if (!webim.checkLogin()) await initIM(onMsgNotify)
+		const startTime = new Date().getTime()
+		if (!webim.checkLogin()) await initIM(onMsgNotify) // 耗时1.3秒
 		// 首先判断有无会话列表
-		const contactList = await getRecentContactList()
-		if (contactList == undefined) {
+		const contactList = await getContactFromServer() // 耗时0.5秒
+		if (!contactList) {
 			console.log('无聊天记录')
 			resolve()
 			return
 		}
-		// 与后端服务器对比获取未读数
-		const initSessionList = await setSessionUnread(contactList)
+		// 获取未读数
+		const initSessionList = await setSessionUnread(contactList) // 耗时0.7秒
 		console.log('初始会话列表数据', initSessionList)
-		// 进一步数据处理（头像，文字，时间）
-		const finishSessionList = await nextSessionController(initSessionList)
+		// 进一步数据处理（时间）
+		const finishSessionList = await nextSessionController(initSessionList) // 耗时0.07秒
 		console.log('最终会话列表数据', finishSessionList)
 		wx.setStorageSync('sessionStorage', finishSessionList)
-		wx.setStorageSync('reSessionStorage', false)
+		const endTime = new Date().getTime()
+		const diffSec = (endTime - startTime) / 1000
+		console.log(`IM登录总耗时:${diffSec}秒`)
 		resolve()
 	})
 }
 
-const nextSessionController = (data) => {
+const nextSessionController = (initSessionList) => {
 	return new Promise(async resolve => {
-		let mySessionList = []
-		let promises = data.map(async (ele, index) => {
+		let promises = initSessionList.map(async (ele, index) => {
 			return new Promise(async resolve => {
-				const item = {}
-				const {data: {userInfo}} = await wepy.request({
-					url: api['userInfo'],
-					data: {
-						uid: ele.To_Account
-					}
-				})
-				if (!userInfo) {
-					// 修复对象为undefined
-					resolve()
-					return
-				}
-				if (wepy.$instance.globalData.myUserInfo.type == '2') {
-					// 自己为经纪人，则列表对象为用户
-					item.avatar = userInfo.headimg
-					item.name = userInfo.nickname
-				} else {
-					// 列表对象为经纪人
-					item.avatar = userInfo.agentAvatar
-					item.name = userInfo.agentName
-				}
-				item.id = ele.To_Account
-				item.unread = ele.unread
-				item.initIndex = index
-				item.time = getDateDiff(ele.MsgTimeStamp * 1000)
-				item.timeStamp = ele.MsgTimeStamp
-				if (ele.MsgShow == '[其他]') {
-					ele.MsgShow = '[房源信息]'
-				} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
-					ele.MsgShow = '[图片信息]'
-				} else if (ele.MsgShow.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
-					ele.MsgShow = '[语音信息]'
-				}
-				item.content = ele.MsgShow
-				mySessionList.push(item)
+				ele.initIndex = index
+				ele.time = getDateDiff(ele.timeStamp * 1000)
 				resolve()
 			})
 		})
 		Promise.all(promises).then(() => {
 			// 防止时间错乱
-			mySessionList = mySessionList.sort((a, b) => a.initIndex - b.initIndex)
-			resolve(mySessionList)
+			initSessionList = initSessionList.sort((a, b) => a.initIndex - b.initIndex)
+			resolve(initSessionList)
 		})
 	})
 }
@@ -745,7 +782,6 @@ module.exports = {
 	setSessionUnread,
 	getAllUnread,
 	getC2CHistoryMsgs,
-	getRecentContactList,
 	convertTime,
 	getDateDiff,
 	loginInfo,
@@ -753,5 +789,6 @@ module.exports = {
 	uploadQiNiu,
 	sendMsgsToServer,
 	getMsgsFromServer,
-	myInitIM
+	myInitIM,
+	saveContactList
 }

@@ -179,7 +179,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
-import {getUserInfo, getUserId, getMarket} from '../utils/util'
+import {getUserInfo, getUserId, getMarket, getAllUnread} from '../utils/util'
 import footer from '../components/footer'
 import houseList from '../components/list_house'
 import sortBar from '../components/bar_sort'
@@ -254,6 +254,9 @@ export default class Index extends wepy.page {
 		}
 	}
 	async onShow () {
+		// 更新未读数
+		const sessStorage = wx.getStorageSync('sessionStorage')
+		if (sessStorage) getAllUnread(sessStorage)
 	}
 	async onLoad(option) {
 		console.log('主页所带参数', option)

@@ -151,7 +151,7 @@
 	>
 	<block wx:for="{{house.photoUrl}}" wx:key="index">
 		<swiper-item>
-			<image src="{{item}}" @tap="previewImg({{index}})"/>
+			<image src="{{item}}" @tap="previewImg({{index}})" wx:if="{{index == currentIndex || index == imgPreIndex || index== imgNextIndex}}"/>
 		</swiper-item>
 	</block>
 	</swiper>
@@ -268,6 +268,7 @@ export default class panelHouseDetail extends wepy.component {
 
 	data = {
 		currentIndex: 0,
+		imgNextIndex: 1,
 		indicatorDots: false,
 		autoplay: false,
 		interval: 5000,
@@ -330,7 +331,18 @@ export default class panelHouseDetail extends wepy.component {
 		},
 		onSwiperChange ({detail: {current}}) {
 			// 懒加载
+			// 懒加载
+			const imgsLength = this.house.photoUrl.length
 			this.currentIndex = current
+			this.imgPreIndex = current - 1
+			this.imgNextIndex = current + 1
+			if (this.imgPreIndex == -1) {
+				this.imgPreIndex = imgsLength - 1
+			}
+			if (this.imgNextIndex == imgsLength) {
+				this.imgNextIndex = 0
+			}
+			// this.currentIndex = current
 			this.$apply()
 		},
 		chatOnLine: () => {

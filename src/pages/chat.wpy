@@ -148,7 +148,7 @@
 <script>
 import wepy from 'wepy'
 import chatBar from '../components/bar_chat'
-import {convertTime, convertCustomMsgToHtml, sendMessage, sendMsgsToServer, getMsgsFromServer, getC2CHistoryMsgs} from '../utils/util'
+import {convertTime, convertCustomMsgToHtml, sendMessage, sendMsgsToServer, getMsgsFromServer, saveContactList, getC2CHistoryMsgs} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -213,7 +213,7 @@ export default class Chat extends wepy.page {
 						type = 'audio'
 						this.lastContent = '[语音信息]'
 					}
-					await this.msgController(value, false, type)
+					await this.msgController(value, false, type, ele.time)
 				} else {
 					this.lastContent = '[房源信息]'
 					const time = new Date().getTime() / 1000
@@ -234,7 +234,7 @@ export default class Chat extends wepy.page {
 		if (!this.onLoading) {
 			// 在聊天页面退出并重新进的时候，等待IM登录完成后执行
 			setTimeout(async () => {
-				await getC2CHistoryMsgs(this.friendId, true)
+				await getC2CHistoryMsgs(this.friendId)
 				const {data} = await getMsgsFromServer(this.friendId)
 				this.msgList = data
 				this.msgLength = data.length
@@ -257,8 +257,17 @@ export default class Chat extends wepy.page {
 		this.scrollHeight = wx.getSystemInfoSync().windowHeight
 		// 获取历史记录,如有未读消息，需先保存新消息到后端服务器
 		const sessionStorage = wx.getStorageSync('sessionStorage')
-		const currentObj = sessionStorage.filter(ele => ele.id == fId)[0]
-		if (currentObj.unread != 0) await getC2CHistoryMsgs(fId, true)
+		if (sessionStorage) {
+			// 设置未读为0
+			const currentObj = sessionStorage.filter(ele => ele.id == fId)[0]
+			if (currentObj.unread != 0) {
+				await getC2CHistoryMsgs(this.friendId)
+				saveContactList([{id: fId, unread: 0}], true)
+			}
+		} else {
+			// 下次进入聊天列表页需要重新登录IM
+			wx.setStorageSync('reSessStorage', true)
+		}
 		const {data} = await getMsgsFromServer(this.friendId)
 		if (data) {
 			this.msgList = data
@@ -286,6 +295,7 @@ export default class Chat extends wepy.page {
 	}
 	async onHide () {
 		console.log('聊天页面隐藏')
+		this.lastContent = ''
 		// 发送暂存的新消息到后端
 		if (this.toSaveMsgList.length) {
 			this.toSaveMsgList.forEach(ele => {
@@ -293,25 +303,27 @@ export default class Chat extends wepy.page {
 			})
 			await sendMsgsToServer(this.friendId, this.toSaveMsgList)
 			this.toSaveMsgList = []
-			this.$apply()
 		}
+		this.$apply()
 	}
 	onUnload () {
 		console.log('页面离开')
 		// 更新sessionStorage缓存
 		const sessionStorage = wx.getStorageSync('sessionStorage')
-		sessionStorage.forEach((ele, index) => {
-			if (ele.id == this.friendId) {
-				ele.unread = 0
-				if (this.lastContent) {
-					ele.time = '刚刚'
-					ele.content = this.lastContent
-					sessionStorage.splice(index, 1)
-					sessionStorage.unshift(ele)
+		if (sessionStorage) {
+			sessionStorage.forEach((ele, index) => {
+				if (ele.id == this.friendId) {
+					ele.unread = 0
+					if (this.lastContent) {
+						ele.time = '刚刚'
+						ele.content = this.lastContent
+						sessionStorage.splice(index, 1)
+						sessionStorage.unshift(ele)
+					}
+					wx.setStorageSync('sessionStorage', sessionStorage)
 				}
-				wx.setStorageSync('sessionStorage', sessionStorage)
-			}
-		})
+			})
+		}
 		// 发送暂存的新消息到后端
 		if (this.toSaveMsgList.length) {
 			this.toSaveMsgList.forEach(ele => {

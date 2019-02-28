@@ -30,7 +30,7 @@ import myAgent from '../components/my_agent'
 import myUser from '../components/my_user'
 import mySMSLogin from '../components/my_login_sms'
 import myWXLogin from '../components/my_login_wx'
-import {getUserInfo} from '../utils/util'
+import {getUserInfo, getAllUnread} from '../utils/util'
 export default class My extends wepy.page {
 	config = {
 		navigationBarTitleText: '我的',
@@ -112,6 +112,9 @@ export default class My extends wepy.page {
 		this.$apply()
 	}
 	onShow() {
+		// 更新未读数
+		const sessStorage = wx.getStorageSync('sessionStorage')
+		if (sessStorage) getAllUnread(sessStorage)
 		// 在其他页面注册了
 		if (JSON.stringify(this.userInfo) != JSON.stringify(wx.getStorageSync('userInfo'))) {
 			console.log('在其他页面注册了')
