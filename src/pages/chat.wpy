@@ -242,7 +242,7 @@ export default class Chat extends wepy.page {
 			}, 3000)
 		}
 	}
-	async onLoad({fId, fAvatar, fName}) {
+	async onLoad({fId, fAvatar, fName, fromBudget}) {
 		this.onLoading = true
 		if (!fAvatar) {
 			this.friendAvatar = wx.getStorageSync('fAvatar')
@@ -289,6 +289,15 @@ export default class Chat extends wepy.page {
 			this.houseCard.detail = houseType + ' | ' + houseSquare + ' | ' + direction
 			const time = await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
 			if (time != 'fail') await this.msgController(this.houseCard, true, 'houseCard', time)
+			// 时间秒数与房卡一样的话数据会丢失
+			setTimeout(async () => {
+				if (fromBudget) {
+					const res = await sendMessage('你好，这套房首付要多少呢？', this.friendId)
+					if (res != 'fail') {
+						await this.msgController('你好，这套房首付要多少呢？', true, 'text', res)
+					}
+				}
+			}, 1000)
 		}
 		this.onLoading = false
 		this.$apply()

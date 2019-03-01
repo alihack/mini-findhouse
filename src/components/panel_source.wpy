@@ -13,23 +13,25 @@
 			padding:0 30rpx;
 		}
 		&-main {
+			display: flex;
+			white-space: nowrap;
 			margin-top:35rpx;
 			width: 100%;
 			height: 100%;
 			.item {
-				padding-left:30rpx;
+				margin-left:30rpx;
+				width:400rpx!important;
 				color:@gray;
 				font-size: 24rpx;
-				width: 376rpx;
-				height: 486rpx;
-				box-sizing: border-box;
+				display: inline-block;
 				.txt1 {
 					font-size: 30rpx;
 					color:black;
 					margin-top:5rpx;
-					width: 346rpx;
+					width: 400rpx;
 					height: 86rpx;
 					overflow: hidden;
+					white-space: normal;
 				}
 				.txt2 {
 					margin:5rpx 0;
@@ -40,8 +42,11 @@
 					margin-right: 10rpx;
 				}
 			}
+			.item:last-child {
+				margin-right:30rpx;
+			}
 			image {
-				width: 346rpx;
+				width: 400rpx;
 				height: 290rpx;
 			}
 		}
@@ -58,21 +63,16 @@
 					<image class="next-icon" src="../images/next.png"/>
 				</view>
 			</view>
-			<swiper
-				class="panel-main"
-				display-multiple-items="2"
-			>
-			<block wx:for="{{sourceList}}" wx:key="index">
-				<swiper-item class="item" @tap="toHouseDetail({{item.propertyUuid}})">
+			<scroll-view class="panel-main" scroll-x="true">
+				<view class="item"  wx:for="{{sourceList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})">
 					<image wx:if="{{item.photoList.length > 2}}" src="{{item.photoList[2]}}"/>
 					<image wx:else src="{{item.photoList[0]}}"/>
 					<view class="txt1">{{item.title}}</view>
 					<view class="txt2" wx:if="{{item.countF}}">南北朝向 | {{item.countF}}室{{item.countT}}厅 | {{item.square}}m²</view>
 					<view class="txt2" wx:else>南北朝向 | {{item.square}}m²</view>
-					<view class="txt3"><text class="price">{{item.sellPrice}}万</text><text class="unit">63626元/m²</text></view>
-				</swiper-item>
-			</block>
-			</swiper>
+					<view class="txt3"><text class="price">{{item.sellPrice}}万</text><text class="unit">{{item.unitPrice}}元/m²</text></view>
+				</view>
+			</scroll-view>
 		</view>
 	</view>
 </template>

@@ -240,7 +240,7 @@ export default class Detail extends wepy.page {
 			const previewImgs = []
 			this.imgPreIndex = this.currentHouse.photoUrl.length - 1
 			this.currentHouse.photoUrl.forEach(ele => {
-				previewImgs.push(ele.split('|')[0])
+				previewImgs.push(ele.split('|')[0] + '|1000')
 			})
 			this.currentHouse.previewImgs = previewImgs
 			resolve()
@@ -260,7 +260,7 @@ export default class Detail extends wepy.page {
 		setTimeout(() => {
 			this.hiddenXML = false
 			this.$apply()
-		}, 1500)
+		}, 1000)
 	}
 	async onLoad(option) {
 		console.log('详情页所带参数', option)

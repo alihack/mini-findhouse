@@ -220,7 +220,7 @@
 				</view>
 			</view>
 			<form bindsubmit="submit" report-submit="true">
-				<button class="budget"  @tap="chatOnLine" plain wx:if="{{hasPhone}}" form-type="submit">
+				<button class="budget"  @tap="chatOnLine('budget')" plain wx:if="{{hasPhone}}" form-type="submit">
 					<view class="budget-head">
 						<text class="cell3-title">首付预算：</text>
 						<text class="budget-main">参考首付及月供请咨询经纪人</text>
@@ -331,7 +331,6 @@ export default class panelHouseDetail extends wepy.component {
 		},
 		onSwiperChange ({detail: {current}}) {
 			// 懒加载
-			// 懒加载
 			const imgsLength = this.house.photoUrl.length
 			this.currentIndex = current
 			this.imgPreIndex = current - 1
@@ -345,7 +344,7 @@ export default class panelHouseDetail extends wepy.component {
 			// this.currentIndex = current
 			this.$apply()
 		},
-		chatOnLine: () => {
+		chatOnLine: (type) => {
 			if (this.isDept) {
 				wx.makePhoneCall({
 					phoneNumber: this.house.phoneList[0]
@@ -360,11 +359,15 @@ export default class panelHouseDetail extends wepy.component {
 				})
 				return
 			}
+			let fromBudget = false
+			if (type == 'budget') {
+				fromBudget = true
+			}
 			// 头像路径过长，存入缓存带参
 			this.clickCount(2)
 			if (this.house.agentId) {
 				wx.setStorageSync('fAvatar', this.house.headimg)
-				wepy.navigateTo({url: `chat?fId=${this.house.agentId}&fName=${this.house.employeeName1}`})
+				wepy.navigateTo({url: `chat?fId=${this.house.agentId}&fName=${this.house.employeeName1}&fromBudget=${fromBudget}`})
 			} else {
 				wepy.showToast({title: '该经纪人暂未绑定', icon: 'none'})
 			}

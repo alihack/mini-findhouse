@@ -301,7 +301,7 @@ const getAllUnread = (contactList) => {
 		return total + item.unread
 	}, 0)
 	console.log('总未读计数为', allUnread)
-	if (allUnread != 0) {
+	if (allUnread) {
 		wx.setTabBarBadge({
 			index: 1,
 			text: allUnread.toString()
@@ -686,8 +686,10 @@ const onMsgNotify = (newMsgs) => {
 	newMsgIds.forEach(async ele => {
 		if (!sessionIds.includes(ele)) {
 			console.log('新增聊天对象', ele)
-			await myInitIM()
-			return
+			setTimeout(async () => {
+				await myInitIM()
+				return
+			}, 1000)
 		}
 	})
 	// 无新增聊天对象继续执行
