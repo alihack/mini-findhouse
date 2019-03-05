@@ -92,7 +92,7 @@ page {
 <script>
 import wepy from 'wepy'
 import webim from './utils/webim_wx'
-import {myInitIM} from './utils/util'
+import {myInitIM, getUserInfo, getUserId} from './utils/util'
 import 'wepy-async-function'
 
 export default class extends wepy.app {
@@ -149,6 +149,8 @@ export default class extends wepy.app {
 	}
 
 	async onShow() {
+		await getUserId()
+		getUserInfo()
 		const intervalId = setInterval(async () => {
 			console.log('准备进行IM登录。。')
 			if (wepy.$instance.globalData.myUserInfo) {

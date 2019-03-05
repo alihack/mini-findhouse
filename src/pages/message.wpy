@@ -112,6 +112,7 @@
 <script>
 import wepy from 'wepy'
 import api from '../utils/api'
+import webim from '../utils/webim_wx'
 import {getAllUnread, myInitIM} from '../utils/util'
 export default class Message extends wepy.page {
 	config = {
@@ -140,6 +141,8 @@ export default class Message extends wepy.page {
 			await myInitIM()
 			wx.removeStorageSync('reSessStorage')
 		}
+		// 判断是否登录IM
+		if (!webim.checkLogin()) wx.showLoading({title: '加载中'})
 		this.sessionList = wx.getStorageSync('sessionStorage')
 		if (this.sessionList) this.isNoData = false
 		getAllUnread(this.sessionList)

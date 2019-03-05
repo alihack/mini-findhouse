@@ -23,8 +23,9 @@ const apis = [
 	'getMarket',
 	'follow',
 	'cancelFollow',
-	'c2cMsgs',
-	'getMsgs',
+	'c2cMsgs', // 保存单个聊天记录
+	'getMsgs', // 获取单个聊天记录
+	'getAllMsg', // 获取所有聊天记录
 	'c2cMsgsList', // 聊天列表
 	'getMsgsList',
 	'saveFromId',
@@ -40,7 +41,7 @@ const apis = [
 	'signIn'
 ]
 
-const env = 'test' // dev: 本地测试服务器， prod：线上服务器, test：测试服务器
+const env = 'prod' // dev: 本地测试服务器， prod：线上服务器, test：测试服务器
 const root = roots[env]
 const api = {}
 apis.forEach(ele => {
