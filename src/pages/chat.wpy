@@ -244,6 +244,7 @@ export default class Chat extends wepy.page {
 	}
 	async onLoad({fId, fAvatar, fName, fromBudget}) {
 		this.onLoading = true
+		wx.showLoading({title: '加载中'})
 		if (!fAvatar) {
 			this.friendAvatar = wx.getStorageSync('fAvatar')
 		} else {
@@ -256,18 +257,27 @@ export default class Chat extends wepy.page {
 		wx.setNavigationBarTitle({title: fName})
 		this.scrollHeight = wx.getSystemInfoSync().windowHeight
 		// 获取历史记录,如有未读消息，需先保存新消息到后端服务器
-		const sessionStorage = wx.getStorageSync('sessionStorage')
-		if (sessionStorage) {
-			// 设置未读为0
-			const currentObj = sessionStorage.filter(ele => ele.id == fId)[0]
-			if (currentObj.unread != 0) {
-				await getC2CHistoryMsgs(this.friendId, true)
-				saveContactList([{id: fId, unread: 0}], true)
-			}
-		} else {
-			// 下次进入聊天列表页需要重新登录IM
-			wx.setStorageSync('reSessStorage', true)
+		const controller = () => {
+			return new Promise(async resolve => {
+				const sessionStorage = wx.getStorageSync('sessionStorage')
+				if (sessionStorage) {
+					// 设置未读为0
+					const currentObj = sessionStorage.filter(ele => ele.id == fId)[0]
+					if (currentObj.unread != 0) {
+						await getC2CHistoryMsgs(this.friendId, true)
+						resolve()
+						saveContactList([{id: fId, unread: 0}], true)
+					} else {
+						resolve()
+					}
+				} else {
+					resolve()
+					// 下次进入聊天列表页需要重新登录IM
+					wx.setStorageSync('reSessStorage', true)
+				}
+			})
 		}
+		await controller()
 		const {data} = await getMsgsFromServer(this.friendId)
 		if (data) {
 			this.msgList = data
@@ -300,6 +310,7 @@ export default class Chat extends wepy.page {
 			}, 1000)
 		}
 		this.onLoading = false
+		wx.hideLoading()
 		this.$apply()
 	}
 	async onHide () {

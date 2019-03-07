@@ -149,6 +149,7 @@ export default class extends wepy.app {
 	}
 
 	async onShow() {
+		const startTime = new Date().getTime()
 		await getUserId()
 		getUserInfo()
 		const intervalId = setInterval(async () => {
@@ -156,8 +157,11 @@ export default class extends wepy.app {
 			if (wepy.$instance.globalData.myUserInfo) {
 				clearInterval(intervalId)
 				await myInitIM()
+				const endTime = new Date().getTime()
+				const diffSec = (endTime - startTime) / 1000
+				console.log(`IM登录总耗时:${diffSec}秒`)
 			}
-		}, 2000)
+		}, 200)
 	}
 
 	onHide() {

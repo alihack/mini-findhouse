@@ -151,7 +151,7 @@ export default class Message extends wepy.page {
 			this.sessionList = wx.getStorageSync('sessionStorage')
 			if (this.sessionList) this.isNoData = false
 			this.$apply()
-		}, 1000)
+		}, 500)
 		this.$apply()
 	}
 	methods = {

@@ -1,6 +1,7 @@
 <style lang="less">
 @import '../styles/base.less';
 .house-deatil {
+	width: 100%;
 	.banner {
 		width: 100%;
 		height: 565rpx;

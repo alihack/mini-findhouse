@@ -77,8 +77,6 @@ const getUserInfo = (isForced) => {
 		if (mobile.length == 11) userInfo.mobile = mobile.replace(mobile.slice(3, 9), '****')
 		wx.setStorageSync('userInfo', userInfo)
 		wepy.$instance.globalData.myUserInfo = userInfo
-		loginInfo.identifierNick = userInfo.nickname
-		loginInfo.identifierAvatar = userInfo.headimg
 		// 如果是经纪人登录，需要设置aid缓存
 		if (isForced) {
 			if (userInfo.type == '2') {
@@ -118,8 +116,6 @@ var loginInfo = {
 	'appIDAt3rd': 1400175041, // 用户所属应用id
 	'accountType': 36862, // 用户所属应用帐号类型
 	'identifier': '', // 当前用户ID
-	'identifierNick': '', // 当前用户昵昵称
-	'identifierAvatar': '', // 用户头像
 	'userSig': ''
 }
 const getSign = () => {
@@ -342,7 +338,6 @@ const setSessionUnread = (contactList) => {
 						}
 					}
 				}
-				console.log('ele.unread', ele.unread)
 				if (ele.unread != 0) {
 					// 将新历史记录处理后发送给后端服务器,标记已读
 					const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
@@ -739,7 +734,6 @@ const onMsgNotify = (newMsgs) => {
 
 const myInitIM = () => {
 	return new Promise(async resolve => {
-		const startTime = new Date().getTime()
 		if (!webim.checkLogin()) await initIM(onMsgNotify) // 耗时1.3秒
 		// 首先判断有无会话列表
 		const contactList = await getContactFromServer() // 耗时0.5秒
@@ -755,9 +749,6 @@ const myInitIM = () => {
 		const finishSessionList = await nextSessionController(initSessionList) // 耗时0.07秒
 		console.log('最终会话列表数据', finishSessionList)
 		wx.setStorageSync('sessionStorage', finishSessionList)
-		const endTime = new Date().getTime()
-		const diffSec = (endTime - startTime) / 1000
-		console.log(`IM登录总耗时:${diffSec}秒`)
 		wx.hideLoading()
 		resolve()
 	})
