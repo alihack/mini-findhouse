@@ -97,7 +97,8 @@
 		<block wx:else>
 			<view class="panel">
 				<view class="panel-main" wx:for="{{communityList}}" wx:key="index"  @tap="estateDetail({{item.estateUuid}})">
-					<image src="{{item.photo_url}}"></image>
+					<image wx:if="{{item.photo_url == '暂无'}}" src="http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg"></image>
+					<image wx:else src="{{item.photo_url}}"></image>
 					<view class="detail">
 						<view class="title">{{item.estate_name}}</view>
 						<view class="detail-text">建筑年代：{{item.estate_age}}</view>

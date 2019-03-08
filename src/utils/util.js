@@ -78,10 +78,8 @@ const getUserInfo = (isForced) => {
 		wx.setStorageSync('userInfo', userInfo)
 		wepy.$instance.globalData.myUserInfo = userInfo
 		// 如果是经纪人登录，需要设置aid缓存
-		if (isForced) {
-			if (userInfo.type == '2') {
-				wx.setStorageSync('aid', userInfo.uid)
-			}
+		if (userInfo.type == '2') {
+			wx.setStorageSync('aid', userInfo.uid)
 		}
 		resolve(userInfo)
 	})
@@ -303,59 +301,75 @@ const getAllUnread = (contactList) => {
 	}
 }
 
+// const setSessionUnread = (contactList) => {
+// 	return new Promise(async resolve => {
+// 		// 将腾讯返回历史记录与后端服务器比较，获取未读数
+// 		const {data} = await getAllMsgFromServer()
+// 		let promises = contactList.map(async (ele, contactIndex) => {
+// 			return new Promise(async resolve => {
+// 				// 获取腾讯数据
+// 				const {newMsgList} = await getC2CHistoryMsgs(ele.id)
+// 				const serverMsgList = data[ele.id]
+// 				if (newMsgList.length == 0) {
+// 					// 腾讯无历史记录 unread为服务器unread
+// 				} else {
+// 					// 腾讯有历史记录
+// 					if (serverMsgList.length == 0) {
+// 						// 服务器无数据，为初次
+// 						console.log('服务器初次，全为新消息')
+// 						ele.unread = newMsgList.length
+// 					} else {
+// 						const firstNewMsgDate = new Date(newMsgList[0].time)
+// 						const firstNewMsgTime = firstNewMsgDate.getTime()
+// 						const lastServerMsgDate = new Date(serverMsgList[serverMsgList.length - 1].time)
+// 						const lastServerMsgTime = lastServerMsgDate.getTime()
+// 						if (firstNewMsgTime > lastServerMsgTime) {
+// 							// 如果腾讯返回第一条数据时间比服务器最后一条时间晚，即后面全是新消息
+// 							ele.unread = newMsgList.length + ele.unread
+// 						} else {
+// 							// 找到服务器最后一条时间与腾讯数据时间相同的一条
+// 							newMsgList.forEach((newItem, index) => {
+// 								if (newItem.time == serverMsgList[serverMsgList.length - 1].time) {
+// 									ele.unread = newMsgList.length - 1 - index + ele.unread
+// 								}
+// 							})
+// 						}
+// 					}
+// 				}
+// 				if (ele.unread != 0) {
+// 					// 将新历史记录处理后发送给后端服务器,标记已读
+// 					const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
+// 					const msgsToServerList = []
+// 					newMsgList2.forEach(ele => {
+// 						ele.data = JSON.stringify(ele.data)
+// 						msgsToServerList.push(ele)
+// 					})
+// 					sendMsgsToServer(ele.id, msgsToServerList)
+// 				}
+// 				resolve()
+// 			})
+// 		})
+// 		Promise.all(promises).then(() => {
+// 			resolve(contactList)
+// 			getAllUnread(contactList)
+// 			// 保存列表未读数到后端
+// 			saveContactList(contactList, true)
+// 		})
+// 	})
+// }
+
 const setSessionUnread = (contactList) => {
-	return new Promise(async resolve => {
-		// 将腾讯返回历史记录与后端服务器比较，获取未读数
-		const {data} = await getAllMsgFromServer()
-		let promises = contactList.map(async (ele, contactIndex) => {
-			return new Promise(async resolve => {
-				// 获取腾讯数据
-				const {newMsgList} = await getC2CHistoryMsgs(ele.id)
-				const serverMsgList = data[ele.id]
-				if (newMsgList.length == 0) {
-					// 腾讯无历史记录 unread为服务器unread
-				} else {
-					// 腾讯有历史记录
-					if (serverMsgList.length == 0) {
-						// 服务器无数据，为初次
-						console.log('服务器初次，全为新消息')
-						ele.unread = newMsgList.length
-					} else {
-						const firstNewMsgDate = new Date(newMsgList[0].time)
-						const firstNewMsgTime = firstNewMsgDate.getTime()
-						const lastServerMsgDate = new Date(serverMsgList[serverMsgList.length - 1].time)
-						const lastServerMsgTime = lastServerMsgDate.getTime()
-						if (firstNewMsgTime > lastServerMsgTime) {
-							// 如果腾讯返回第一条数据时间比服务器最后一条时间晚，即后面全是新消息
-							ele.unread = newMsgList.length + ele.unread
-						} else {
-							// 找到服务器最后一条时间与腾讯数据时间相同的一条
-							newMsgList.forEach((newItem, index) => {
-								if (newItem.time == serverMsgList[serverMsgList.length - 1].time) {
-									ele.unread = newMsgList.length - 1 - index + ele.unread
-								}
-							})
-						}
-					}
-				}
-				if (ele.unread != 0) {
-					// 将新历史记录处理后发送给后端服务器,标记已读
-					const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
-					const msgsToServerList = []
-					newMsgList2.forEach(ele => {
-						ele.data = JSON.stringify(ele.data)
-						msgsToServerList.push(ele)
-					})
-					sendMsgsToServer(ele.id, msgsToServerList)
-				}
-				resolve()
+	return new Promise(resolve => {
+		webim.syncMsgs((res) => {
+			var sessMap = webim.MsgStore.sessMap()
+			contactList.forEach(ele => {
+				ele.unread = sessMap['C2C' + ele.id] ? sessMap['C2C' + ele.id].unread() : 0
 			})
-		})
-		Promise.all(promises).then(() => {
 			resolve(contactList)
 			getAllUnread(contactList)
-			// 保存列表未读数到后端
-			saveContactList(contactList, true)
+		}, (err) => {
+			console.log('err', err)
+			resolve()
 		})
 	})
 }
@@ -591,7 +605,7 @@ const getC2CHistoryMsgs = (friendID, isSaveServer = false) => {
 						ele.data = JSON.stringify(ele.data)
 						msgsToServerList.push(ele)
 					})
-					sendMsgsToServer(friendID, msgsToServerList)
+					await sendMsgsToServer(friendID, msgsToServerList)
 				}
 				resolve({newMsgList, Msglength})
 			},
@@ -633,17 +647,17 @@ const getMsgsFromServer = (fid, hasSec = 0) => {
 	})
 }
 // 获取某对象所有聊天记录
-const getAllMsgFromServer = () => {
-	return new Promise(async resolve => {
-		const msgList = await wepy.request({
-			url: api['getAllMsg'],
-			data: {
-				uid: loginInfo.identifier,
-			}
-		})
-		resolve(msgList)
-	})
-}
+// const getAllMsgFromServer = () => {
+// 	return new Promise(async resolve => {
+// 		const msgList = await wepy.request({
+// 			url: api['getAllMsg'],
+// 			data: {
+// 				uid: loginInfo.identifier,
+// 			}
+// 		})
+// 		resolve(msgList)
+// 	})
+// }
 
 const uploadQiNiu = (filePath, type) => {
 	return new Promise(async (resolve) => {
@@ -675,6 +689,11 @@ const onMsgNotify = (newMsgs) => {
 	console.log('列表页新信息', newMsgs)
 	wepy.$instance.globalData.newMsgs = newMsgs
 	const sessionStorage = wx.getStorageSync('sessionStorage')
+	// 无聊天缓存说明新增对象,重新进
+	if (!sessionStorage) {
+		myInitIM()
+		return
+	}
 	// 先判断是否有新增对象
 	let sessionIds = []
 	let newMsgIds = []
@@ -687,10 +706,8 @@ const onMsgNotify = (newMsgs) => {
 	newMsgIds.forEach(async ele => {
 		if (!sessionIds.includes(ele)) {
 			console.log('新增聊天对象', ele)
-			setTimeout(async () => {
-				await myInitIM()
-				return
-			}, 1000)
+			await myInitIM()
+			return
 		}
 	})
 	// 无新增聊天对象继续执行
@@ -699,8 +716,6 @@ const onMsgNotify = (newMsgs) => {
 			return new Promise(async resolve => {
 				if (msg.fromAccount == ele.id) {
 					ele.unread = ele.unread ? ele.unread + 1 : 1
-					// 保存列表未读数到后端
-					// saveContactList([{id: ele.id, unread: ele.unread}], true)
 					ele.time = '刚刚'
 					ele.timeStamp = ele.MsgTimeStamp
 					ele.content = await convertCustomMsgToHtml(msg)
@@ -742,9 +757,8 @@ const myInitIM = () => {
 			resolve()
 			return
 		}
-		// 根据聊天记录获取未读数
-		const initSessionList = await setSessionUnread(contactList) // 耗时0.25秒
-		console.log('初始会话列表数据', initSessionList)
+		// 从腾讯获取未读数
+		const initSessionList = await setSessionUnread(contactList) // 耗时0.17秒
 		// 进一步数据处理（时间）
 		const finishSessionList = await nextSessionController(initSessionList) // 耗时0.07秒
 		console.log('最终会话列表数据', finishSessionList)

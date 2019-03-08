@@ -150,8 +150,8 @@ export default class extends wepy.app {
 
 	async onShow() {
 		const startTime = new Date().getTime()
-		await getUserId()
-		getUserInfo()
+		const uid = await getUserId()
+		if (uid) getUserInfo()
 		const intervalId = setInterval(async () => {
 			console.log('准备进行IM登录。。')
 			if (wepy.$instance.globalData.myUserInfo) {

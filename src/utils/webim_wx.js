@@ -1394,7 +1394,7 @@ module.exports = function() {
                 var item = {
                     'To_Account': c2CMsgReadedItem[i].toAccount,
                     'LastedMsgTime': c2CMsgReadedItem[i].lastedMsgTime,
-                    "Receipt": isPeerRead
+                    // "Receipt": isPeerRead
                 };
                 tmpC2CMsgReadedItem.push(item);
             }
@@ -2916,9 +2916,6 @@ module.exports = function() {
                                 notifyInfo.push(msg);
                             }
                         } // for loop
-
-                        //处理加群未决申请消息
-                        handlerApplyJoinGroupSystemMsgs(resp.EventArray);
 
                         if (notifyInfo.length > 0)
                             MsgStore.updateTimeline();

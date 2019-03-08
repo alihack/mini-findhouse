@@ -147,8 +147,9 @@
 
 <script>
 import wepy from 'wepy'
+import webim from '../utils/webim_wx'
 import chatBar from '../components/bar_chat'
-import {convertTime, convertCustomMsgToHtml, sendMessage, sendMsgsToServer, getMsgsFromServer, saveContactList, getC2CHistoryMsgs} from '../utils/util'
+import {convertTime, convertCustomMsgToHtml, sendMessage, sendMsgsToServer, getMsgsFromServer, getC2CHistoryMsgs} from '../utils/util'
 export default class Chat extends wepy.page {
 	config = {
 		navigationBarTitleText: '对话',
@@ -266,7 +267,8 @@ export default class Chat extends wepy.page {
 					if (currentObj.unread != 0) {
 						await getC2CHistoryMsgs(this.friendId, true)
 						resolve()
-						saveContactList([{id: fId, unread: 0}], true)
+						var sessMap = webim.MsgStore.sessMap()
+						webim.setAutoRead(sessMap['C2C' + fId], true, true)
 					} else {
 						resolve()
 					}
