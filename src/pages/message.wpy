@@ -168,7 +168,7 @@ export default class Message extends wepy.page {
 		async submit({detail}) {
 			console.log('detail', detail)
 			await wepy.request({
-				url: api['saveFromId'],
+				url: api['user/saveFromId'],
 				method: 'POST',
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,

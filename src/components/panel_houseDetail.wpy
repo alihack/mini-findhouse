@@ -286,7 +286,7 @@ export default class panelHouseDetail extends wepy.component {
 	}
 	async clickCount(type) {
 		await wepy.request({
-			url: api['clickCount'],
+			url: api['agent/clickCount'],
 			method: 'POST',
 			data: {
 				uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -302,7 +302,7 @@ export default class panelHouseDetail extends wepy.component {
 			if (this.house.isFollowed) {
 				// 关注
 				await wepy.request({
-					url: api['follow'],
+					url: api['user/follow'],
 					method: 'POST',
 					data: {
 						uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -313,7 +313,7 @@ export default class panelHouseDetail extends wepy.component {
 			} else {
 				// 取消关注
 				await wepy.request({
-					url: api['cancelFollow'],
+					url: api['user/cancelFollow'],
 					method: 'POST',
 					data: {
 						uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -376,7 +376,7 @@ export default class panelHouseDetail extends wepy.component {
 		async submit({detail}) {
 			console.log('detail', detail)
 			await wepy.request({
-				url: api['saveFromId'],
+				url: api['user/saveFromId'],
 				method: 'POST',
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -393,7 +393,7 @@ export default class panelHouseDetail extends wepy.component {
 			wx.showLoading({title: '授权中'})
 			await getUserId(true)
 			const res = await wepy.request({
-				url: api['userMobile'],
+				url: api['user/userMobile'],
 				method: 'POST',
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,

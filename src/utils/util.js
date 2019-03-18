@@ -17,7 +17,7 @@ const getUserId = (isForced) => {
 				if (res.code) {
 					console.log(res)
 					const {data} = await wepy.request({
-						url: api['userId'] + `?code=${res.code}`,
+						url: api['user/userId'] + `?code=${res.code}`,
 					})
 					if (!data.uid) {
 						resolve('')
@@ -67,7 +67,7 @@ const getUserInfo = (isForced) => {
 			return
 		}
 		const {data: {userInfo}} = await wepy.request({
-			url: api['userInfo'],
+			url: api['user/userInfo'],
 			data: {
 				uid
 			}
@@ -89,7 +89,7 @@ const getMarket = () => {
 	return new Promise(async resolve => {
 		let market = {}
 		const {data} = await wepy.request({
-			url: api['getMarket'],
+			url: api['house/getMarket'],
 		})
 		market.price = data.total_price
 		if (data.ratio.indexOf('-') != -1) {
@@ -137,7 +137,7 @@ const getSign = () => {
 		if (!userSig || isOutDate) {
 			// 如果不存在或者过期了，重新获取（180天过期，得提前获取）
 			const {data} = await wepy.request({
-				url: api['sign'],
+				url: api['user/sign'],
 				data: {
 					identifier: uid
 				},
@@ -301,63 +301,6 @@ const getAllUnread = (contactList) => {
 	}
 }
 
-// const setSessionUnread = (contactList) => {
-// 	return new Promise(async resolve => {
-// 		// 将腾讯返回历史记录与后端服务器比较，获取未读数
-// 		const {data} = await getAllMsgFromServer()
-// 		let promises = contactList.map(async (ele, contactIndex) => {
-// 			return new Promise(async resolve => {
-// 				// 获取腾讯数据
-// 				const {newMsgList} = await getC2CHistoryMsgs(ele.id)
-// 				const serverMsgList = data[ele.id]
-// 				if (newMsgList.length == 0) {
-// 					// 腾讯无历史记录 unread为服务器unread
-// 				} else {
-// 					// 腾讯有历史记录
-// 					if (serverMsgList.length == 0) {
-// 						// 服务器无数据，为初次
-// 						console.log('服务器初次，全为新消息')
-// 						ele.unread = newMsgList.length
-// 					} else {
-// 						const firstNewMsgDate = new Date(newMsgList[0].time)
-// 						const firstNewMsgTime = firstNewMsgDate.getTime()
-// 						const lastServerMsgDate = new Date(serverMsgList[serverMsgList.length - 1].time)
-// 						const lastServerMsgTime = lastServerMsgDate.getTime()
-// 						if (firstNewMsgTime > lastServerMsgTime) {
-// 							// 如果腾讯返回第一条数据时间比服务器最后一条时间晚，即后面全是新消息
-// 							ele.unread = newMsgList.length + ele.unread
-// 						} else {
-// 							// 找到服务器最后一条时间与腾讯数据时间相同的一条
-// 							newMsgList.forEach((newItem, index) => {
-// 								if (newItem.time == serverMsgList[serverMsgList.length - 1].time) {
-// 									ele.unread = newMsgList.length - 1 - index + ele.unread
-// 								}
-// 							})
-// 						}
-// 					}
-// 				}
-// 				if (ele.unread != 0) {
-// 					// 将新历史记录处理后发送给后端服务器,标记已读
-// 					const newMsgList2 = JSON.parse(JSON.stringify(newMsgList))
-// 					const msgsToServerList = []
-// 					newMsgList2.forEach(ele => {
-// 						ele.data = JSON.stringify(ele.data)
-// 						msgsToServerList.push(ele)
-// 					})
-// 					sendMsgsToServer(ele.id, msgsToServerList)
-// 				}
-// 				resolve()
-// 			})
-// 		})
-// 		Promise.all(promises).then(() => {
-// 			resolve(contactList)
-// 			getAllUnread(contactList)
-// 			// 保存列表未读数到后端
-// 			saveContactList(contactList, true)
-// 		})
-// 	})
-// }
-
 const setSessionUnread = (contactList) => {
 	return new Promise(resolve => {
 		webim.syncMsgs((res) => {
@@ -424,7 +367,7 @@ const saveContactList = (contactList, setUnread = false) => {
 			})
 			Promise.all(promises).then(async () => {
 				await wepy.request({
-					url: api['c2cMsgsList'],
+					url: api['user/saveContactList'],
 					method: 'POST',
 					data: {
 						uid,
@@ -435,7 +378,7 @@ const saveContactList = (contactList, setUnread = false) => {
 			})
 		} else {
 			await wepy.request({
-				url: api['c2cMsgsList'],
+				url: api['user/saveContactList'],
 				method: 'POST',
 				data: {
 					uid,
@@ -460,7 +403,7 @@ const getContactFromServer = () => {
 		// 再从后端获取全部列表
 		const uid = wx.getStorageSync('uid')
 		const {data} = await wepy.request({
-			url: api['getMsgsList'],
+			url: api['user/getContactList'],
 			data: {
 				uid
 			}
@@ -619,7 +562,7 @@ const getC2CHistoryMsgs = (friendID, isSaveServer = false) => {
 const sendMsgsToServer = (fid, msg) => {
 	return new Promise(async resolve => {
 		await wepy.request({
-			url: api['c2cMsgs'],
+			url: api['user/saveChatMsgs'],
 			method: 'POST',
 			data: {
 				uid: loginInfo.identifier,
@@ -640,24 +583,12 @@ const getMsgsFromServer = (fid, hasSec = 0) => {
 		}
 		// if (page) form.page = page
 		const msgList = await wepy.request({
-			url: api['getMsgs'],
+			url: api['user/getChatMsgs'],
 			data: form
 		})
 		resolve(msgList)
 	})
 }
-// 获取某对象所有聊天记录
-// const getAllMsgFromServer = () => {
-// 	return new Promise(async resolve => {
-// 		const msgList = await wepy.request({
-// 			url: api['getAllMsg'],
-// 			data: {
-// 				uid: loginInfo.identifier,
-// 			}
-// 		})
-// 		resolve(msgList)
-// 	})
-// }
 
 const uploadQiNiu = (filePath, type) => {
 	return new Promise(async (resolve) => {
@@ -669,7 +600,7 @@ const uploadQiNiu = (filePath, type) => {
 			key = `img${Date.now()}.jpg`
 		}
 		const {data: {uptoken}} = await wepy.request({
-			url: api['uptoken'],
+			url: api['user/uptoken'],
 		})
 		console.log('uptoken', uptoken)
 		const options = {
@@ -691,7 +622,10 @@ const onMsgNotify = (newMsgs) => {
 	const sessionStorage = wx.getStorageSync('sessionStorage')
 	// 无聊天缓存说明新增对象,重新进
 	if (!sessionStorage) {
-		myInitIM()
+		// 此处必须延时，腾讯接口有延时！
+		setTimeout(async () => {
+			await myInitIM()
+		}, 1000)
 		return
 	}
 	// 先判断是否有新增对象
@@ -706,7 +640,10 @@ const onMsgNotify = (newMsgs) => {
 	newMsgIds.forEach(async ele => {
 		if (!sessionIds.includes(ele)) {
 			console.log('新增聊天对象', ele)
-			await myInitIM()
+			// 此处必须延时，腾讯接口有延时！
+			setTimeout(async () => {
+				await myInitIM()
+			}, 1000)
 			return
 		}
 	})

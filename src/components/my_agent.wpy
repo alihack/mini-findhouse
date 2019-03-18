@@ -3,16 +3,6 @@
 .agent {
 	.flex;
 	flex-direction: column;
-	.sign {
-		.label-auto(124rpx, 50rpx);
-		position: absolute;
-		top: 50rpx;
-		right:60rpx;
-		background: @gold;
-		color:#fff;
-		font-size: 30rpx;
-		border-radius: 50rpx;
-	}
 	.hover-sign{
 		background: @gold + #111;
 	}
@@ -105,9 +95,6 @@
 				<view class="name">{{userInfo.agentName}}</view>
 				<view class="phone">{{userInfo.mobile}}</view>
 			</view>
-			<form bindsubmit="submit" report-submit="true">
-				<button class="sign" hover-class="hover-sign" form-type="submit" @tap="sign">签到</button>
-			</form>
 		</view>
 		<view class="main">
 			<view class="row">
@@ -137,7 +124,6 @@
 </template>
 <script>
 import wepy from 'wepy'
-import api from '../utils/api'
 export default class Footer extends wepy.component {
 	props = {
 		userInfo: Object,
@@ -153,27 +139,6 @@ export default class Footer extends wepy.component {
 	}
 
 	methods = {
-		async submit({detail}) {
-			console.log('detail', detail)
-			await wepy.request({
-				url: api['saveFromId'],
-				method: 'POST',
-				data: {
-					uid: wepy.$instance.globalData.myUserInfo.uid,
-					form_id: detail.formId
-				}
-			})
-		},
-		async sign() {
-			wepy.showToast({title: '签到成功'})
-			await wepy.request({
-				url: api['signIn'],
-				method: 'POST',
-				data: {
-					uid: wepy.$instance.globalData.myUserInfo.uid,
-				}
-			})
-		}
 	}
 }
 </script>

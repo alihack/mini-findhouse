@@ -46,7 +46,7 @@
 				</view>
 			</view>
 			<view class="panel-main">
-				<image src="{{estate.photo_url[0]}}"></image>
+				<image src="{{estate.photo_url}}"></image>
 				<view class="detail">
 					<!-- <view class="title">
 						<view class="title-left">参考均价：</view>

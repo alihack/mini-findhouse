@@ -145,7 +145,7 @@ export default class UserMark extends wepy.page {
 	getCommunityList() {
 		return new Promise(async resolve => {
 			const {data} = await wepy.request({
-				url: api['followList'],
+				url: api['user/followList'],
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
 					type: 2, // 1房源2小区
@@ -160,7 +160,7 @@ export default class UserMark extends wepy.page {
 	getHouseSourceList() {
 		return new Promise(async resolve => {
 			const {data} = await wepy.request({
-				url: api['followList'],
+				url: api['user/followList'],
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
 					type: 1,

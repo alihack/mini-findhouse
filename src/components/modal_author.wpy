@@ -92,7 +92,7 @@ export default class modalAuthor extends wepy.component {
 						if (res.code) {
 							wx.showLoading({title: '授权中'})
 							await wepy.request({
-								url: api['saveUser'],
+								url: api['user/saveUser'],
 								method: 'POST',
 								data: {
 									code: res.code,

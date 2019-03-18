@@ -30,7 +30,7 @@ export default class UserHistory extends wepy.page {
 
 	async onLoad() {
 		const {data: {list}} = await wepy.request({
-			url: api['history'],
+			url: api['user/history'],
 			data: {
 				uid: wepy.$instance.globalData.myUserInfo.uid
 			}

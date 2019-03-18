@@ -70,7 +70,7 @@
 					<view class="txt1">{{item.title}}</view>
 					<view class="txt2" wx:if="{{item.countF}}">南北朝向 | {{item.countF}}室{{item.countT}}厅 | {{item.square}}m²</view>
 					<view class="txt2" wx:else>南北朝向 | {{item.square}}m²</view>
-					<view class="txt3"><text class="price">{{item.sellPrice}}万</text><text class="unit">{{item.unitPrice}}元/m²</text></view>
+					<view class="txt3"><text class="price">{{item.sellPrice}}万</text><text class="unit">{{item.unitPrice}}万元/m²</text></view>
 				</view>
 			</scroll-view>
 		</view>

@@ -294,15 +294,29 @@ export default class barSort extends wepy.component {
 			this.$apply()
 		},
 		confirm (index) {
-			if (this.minPrice && this.maxPrice) {
-				if (Number(this.minPrice) > Number(this.maxPrice)) {
-					wx.showToast({title: '最低价不高于最高价!', icon: 'none'})
-					return
-				} else {
-					this.resultObj.sellPrice = this.minPrice + '-' + this.maxPrice
+			// 价格范围输入
+			let isInputPrice = false
+			if (this.minPrice || this.maxPrice) {
+				isInputPrice = true
+				if (this.minPrice && !this.maxPrice) {
+					// 只有最低价格
+					this.resultObj.sellPrice = this.minPrice
+					this.sortData[index].title = this.resultObj.sellPrice + '以上'
+				} else if (!this.minPrice && this.maxPrice) {
+					// 只有最高价格
+					this.resultObj.sellPrice = '0' + '-' + this.maxPrice
 					this.sortData[index].title = this.resultObj.sellPrice
-					this.sortData[index].isConfirmed = true
+				} else {
+					// 两者都有
+					if (Number(this.minPrice) > Number(this.maxPrice)) {
+						wx.showToast({title: '最低价不高于最高价!', icon: 'none'})
+						return
+					} else {
+						this.resultObj.sellPrice = this.minPrice + '-' + this.maxPrice
+						this.sortData[index].title = this.resultObj.sellPrice
+					}
 				}
+				this.sortData[index].isConfirmed = true
 			}
 			switch (index) {
 				case 0:
@@ -318,7 +332,7 @@ export default class barSort extends wepy.component {
 					}
 					break
 				case 1:
-					if (this.minPrice && this.maxPrice) break
+					if (isInputPrice) break
 					if (this.resultObj.sellPrice) {
 						const sellPrice = this.resultObj.sellPrice
 						// 设置title
@@ -332,7 +346,7 @@ export default class barSort extends wepy.component {
 						if (sellPrice == '100万以下') {
 							this.resultObj.sellPrice = '0 - 100'
 						} else if (sellPrice == '800万以上') {
-							this.resultObj.sellPrice = '900'
+							this.resultObj.sellPrice = '800'
 						} else {
 							if (sellPrice != '不限') this.resultObj.sellPrice = sellPrice.slice(0, sellPrice.length - 1)
 						}

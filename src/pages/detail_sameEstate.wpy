@@ -66,7 +66,7 @@ export default class SameEstate extends wepy.page {
 			}
 			Object.assign(form, this.sortObj)
 			const {data: {list}} = await wepy.request({
-				url: api['houseList'],
+				url: api['house/houseList'],
 				data: form
 			})
 			if (list) {

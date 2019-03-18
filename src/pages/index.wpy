@@ -307,7 +307,7 @@ export default class Index extends wepy.page {
 	async clickCount() {
 		if (!this.aidByShare) return
 		await wepy.request({
-			url: api['clickCount'],
+			url: api['agent/clickCount'],
 			method: 'POST',
 			data: {
 				uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -326,7 +326,7 @@ export default class Index extends wepy.page {
 			Object.assign(form, this.sortObj)
 			this.isLoading = true
 			const {data: {list}} = await wepy.request({
-				url: api['houseList'],
+				url: api['house/houseList'],
 				data: form
 			})
 			if (list) {

@@ -1,47 +1,40 @@
 const roots = {
-	prod: 'https://api.hd.xiaoyu.com/wxapp/fnzf/index/',
-	dev: 'http://192.168.1.46/index.php/wxapp/fnzf/index/',
-	test: 'https://hd-api.dev.xiaoyu.com/index.php/wxapp/fnzf/index/'
+	prod: 'https://api.hd.xiaoyu.com/wxapp/fnzf/',
+	test: 'https://hd-api.dev.xiaoyu.com/index.php/wxapp/fnzf/'
 }
+
 const apis = [
-	// 普通用户
-	'followList',
-	'history',
-	'houseList',
-	'userId',
-	'userInfo',
-	'userMobile',
-	'mobileLogin',
-	'saveUser',
-	'sendCode',
-	'sendAgentCode',
-	'houseInfo',
-	'estateInfo',
-	'estateList',
-	'sign',
-	'uptoken',
-	'getMarket',
-	'follow',
-	'cancelFollow',
-	'c2cMsgs', // 保存单个聊天记录
-	'getMsgs', // 获取单个聊天记录
-	'getAllMsg', // 获取所有聊天记录
-	'c2cMsgsList', // 聊天列表
-	'getMsgsList',
-	'saveFromId',
-	'clickCount',
+	// 用户
+	'user/userId',
+	'user/saveUser',
+	'user/userInfo',
+	'user/userMobile',
+	'user/sendCode',
+	'user/mobileLogin',
+	'user/followList',
+	'user/history',
+	'user/follow',
+	'user/cancelFollow',
+	'user/saveFromId',
+	'user/sign', // 云通信签名
+	'user/uptoken',
+	'user/saveChatMsgs', // 保存单个聊天记录
+	'user/getChatMsgs', // 获取单个聊天记录
+	'user/saveContactList', // 保存聊天列表
+	'user/getContactList', // 获取聊天列表
 	// 经纪人
-	'agentLogin',
-	'agentHouses',
-	'addHouses',
-	'deleteHouses',
-	'searchHouses',
-	'sortHouses',
-	'getQRCode',
-	'signIn'
+	'agent/agentLogin',
+	'agent/sendAgentCode',
+	'agent/clickCount',
+	// 房源
+	'house/houseList',
+	'house/houseInfo',
+	'house/estateList',
+	'house/getMarket',
+	'house/estateInfo',
 ]
 
-const env = 'prod' // dev: 本地测试服务器， prod：线上服务器, test：测试服务器
+const env = 'prod' // prod: 线上服务器， test：测试服务器
 const root = roots[env]
 const api = {}
 apis.forEach(ele => {

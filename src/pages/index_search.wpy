@@ -179,7 +179,7 @@ export default class IndexSearch extends wepy.page {
 			}
 			Object.assign(form, this.sortObj)
 			const {data: {list}} = await wepy.request({
-				url: api['houseList'],
+				url: api['house/houseList'],
 				data: form
 			})
 			if (list) {
@@ -208,7 +208,7 @@ export default class IndexSearch extends wepy.page {
 				title: '搜索中',
 			})
 			wepy.request({
-				url: api['estateList'],
+				url: api['house/estateList'],
 				data: {
 					estateName: value,
 				}

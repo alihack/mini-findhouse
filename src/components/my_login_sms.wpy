@@ -150,7 +150,7 @@ export default class MyLoginSMS extends wepy.component {
 	async userLogin () {
 		return new Promise(async resolve => {
 			const res = await wepy.request({
-				url: api['mobileLogin'],
+				url: api['user/mobileLogin'],
 				method: 'POST',
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -174,7 +174,7 @@ export default class MyLoginSMS extends wepy.component {
 	async agentLogin () {
 		return new Promise(async resolve => {
 			const res = await wepy.request({
-				url: api['agentLogin'],
+				url: api['agent/agentLogin'],
 				method: 'POST',
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -212,7 +212,7 @@ export default class MyLoginSMS extends wepy.component {
 				if (this.isSMSByAgent) {
 					// 经纪人发送验证码
 					const {code} = await wepy.request({
-						url: api['sendAgentCode'],
+						url: api['agent/sendAgentCode'],
 						method: 'POST',
 						data: {
 							cellphone: this.phoneNum
@@ -226,7 +226,7 @@ export default class MyLoginSMS extends wepy.component {
 					}
 				}
 				await wepy.request({
-					url: api['sendCode'],
+					url: api['user/sendCode'],
 					method: 'POST',
 					data: {
 						mobile: this.phoneNum

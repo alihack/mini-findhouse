@@ -344,7 +344,7 @@ export default class barChat extends wepy.component {
 		async submit({detail}) {
 			console.log('detail', detail)
 			await wepy.request({
-				url: api['saveFromId'],
+				url: api['user/saveFromId'],
 				method: 'POST',
 				data: {
 					uid: wepy.$instance.globalData.myUserInfo.uid,

@@ -102,6 +102,7 @@
 				&-head {
 					color:@gray;
 					margin-right: 10rpx;
+					width:150rpx;
 				}
 			}
 		}
@@ -130,7 +131,7 @@
 					<view class="name">{{currentEstate.estate_name}}</view>
 					<view class="address">
 						<image src="../images/address.png"></image>
-						<text wx:if="{{currentEstate.full_address}}">{{currentEstate.full_address}}</text>
+						<text wx:if="{{currentEstate.full_address != '暂无'}}">{{currentEstate.full_address}}</text>
 						<text wx:else>{{currentEstate.short_address}}</text>
 					</view>
 				</view>
@@ -139,21 +140,6 @@
 					<view>{{markText}}</view>
 				</view>
 			</view>
-			<!-- <view class="side">
-				<view class="side-left">
-					<view class="title">参考均价(元/m²)</view>
-					<view class="number">{{currentEstate.estate_price}}</view>
-				</view>
-				<view class="side-center"></view>
-				<view class="side-right">
-					<view class="title">环比上个月变化</view>
-					<view class="number" wx:if="{{currentEstate.ratio != '暂无'}}">
-						<image src="{{currentEstate.isDecline?'../images/decline.png':'../images/rise.png'}}"></image>
-						<text class="{{currentEstate.isDecline? 'green': 'red'}}"> {{currentEstate.ratio}}%</text>
-					</view>
-					<view class="number" wx:else><text style="color:#666666">暂无</text></view>
-				</view>
-			</view> -->
 			<view class="content">
 				<view class="title">小区简介</view>
 				<view class="item">
@@ -177,7 +163,7 @@
 		<!-- 周边配套 -->
 		<panelSupport wx:if="{{currentEstate.lat != '暂无'}}" :estate.sync="currentEstate"></panelSupport>
 		<!-- 同小区房源 -->
-		<block wx:if="{{sameEstateHouses.length > 2}}">
+		<block wx:if="{{sameEstateHouses.length > 1}}">
 			<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
 		</block>
 		<!-- 尾部广告 -->
@@ -242,16 +228,17 @@ export default class detailEstate extends wepy.page {
 	}
 
 	async onLoad({id}) {
-		console.log('id', id)
 		const uid = wx.getStorageSync('uid')
 		const {data} = await wepy.request({
-			url: api['estateInfo'],
+			url: api['house/estateInfo'],
 			data: {
 				estateUuid: id,
 				uid: uid,
 			}
 		})
 		this.currentEstate = data
+		// 获取同房源小区数据
+		this.sameEstateHouses = data.same_estate
 		// 对小区图片进行处理
 		const firstImg = this.currentEstate.photo_url
 		if (!firstImg || firstImg == '暂无') {
@@ -259,15 +246,6 @@ export default class detailEstate extends wepy.page {
 			this.currentEstate.photo_url[0] = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
 		}
 		this.currentEstate.photo_url = this.currentEstate.photo_url.slice(0, 10)
-		// 对环比数据进行处理
-		if (data.ratio.indexOf('-') != -1) {
-			this.currentEstate.ratio = data.ratio.slice(1)
-			this.currentEstate.isDecline = true
-		}
-		// 获取同房源小区数据
-		const pages = getCurrentPages()
-		const prevPage = pages[pages.length - 2]
-		this.sameEstateHouses = prevPage.data.sameEstateHouses
 		// 获取原图链接
 		const previewImgs = []
 		this.currentEstate.photo_url.forEach(ele => {
@@ -290,7 +268,7 @@ export default class detailEstate extends wepy.page {
 			if (this.currentEstate.isFollowed) {
 				// 关注
 				await wepy.request({
-					url: api['follow'],
+					url: api['user/follow'],
 					method: 'POST',
 					data: {
 						uid: wepy.$instance.globalData.myUserInfo.uid,
@@ -301,7 +279,7 @@ export default class detailEstate extends wepy.page {
 			} else {
 				// 取消关注
 				await wepy.request({
-					url: api['cancelFollow'],
+					url: api['user/cancelFollow'],
 					method: 'POST',
 					data: {
 						uid: wepy.$instance.globalData.myUserInfo.uid,
