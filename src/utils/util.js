@@ -290,7 +290,6 @@ const getAllUnread = (contactList) => {
 	const allUnread = contactList.reduce((total, item) => {
 		return total + item.unread
 	}, 0)
-	console.log('总未读计数为', allUnread)
 	if (allUnread) {
 		wx.setTabBarBadge({
 			index: 1,

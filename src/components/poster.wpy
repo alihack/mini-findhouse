@@ -198,9 +198,9 @@ export default class Poster extends wepy.component {
 				ctx.setFontSize(24)
 				ctx.setTextAlign('center')
 				ctx.setFillStyle('#fcf378')
-				if (this.title.length > 14) {
-					ctx.fillText(this.title.slice(0, 14), 187.5, 104)
-					ctx.fillText(this.title.slice(14, 28), 187.5, 132)
+				if (this.title.length > 13) {
+					ctx.fillText(this.title.slice(0, 13), 187.5, 104)
+					ctx.fillText(this.title.slice(13, 27), 187.5, 132)
 				} else {
 					ctx.fillText(this.title, 187.5, 117)
 				}

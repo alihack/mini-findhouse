@@ -26,7 +26,7 @@
 		letter-spacing: 1rpx;
 		padding: 20rpx;
 		.item {
-			margin-bottom:30rpx;
+			padding-bottom:30rpx;
 			display: flex;
 			justify-content: space-between;
 			&-foot {

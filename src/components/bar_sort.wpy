@@ -180,6 +180,7 @@ export default class barSort extends wepy.component {
 		sortData,
 		preSortData: sortData,
 		sortBarTop: 0,
+		timer: '',
 		showSortBarPanel: false,
 		isTabFixed: false,
 		minPrice: '',
@@ -195,12 +196,17 @@ export default class barSort extends wepy.component {
 
 	watch = {
 		scrollTop () {
-			if (this.scrollTop > this.sortBarTop) {
-				this.isTabFixed = true
-			} else {
-				if (!this.showSortBarPanel) this.isTabFixed = false
-			}
-			this.$apply()
+			// 节流函数
+			if (this.timer) return
+			this.timer = setTimeout(() => {
+				this.timer = ''
+				if (this.scrollTop > this.sortBarTop) {
+					this.isTabFixed = true
+				} else {
+					if (!this.showSortBarPanel) this.isTabFixed = false
+				}
+				this.$apply()
+			}, 250)
 		}
 	}
 	onLoad() {
