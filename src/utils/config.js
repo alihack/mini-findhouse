@@ -53,17 +53,39 @@ const supportArry = [{
 const sortData = [{
 			title: '区域',
 			isSelected: false,
-			kinds: ['不限', '湖里区', '思明区', '集美区', '海沧区', '翔安区', '同安区']
+			kinds: [
+				{value: '湖里区', isKindSelected: false},
+				{value: '思明区', isKindSelected: false},
+				{value: '集美区', isKindSelected: false},
+				{value: '海沧区', isKindSelected: false},
+				{value: '翔安区', isKindSelected: false},
+				{value: '同安区', isKindSelected: false},
+			]
 		},
 		{
 			title: '总价',
 			isSelected: false,
-			kinds: ['不限', '100万以下', '100-200万', '200-300万', '300-400万', '400-500万', '500-800万', '800万以上']
+			kinds: [
+				{value: '100万以下', isKindSelected: false},
+				{value: '100-200万', isKindSelected: false},
+				{value: '200-300万', isKindSelected: false},
+				{value: '300-400万', isKindSelected: false},
+				{value: '400-500万', isKindSelected: false},
+				{value: '500-800万', isKindSelected: false},
+				{value: '800万以上', isKindSelected: false},
+			]
 		},
 		{
 			title: '户型',
 			isSelected: false,
-			kinds: ['不限', '一室', '二室', '三室', '四室', '五室', '五室以上']
+			kinds: [
+				{value: '一室', isKindSelected: false},
+				{value: '二室', isKindSelected: false},
+				{value: '三室', isKindSelected: false},
+				{value: '四室', isKindSelected: false},
+				{value: '五室', isKindSelected: false},
+				{value: '五室以上', isKindSelected: false},
+			]
 		},
 		{
 			title: '更多',
@@ -72,7 +94,6 @@ const sortData = [{
 				{
 					title: '面积',
 					kinds: [
-						{value: '不限', isKindSelected: false},
 						{value: '50平以下', isKindSelected: false},
 						{value: '50-70平', isKindSelected: false},
 						{value: '70-90平', isKindSelected: false},
@@ -86,7 +107,6 @@ const sortData = [{
 					{
 						title: '朝向',
 						kinds: [
-							{value: '不限', isKindSelected: false},
 							{value: '朝东', isKindSelected: false},
 							{value: '朝南', isKindSelected: false},
 							{value: '朝西', isKindSelected: false},

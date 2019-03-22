@@ -7,7 +7,7 @@
 </style>
 <template>
 <view class="container">
-	<sortBar  :scrollTop.sync="scrollTop"></sortBar>
+	<!-- <sortBar  :scrollTop.sync="scrollTop"></sortBar> -->
 	<houseList :dataList.sync="dataList"></houseList>
 </view>
 </template>

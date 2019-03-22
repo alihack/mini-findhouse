@@ -235,7 +235,6 @@ export default class Index extends wepy.page {
 	}
 	// 上拉触底事件
 	async onReachBottom() {
-		console.log('上拉触底事件')
 		await this.getHouseList(++this.page)
 	}
 	onShareAppMessage(ops) {
