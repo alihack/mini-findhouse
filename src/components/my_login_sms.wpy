@@ -185,7 +185,7 @@ export default class MyLoginSMS extends wepy.component {
 			if (res.code == 400) {
 				this.codeNum = ''
 				wx.showToast({
-					title: '验证码错误',
+					title: `${res.msg}`,
 					icon: 'none'
 				})
 				resolve('fail')

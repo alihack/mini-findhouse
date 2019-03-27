@@ -1,6 +1,7 @@
 const roots = {
 	prod: 'https://api.hd.xiaoyu.com/wxapp/fnzf/',
-	test: 'https://hd-api.dev.xiaoyu.com/index.php/wxapp/fnzf/'
+	test: 'https://api.test.haodian.cn/wxapp/fnzf/'
+	// test: 'https://hd-api.dev.xiaoyu.com/index.php/wxapp/fnzf/'
 }
 
 const apis = [
