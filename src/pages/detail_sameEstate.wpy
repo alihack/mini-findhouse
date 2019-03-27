@@ -1,0 +1,95 @@
+<style lang="less" scoped>
+.container {
+	.sort-bar {
+		margin-top:0rpx;
+	}
+}
+</style>
+<template>
+<view class="container">
+	<!-- <sortBar  :scrollTop.sync="scrollTop"></sortBar> -->
+	<houseList :dataList.sync="dataList"></houseList>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import houseList from '../components/list_house'
+import sortBar from '../components/bar_sort'
+import api from '../utils/api'
+export default class SameEstate extends wepy.page {
+	config = {
+		navigationBarTitleText: '同小区房源',
+	}
+	components = {
+		houseList,
+		sortBar
+	}
+    data = {
+		dataList: [],
+		page: 1,
+		sortObj: {}
+	}
+	// 监听页面滚动
+	onPageScroll (e) {
+		this.scrollTop = e.scrollTop
+		this.$apply()
+	}
+	// 上拉触底事件
+	async onReachBottom() {
+		await this.getHouseList(++this.page)
+	}
+	events = {
+		sortHouses (sortObj) {
+			this.page = 1
+			this.dataList = []
+			// 将除了小区的元素，其他置空
+			if (this.sortObj.estateName) {
+				var estateName = this.sortObj.estateName
+			}
+			this.sortObj = []
+			this.sortObj.estateName = estateName
+			Object.assign(this.sortObj, sortObj)
+			this.getHouseList(this.page)
+		}
+	}
+	getHouseList(page) {
+		return new Promise(async resolve => {
+			if (page != 1) {
+				wx.showLoading({
+					title: '玩命加载中',
+				})
+			}
+			const form = {
+				page: page,
+				pagesize: 8
+			}
+			Object.assign(form, this.sortObj)
+			const {data: {list}} = await wepy.request({
+				url: api['house/houseList'],
+				data: form
+			})
+			if (list) {
+				list.forEach(ele => {
+					ele.unitPrice = (ele.sellPrice / ele.square).toFixed(2)
+					this.dataList.push(ele)
+				})
+			}
+			wx.hideLoading()
+			this.$apply()
+			resolve()
+		})
+	}
+	async onLoad() {
+		// 获取前一页面数据
+		const pages = getCurrentPages()
+		const prevPage = pages[pages.length - 2]
+		this.dataList = prevPage.data.sameEstateHouses
+		this.sortObj.estateName = prevPage.data.currentEstate.estate_name
+		wx.showShareMenu()
+		this.$apply()
+	}
+	methods = {
+	}
+}
+</script>

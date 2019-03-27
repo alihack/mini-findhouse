@@ -1,0 +1,151 @@
+<style lang="less">
+  .container {
+	  width: 100%;
+	  height: 100%;
+	  .fixed-bar {
+		  position: fixed;
+		  bottom: 0px;
+		  width: 100%;
+		  height: 100rpx;
+		  display: flex;
+		  justify-content: space-around;
+		  align-items: center;
+		  background: #2f363d;
+		  color:#fff;
+		  font-size: 28rpx;
+		  .item {
+			  display: flex;
+			  flex-direction: column;
+			  align-items: center;
+		  }
+		  cover-image {
+			  width: 45rpx;
+			  height: 45rpx;
+		  }
+	  }
+  }
+</style>
+<template>
+<view class="container">
+	<map
+	id="map"
+	longitude="{{locationMarker.longitude}}"
+	latitude="{{locationMarker.latitude}}"
+	scale="18"
+	bindcontroltap="controltap"
+	markers="{{markers}}"
+	bindtap="mapDetail"
+	style="width: 100%; height: 100%;"
+	></map>
+	<cover-view class="fixed-bar">
+		<cover-view class="item" wx:for="{{supportArry}}" wx:key="index" @tap="select({{index}})">
+			<cover-view class="{{item.isSelected}}"></cover-view>
+			<cover-image src="{{item.isSelected? item.blueIcon :item.whiteIcon}}"></cover-image>
+			<cover-view style="{{item.isSelected? 'color:#2d8cf0':''}}">{{item.title}}</cover-view>
+		</cover-view>
+	</cover-view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import QQMapWX from '../utils/qqmap-wx-jssdk'
+import {supportArry} from '../utils/config'
+// import {getLocation} from '../utils/util'
+
+export default class DetailSupport extends wepy.page {
+	config = {
+		navigationBarTitleText: '地图详情'
+	}
+	components = {
+	}
+	data = {
+		supportArry,
+		locationMarker: {
+			iconPath: '../images/red-address.png',
+			id: 0,
+			width: 30,
+			height: 30,
+			callout: {
+				content: '',
+				padding: 10,
+				borderRadius: 5,
+				display: 'ALWAYS'
+			},
+		},
+		supportMarkers: []
+	}
+
+	computed = {
+		markers() {
+			return [...[this.locationMarker], ...this.supportMarkers]
+		}
+	}
+
+	events = {
+	}
+
+	async onLoad(option) {
+		// await getLocation()
+		// this.mapLocation = wx.getStorageSync('locationInfo').location
+		const mapLocation = {latitude: option.lat, longitude: option.lng}
+		this.locationMarker.latitude = mapLocation.latitude
+		this.locationMarker.longitude = mapLocation.longitude
+		this.locationMarker.callout.content = option.title
+		console.log('locationMarker', this.locationMarker)
+		this.$apply()
+	}
+
+	methods = {
+		searchSupport: (index) => {
+			return new Promise(resolve => {
+				console.log('调用searchSupport方法')
+				// 实例化API核心类
+				const qqmapsdk = new QQMapWX({
+					key: 'KUBBZ-HYIKF-II2J3-NYSEA-IY3ZQ-KTBP3'
+				})
+				// 调用接口
+				qqmapsdk.search({
+					keyword: `${this.supportArry[index].title}`,
+					location: `${this.locationMarker.latitude},${this.locationMarker.longitude}`,
+					success: (res) => {
+						console.log('success', res)
+						this.supportMarkers = []
+						for (var i = 0; i < res.data.length; i++) {
+							this.supportMarkers.push({ // 获取返回结果，放到mks数组中
+								callout: {
+									content: res.data[i].title,
+									padding: 10,
+									borderRadius: 5,
+								},
+								id: res.data[i].id,
+								latitude: res.data[i].location.lat,
+								longitude: res.data[i].location.lng,
+								iconPath: this.supportArry[index].markerIcon,
+								width: 30,
+								height: 30
+							})
+						}
+						this.$apply()
+					},
+					fail: (res) => {
+						console.log(res)
+					},
+					complete: (res) => {
+						resolve()
+					}
+				})
+			})
+		},
+		select(index) {
+			this.supportArry.forEach(ele => {
+				ele.isSelected = false
+			})
+			console.log('index', index)
+			this.supportArry[index].isSelected = true
+			this.methods.searchSupport(index)
+			this.$apply()
+		}
+	}
+}
+</script>

@@ -1,0 +1,118 @@
+<style lang="less">
+@import '../styles/base.less';
+@keyframes fadeUp {	
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+.authorModal {
+	position: fixed;
+	display: flex;
+	flex-direction: column;
+	width: 540rpx;
+	height: 440rpx;
+	top: 340rpx;
+	left: 100rpx;
+	z-index: 2000;
+	background: #FFFFFF;
+	border-radius: 20rpx;
+	padding: 20rpx 30rpx;
+	box-sizing: border-box;
+	animation: fadeUp 1s;
+	&-main {
+		margin-top:20rpx;
+		font-size: 20px;
+		letter-spacing: 1rpx;
+		padding: 20rpx;
+		.txt {
+			font-weight: bold;
+		}
+		.tip {
+			font-size: 12px;
+			margin: 40rpx 0;
+		}
+		button {
+			width:100%;
+			margin-top:50rpx;
+		}
+	}
+}
+.author_screen {
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: #000;
+	opacity: 0.5;
+	overflow: hidden;
+	z-index: 1000;
+	color: #fff;
+}
+</style>
+<template>
+	<view class="authorModal" wx:if="{{showAuthorModal}}">
+		<view class="authorModal-main">
+			<view class="txt">真房源 找房牛</view>
+			<view class="txt">省钱省时间</view>
+			<view class="tip">房牛找房将对您的授权信息严格保密</view>
+			<button class="button" open-type="getUserInfo" @getuserinfo="getUserInfo">马上寻找真房源</button>
+		</view>
+	</view>
+	<view class="author_screen" wx:if="{{showAuthorModal}}"></view>
+</template>
+<script>
+import wepy from 'wepy'
+import api from '../utils/api'
+import {getUserInfo, getUserId} from '../utils/util'
+export default class modalAuthor extends wepy.component {
+	props = {
+		showAuthorModal: {
+			type: Boolean,
+			default: false,
+		},
+	}
+
+	data = {
+	}
+
+	watch = {
+	}
+
+	onLoad() {
+	}
+	methods = {
+		getUserInfo({detail}) {
+			if (detail.iv) {
+				wx.login({
+					success: async (res) => {
+						if (res.code) {
+							wx.showLoading({title: '授权中'})
+							await wepy.request({
+								url: api['user/saveUser'],
+								method: 'POST',
+								data: {
+									code: res.code,
+									encryptedData: detail.encryptedData,
+									iv: detail.iv
+								}
+							})
+							wx.hideLoading()
+							await getUserId(true)
+							await getUserInfo(true)
+							this.$emit('finishAuthor')
+							this.showAuthorModal = false
+							this.$apply()
+						} else {
+							console.log('登录失败！' + res.errMsg)
+						}
+					}
+				})
+			}
+		}
+	}
+}
+</script>

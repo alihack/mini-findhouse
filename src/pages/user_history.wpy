@@ -1,0 +1,46 @@
+<style lang="less">
+@import '../styles/base.less';
+</style>
+<template>
+	<houseList :dataList.sync="historyList"></houseList>
+</template>
+
+<script>
+import wepy from 'wepy'
+import api from '../utils/api'
+import houseList from '../components/list_house'
+export default class UserHistory extends wepy.page {
+	config = {
+		navigationBarTitleText: '历史记录',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+		houseList
+	}
+
+	data = {
+		historyList: []
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+
+	async onLoad() {
+		const {data: {list}} = await wepy.request({
+			url: api['user/history'],
+			data: {
+				uid: wepy.$instance.globalData.myUserInfo.uid
+			}
+		})
+		console.log('data', list)
+		this.historyList = list
+		this.$apply()
+	}
+
+	methods = {
+	}
+}
+</script>

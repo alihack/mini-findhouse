@@ -1,0 +1,108 @@
+<style lang="less">
+@import '../styles/base.less';
+.panel-source {
+	background: #fff;
+	width: 100%;
+	.panel {
+		width: 100%;
+		height: 630rpx;
+		padding: 40rpx 0rpx;
+		box-sizing: border-box;
+		border-top:2rpx solid #f5f5f5;
+		&-head {
+			padding:0 30rpx;
+		}
+		&-main {
+			display: flex;
+			white-space: nowrap;
+			margin-top:35rpx;
+			width: 100%;
+			height: 100%;
+			.item {
+				margin-left:30rpx;
+				width:400rpx!important;
+				color:@gray;
+				font-size: 24rpx;
+				display: inline-block;
+				.txt1 {
+					font-size: 30rpx;
+					color:black;
+					margin-top:5rpx;
+					width: 400rpx;
+					height: 86rpx;
+					overflow: hidden;
+					white-space: normal;
+				}
+				.txt2 {
+					margin:5rpx 0;
+				}
+				.price {
+					color: @gold;
+					font-size: 30rpx;
+					margin-right: 10rpx;
+				}
+			}
+			.item:last-child {
+				margin-right:30rpx;
+			}
+			image {
+				width: 400rpx;
+				height: 290rpx;
+			}
+		}
+	}
+}
+</style>
+<template>
+	<view class="panel-source">
+		<view class="panel">
+			<view class="panel-head">
+				<view class="panel-head-left">{{title}}</view>
+				<view class="panel-head-right" wx:if="{{type == 'community'}}" @tap="allSource">
+					<text>查看全部</text>
+					<image class="next-icon" src="../images/next.png"/>
+				</view>
+			</view>
+			<scroll-view class="panel-main" scroll-x="true">
+				<view class="item"  wx:for="{{sourceList}}" wx:key="index" @tap="toHouseDetail({{item.propertyUuid}})">
+					<image wx:if="{{item.photoList.length > 2}}" src="{{item.photoList[2]}}"/>
+					<image wx:else src="{{item.photoList[0]}}"/>
+					<view class="txt1">{{item.title}}</view>
+					<view class="txt2" wx:if="{{item.countF}}">南北朝向 | {{item.countF}}室{{item.countT}}厅 | {{item.square}}m²</view>
+					<view class="txt2" wx:else>南北朝向 | {{item.square}}m²</view>
+					<view class="txt3"><text class="price">{{item.sellPrice}}万</text><text class="unit">{{item.unitPrice}}万元/m²</text></view>
+				</view>
+			</scroll-view>
+		</view>
+	</view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class panelSource extends wepy.component {
+	props = {
+		type: String,
+		sourceList: Array
+	}
+
+	data = {
+		title: '同小区房源',
+	}
+
+	onLoad() {
+		if (this.type == 'recommend') this.title = '推荐房源'
+		this.$apply()
+	}
+
+	watch = {
+	}
+
+	methods = {
+		allSource() {
+			wepy.navigateTo({url: 'detail_sameEstate'})
+		},
+		toHouseDetail(id) {
+			wepy.redirectTo({url: `detail?id=${id}`})
+		}
+	}
+}
+</script>

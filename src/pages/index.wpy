@@ -1,33 +1,411 @@
 <style lang="less">
-  
+	.flex {
+		display: flex;
+		align-items: center;
+	}
+	.container {
+		.banner {
+			width: 100%;
+			height: 475rpx;
+		}
+		.banner-txt {
+			position: absolute;
+			top:180rpx;
+			left:60rpx;
+			color:#fff;
+			.txt1 {
+				font-size: 66rpx;
+			}
+			.txt2 {
+				font-size: 30rpx;
+			}
+		}
+		.address {
+			position: absolute;
+			top:40rpx;
+			left:30rpx;
+			width: 140rpx;
+			height: 60rpx;
+			background: #1b140e;
+			color:#fff;
+			border-radius: 60rpx;
+			.flex;
+			image {
+				width: 30rpx;
+				height: 30rpx;
+				margin: 0 10rpx 0 20rpx;
+			}
+		}
+		.search-bar {
+			position: absolute;
+			width: 660rpx;
+			height: 90rpx;
+			top:430rpx;
+			background: #fff;
+			border-radius: 90rpx;
+			box-shadow: 0 5rpx 5rpx #eaeaea;
+			color: #666666;
+			font-size: 26rpx;
+			.flex;
+			image {
+				margin:0 30rpx;
+				width: 40rpx;
+				height: 40rpx;
+			}
+		}
+		.header {
+			width: 100%;
+			height: 250rpx;
+			.flex;
+			padding:80rpx 30rpx 30rpx 30rpx;
+			background: #fff;
+			box-sizing: border-box;
+			font-size: 26rpx;
+			margin-bottom: 20rpx;
+			&-left {
+				width: 490rpx;
+				padding:0 30rpx 0 10rpx;
+				box-sizing: border-box;
+				.content {
+					.flex;
+				}
+				image {
+					width: 25rpx;
+					height: 22rpx;
+				}
+				.title {
+					font-size: 32rpx;
+				}
+				.price {
+					color: #3497ff;
+					.number {
+						font-size: 50rpx;
+					}
+				}
+				.ratio {
+					.flex;
+					padding-left:20rpx;
+					image {
+						margin-right: 8rpx;
+					}
+					.word {width:105rpx}
+					.green{color:#5bca39}
+					.red{color:#f95640}
+				}
+			}
+			&-center {
+				width:2rpx;
+				height: 80rpx;
+				background: #e4e6f0;
+				margin-right:20rpx;
+			}
+			&-right {
+				padding-left: 30rpx;
+				box-sizing: border-box;
+				image {
+					margin-top: 5rpx;
+					width: 90rpx;
+					height: 90rpx;
+				}
+				text {
+					color: #666666;
+				}
+			}
+		}
+		.quitVIP {
+			position: fixed;
+			background: #1b140e;
+			color:#fff;
+			opacity: 0.5;
+			width: 100rpx;
+			height: 60rpx;
+			line-height: 60rpx;
+			text-align: center;
+			border-radius: 20rpx;
+			bottom: 50rpx;
+			right:50rpx;
+		}
+	}
 </style>
 <template>
-  
+	<view class="container">
+		<image class="banner" src="http://qimg.fangzi.xiaoyu.com/fangniu/banner.jpg"></image>
+		<view class="banner-txt">
+			<view class="txt1">真房源·找房牛</view>
+			<view class="txt2">找房真平台，省钱省时间</view>
+		</view>
+		<view class="address" @tap="address">
+			<image src="../images/white-address.png"></image>
+			<text>厦门</text>
+		</view>
+		<view class="search-bar" @tap="toSearch">
+			<image src="../images/search.png"></image>
+			<text>搜索小区</text>
+		</view>
+		<view class="header">
+			<view class="header-left">
+				<view class="title">厦门市场行情</view>
+				<view class="content">
+					<view class="price"><text class="number">{{market.price}}</text><text class="unit">元/m²</text></view>
+					<view class="ratio">
+						<text class="word">比上月：</text>
+						<image src="{{market.isDecline?'../images/decline.png':'../images/rise.png'}}"></image>
+						<text class="{{market.isDecline? 'green': 'red'}}"> {{market.ratio}}%</text>
+					</view>
+				</view>
+			</view>
+			<view class="header-center"></view>
+			<view class="header-right">
+				<navigator appId="wx0653ba0a3274d3b9" hover-class="active" openType="navigate" path="pages/index" target="miniProgram" version="release">
+					<image src="../images/calc.jpg"></image>
+					<view>房屋估价</view>
+				</navigator>
+			</view>
+		</view>
+		<sortBar :scrollTop.sync="scrollTop"></sortBar>
+		<houseList :dataList.sync="dataList" from="index"></houseList>
+		<view class="loading" wx:if="{{isLoading && dataList.length}}">
+			<image src="../images/loading.png"></image>
+			<view>玩命加载中</view>
+		</view>
+		<footer></footer>
+		<!-- 授权弹窗 -->
+		<authorModal :showAuthorModal.sync="showAuthorModal"></authorModal>
+		<!-- 退出专属主页 -->
+		<view class="quitVIP" wx:if="{{showQuitVIP}}" @tap="quitVIP">退出</view>
+	</view>
 </template>
 
 <script>
 import wepy from 'wepy'
-
+import api from '../utils/api'
+import {getUserInfo, getUserId, getMarket, getAllUnread} from '../utils/util'
+import footer from '../components/footer'
+import houseList from '../components/list_house'
+import sortBar from '../components/bar_sort'
+import authorModal from '../components/modal_author'
 export default class Index extends wepy.page {
 	config = {
-		navigationBarTitleText: 'test'
+		navigationBarTitleText: '房牛找房',
+		onReachBottomDistance: 150
 	}
 	components = {
+		footer,
+		houseList,
+		sortBar,
+		authorModal
 	}
 
 	data = {
+		dataList: [],
+		sortObj: {},
+		market: {},
+		showAuthorModal: false,
+		scrollTop: 0,
+		page: 1,
+		isLoading: false,  // 列表页加载中
+		aid: '', // 自己的经纪人ID
+		proNo: '', // 房源编号
+		houseId: '', // 从房源详情页分享进来Id
+		estateId: '', // 从小区详情页分享进来Id
+		aidByShare: '', // 从专属主页分享进来的经纪人Id
+		pageIsShared: false, // 当前页是否分享过
+		showQuitVIP: false
 	}
 
 	computed = {
 	}
 
 	events = {
+		finishAuthor () {
+			wx.showTabBar()
+			this.shareController()
+		},
+		sortHouses (sortObj) {
+			this.page = 1
+			this.sortObj = sortObj
+			this.dataList = []
+			this.getHouseList()
+		}
+	}
+	// 监听页面滚动
+	onPageScroll ({scrollTop}) {
+		this.scrollTop = scrollTop
+		this.$apply()
+	}
+	// 上拉触底事件
+	async onReachBottom() {
+		await this.getHouseList(++this.page)
+	}
+	onShareAppMessage(ops) {
+		let path = 'pages/index'
+		this.pageIsShared = true
+		const aid = wx.getStorageSync('aid')
+		const aidByShare = wx.getStorageSync('aidByShare')
+		if (aidByShare) {
+			path = `pages/index?agentId=${aidByShare}`
+		} else if (aid) {
+			path = `pages/index?agentId=${aid}`
+		}
+		return {
+			title: '真房源找房牛，省钱省时间',
+			path: path, // 点击分享消息是打开的页面
+		}
+	}
+	async onShow () {
+		// 更新未读数
+		const sessStorage = wx.getStorageSync('sessionStorage')
+		if (sessStorage) getAllUnread(sessStorage)
+	}
+	async onLoad(option) {
+		console.log('主页所带参数', option)
+		this.getHouseList()
+		this.market = await getMarket()
+		// 从分享进来的
+		if (JSON.stringify(option) != '{}') {
+			this.houseId = option.houseId
+			this.estateId = option.estateId
+			this.aidByShare = option.agentId
+			if (option.scene) {
+				// 扫码海报二维码带参
+				this.proNo = option.scene.split('_')[0]
+				this.aidByShare = option.scene.split('_')[1]
+			}
+			wx.setStorageSync('aidByShare', this.aidByShare)
+			const uid = await getUserId()
+			this.aid = wx.getStorageSync('aid')
+			if (!uid) {
+				wx.hideTabBar()
+				this.showAuthorModal = true
+			} else {
+				// 分享逻辑处理
+				this.shareController()
+			}
+		} else {
+			// 正常进来
+			const uid = await getUserId()
+			if (!uid) {
+				wx.hideTabBar()
+				this.showAuthorModal = true
+			} else {
+				wx.showTabBar()
+				await getUserInfo()
+			}
+			// 如缓存中有分享经纪人ID，分享进来的经纪人ID与自己经纪人ID不同，显示退出
+			this.aidByShare = wx.getStorageSync('aidByShare')
+			this.aid = wx.getStorageSync('aid')
+			if (this.aid && this.aidByShare) {
+				if (this.aid != this.aidByShare) {
+					this.showQuitVIP = true
+				}
+			}
+		}
+		wx.showShareMenu()
+		this.$apply()
+	}
+	async clickCount() {
+		if (!this.aidByShare) return
+		await wepy.request({
+			url: api['agent/clickCount'],
+			method: 'POST',
+			data: {
+				uid: wepy.$instance.globalData.myUserInfo.uid,
+				type: 4,
+				agentId: this.aidByShare,
+			}
+		})
+	}
+	getHouseList() {
+		return new Promise(async resolve => {
+			let form = {
+				page: this.page,
+				pagesize: 8,
+			}
+			if (this.page == 1) form.pagesize = 4
+			Object.assign(form, this.sortObj)
+			this.isLoading = true
+			const {data: {list}} = await wepy.request({
+				url: api['house/houseList'],
+				data: form
+			})
+			if (list) {
+				this.dataList = [...this.dataList, ...list]
+			}
+			this.isLoading = false
+			this.$apply()
+			resolve()
+		})
 	}
 
-	onLoad() {
+	async shareController() {
+		// 分享进来的经纪人ID与自己经纪人ID不同，显示退出
+		if (this.aid && this.aidByShare) {
+			if (this.aid != this.aidByShare) {
+				this.showQuitVIP = true
+			}
+		}
+		// 经纪人房源详情分享进来的
+		if (this.houseId && this.aidByShare) {
+			wepy.navigateTo({url: `detail?id=${this.houseId}`})
+			await getUserInfo()
+			this.clickCount()
+			return
+		}
+		// 扫码经纪人海报进来的
+		if (this.proNo && this.aidByShare) {
+			wepy.navigateTo({url: `detail?proNo=${this.proNo}`})
+			await getUserInfo()
+			this.clickCount()
+			return
+		}
+		// 经纪人小区详情分享进来的
+		if (this.estateId && this.aidByShare) {
+			wepy.navigateTo({url: `detail_estate?id=${this.estateId}`})
+			await getUserInfo()
+			this.clickCount()
+			return
+		}
+		if (this.houseId) {
+			// 用户房源详情页分享进来的
+			wepy.navigateTo({url: `detail?id=${this.houseId}`})
+		} else if (this.estateId) {
+			// 小区详情页分享进来的
+			wepy.navigateTo({url: `detail_estate?id=${this.estateId}`})
+		} else if (this.aidByShare) {
+			// 经纪人主页分享进来的
+			console.log('经纪人主页分享进来的')
+		}
+		await getUserInfo()
+		this.clickCount()
 	}
-
 	methods = {
+		address() {
+			wepy.showToast({
+				title: '当前只支持厦门地区',
+				icon: 'none'
+			})
+		},
+		toSearch () {
+			wepy.navigateTo({url: 'index_search'})
+		},
+		toGujia () {
+			wx.navigateToMiniProgram({
+				appId: 'wx0653ba0a3274d3b9',
+				path: 'pages/index',
+				success(res) {
+					// 打开成功
+				}
+			})
+		},
+		quitVIP () {
+			wx.removeStorageSync('aidByShare')
+			this.page = 1
+			this.dataList = []
+			this.sortObj = {}
+			this.showQuitVIP = false
+			this.getHouseList()
+			this.$apply()
+		}
 	}
 }
 </script>

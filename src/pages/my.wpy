@@ -1,0 +1,134 @@
+<style lang="less">
+
+</style>
+<template>
+<block wx:if="{{!isQuit}}">
+	<!-- 登录状态下 -->
+	<block wx:if="{{isAgent}}">
+		<!-- 经纪人页面 -->
+		<myAgent :userInfo.sync="userInfo"></myAgent>
+	</block>
+	<block wx:else>
+		<!-- 普通用户页面 -->
+		<myUser  :userInfo.sync="userInfo"></myUser>
+	</block>
+</block>
+<block wx:else>
+	<!-- 退出状态下 -->
+	<block wx:if="{{isLoginBySMS}}">
+		<mySMSLogin :isSMSByAgent.sync="isSMSByAgent"></mySMSLogin>
+	</block>
+	<block wx:else>
+		<myWXLogin></myWXLogin>
+	</block>
+</block>
+</template>
+
+<script>
+import wepy from 'wepy'
+import myAgent from '../components/my_agent'
+import myUser from '../components/my_user'
+import mySMSLogin from '../components/my_login_sms'
+import myWXLogin from '../components/my_login_wx'
+import {getUserInfo, getAllUnread} from '../utils/util'
+export default class My extends wepy.page {
+	config = {
+		navigationBarTitleText: '我的',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+		myAgent,
+		myUser,
+		mySMSLogin,
+		myWXLogin
+	}
+
+	data = {
+		userInfo: {},
+		isAgent: false,
+		isQuit: false,
+		isLoginBySMS: false,
+		isSMSByAgent: false
+	}
+
+	computed = {
+	}
+
+	events = {
+		quit() {
+			this.isQuit = true
+		},
+		SMSByAgent() {
+			this.isQuit = true
+			this.isLoginBySMS = true
+			this.isSMSByAgent = true
+		},
+		refresh() {
+			this.refresh()
+		}
+	}
+	refresh() {
+		console.log('我的主页')
+		this.isQuit = false
+		this.isAgent = false
+		this.isLoginBySMS = false
+		this.isSMSByAgent = false
+		this.userInfo = wx.getStorageSync('userInfo')
+		if (!this.userInfo.mobile) {
+			this.isQuit = true
+			this.$apply()
+			return
+		}
+		if (this.userInfo.type == '2') this.isAgent = true
+		this.$apply()
+	}
+	async waitIndex() {
+		return new Promise(resolve => {
+			setTimeout(async () => {
+				wx.showLoading({title: '加载中'})
+				this.userInfo = wx.getStorageSync('userInfo')
+				if (!this.userInfo) {
+					console.log('等待中。。。')
+					await this.waitIndex()
+					resolve()
+				} else {
+					this.userInfo = wx.getStorageSync('userInfo')
+					console.log('获取到首页数据了')
+					wx.hideLoading()
+					this.$apply()
+					resolve()
+				}
+			}, 500)
+		})
+	}
+	async onLoad() {
+		this.userInfo = wx.getStorageSync('userInfo')
+		if (!this.userInfo) {
+			await this.waitIndex()
+			this.refresh()
+		} else {
+			this.refresh()
+		}
+		this.$apply()
+	}
+	onShow() {
+		// 更新未读数
+		const sessStorage = wx.getStorageSync('sessionStorage')
+		if (sessStorage) getAllUnread(sessStorage)
+		// 在其他页面注册了
+		if (JSON.stringify(this.userInfo) != JSON.stringify(wx.getStorageSync('userInfo'))) {
+			console.log('在其他页面注册了')
+			this.refresh()
+		}
+		// 本页面逻辑跑完后，更新一次经纪人数据（咨询次数）
+		if (this.isAgent) {
+			setTimeout(async () => {
+				this.userInfo = await getUserInfo(true)
+				this.$apply()
+			}, 5000)
+		}
+	}
+	methods = {
+	}
+}
+</script>

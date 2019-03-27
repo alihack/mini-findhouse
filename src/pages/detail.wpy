@@ -1,0 +1,262 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	padding-bottom: 120rpx;
+	.fixed-round {
+		.flex;
+		justify-content: center;
+		position: fixed;
+		background: #1b140e;
+		color:#fff;
+		opacity: 0.5;
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 100rpx;
+		bottom: 250rpx;
+		right:30rpx;
+		.text {
+			width: 56rpx;
+		}
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<!-- 房屋详情 -->
+		<panelHouseDetail :house.sync="currentHouse" :isDept.sync="isDept"  
+			:hasPhone.sync="hasPhone" :imgPreIndex.sync="imgPreIndex">
+		</panelHouseDetail>
+		<block wx:if="{{!hiddenXML}}">
+			<!-- 小区详情 -->
+			<panelEstateDetail :estate.sync="currentEstate"></panelEstateDetail>
+			<!-- 同小区房源 -->
+			<block wx:if="{{sameEstateHouses.length > 1}}">
+				<communitySource :sourceList.sync="sameEstateHouses" type="community"></communitySource>
+			</block>
+			<!-- 周边配套 -->
+			<panelSupport wx:if="{{currentEstate.lat != '暂无'}}" :estate.sync="currentEstate"></panelSupport>
+			<!-- 推荐房源 -->
+			<block wx:if="{{recommendEstateHouses.length > 1}}">
+				<recommendSource  :sourceList.sync="recommendEstateHouses" type="recommend"></recommendSource>
+			</block>
+			<!-- 尾部广告 -->
+			<footer></footer>
+		</block>
+		<!-- 固定尾部 -->
+		<panelFixed :isDept.sync="isDept" 	:hasPhone.sync="hasPhone"  :house.sync="currentHouse"></panelFixed>
+		<!-- 经纪人生成海报悬浮球 -->
+		<view class="fixed-round" wx:if="{{isMyAgent && !showPoster && !showPosterModal}}" @tap="setPoster"><view class="text">制作海报</view></view>
+		<!-- 经纪人生成海报表单 -->
+		<posterModal wx:if="{{showPosterModal}}"></posterModal>
+		<!-- 经纪人生成海报 -->
+		<poster wx:if="{{showPoster}}" :house.sync="currentHouse"></poster>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import api from '../utils/api'
+import {convertTime} from '../utils/util'
+import panelHouseDetail from '../components/panel_houseDetail'
+import panelEstateDetail from '../components/panel_estateDetail'
+import panelSource from '../components/panel_source'
+import panelSupport from '../components/panel_support'
+import panelFixed from '../components/panel_fixed'
+import poster from '../components/poster'
+import posterModal from '../components/poster_modal'
+import footer from '../components/footer'
+
+export default class Detail extends wepy.page {
+	config = {
+		navigationBarTitleText: '房源详情'
+	}
+	components = {
+		panelHouseDetail,
+		panelEstateDetail,
+		recommendSource: panelSource,
+		communitySource: panelSource,
+		panelSupport,
+		panelFixed,
+		footer,
+		poster,
+		posterModal
+	}
+
+	data = {
+		currentHouse: {},
+		currentEstate: {},
+		sameEstateHouses: [],
+		recommendEstateHouses: [],
+		isMyAgent: false,
+		isDept: false, // 经纪人是否为店铺
+		showPoster: false,
+		showPosterModal: false,
+		hasPhone: true,
+		isProNo: false, // 是否是房源编号
+		userInfo: {},
+		imgPreIndex: 0,
+		aid: '',
+		hiddenXML: true // 刚进入详情时，下面节点先不渲染
+	}
+
+	events = {
+		closePoster() {
+			this.showPoster = false
+		},
+		closePosterModal() {
+			this.showPosterModal = false
+		},
+		async getPoster(customPoster) {
+			this.showPosterModal = false
+			const waitData = () => {
+				return new Promise(resolve => {
+					setTimeout(async () => {
+						console.log('等待中')
+						if (!this.currentHouse.posterImgs) {
+							await waitData()
+							resolve()
+						} else {
+							resolve()
+						}
+					}, 300)
+				})
+			}
+			wx.showLoading({
+				title: '急速生成中',
+			})
+			if (!this.currentHouse.posterImgs) {
+				await waitData()
+			}
+			this.showPoster = true
+			this.$invoke('poster', 'getPoster', customPoster)
+			this.$apply()
+		}
+	}
+	onShareAppMessage(ops) {
+		let path = `pages/index?houseId=${this.currentHouse.propertyUuid}`
+		const aidByShare = wx.getStorageSync('aidByShare')
+		if (aidByShare) {
+			path += `&agentId=${aidByShare}`
+		} else if (this.aid) {
+			path += `&agentId=${this.aid}`
+		}
+		if (ops.from == 'button') this.showPoster = false
+		return {
+			title: this.currentHouse.title,
+			path: path, // 点击分享消息是打开的页面
+		}
+	}
+	getHouseInfo(id) {
+		return new Promise(async resolve => {
+			const uid = wx.getStorageSync('uid')
+			const aid = wx.getStorageSync('aid')
+			this.aid = aid
+			const aidByShare = wx.getStorageSync('aidByShare')
+			let form = {
+				uid: uid
+			}
+			// 扫码海报带参是房源编号
+			if (this.isProNo) {
+				form.propertyNo = id
+			} else {
+				form.propertyUuid = id
+			}
+			// 本身为经纪人，或者是经纪人分享进来的
+			if (aidByShare && aid) {
+				form.agentId = aidByShare
+				if (aidByShare == aid) this.isMyAgent = true
+			} else if (aidByShare) {
+				form.agentId = aidByShare
+			} else if (aid) {
+				this.isMyAgent = true
+				form.agentId = aid
+			}
+			const {data} = await wepy.request({
+				url: api['house/houseInfo'],
+				data: form
+			})
+			this.currentHouse = data
+			this.currentHouse.photoUrl = this.currentHouse.photoUrl.slice(0, 10)
+			this.currentHouse.createdTime = await convertTime(this.currentHouse.createdTime, true)
+			this.sameEstateHouses = data.same_estate
+			this.recommendEstateHouses = data.recommend_estate
+			this.currentEstate = data.estate
+			// 对小区图片进行处理
+			if (this.currentEstate.photo_url == '暂无') {
+				this.currentEstate.photo_url = 'http://qimg.fangzi.xiaoyu.com/fangniu/estateImg.jpg'
+			}
+			if ((data.phoneList[0].indexOf('-') != -1) || data.phoneList[0].length < 11) this.isDept = true
+			// 获取原图链接
+			const previewImgs = []
+			this.imgPreIndex = this.currentHouse.photoUrl.length - 1
+			this.currentHouse.photoUrl.forEach(ele => {
+				previewImgs.push(ele.split('|')[0] + '|1000')
+			})
+			this.currentHouse.previewImgs = previewImgs
+			resolve()
+			this.$apply()
+		})
+	}
+	async refresh(houseId) {
+		if (!this.userInfo.mobile) {
+			this.hasPhone = false
+			console.log('没有手机号')
+		}
+		await this.getHouseInfo(houseId)
+		if (this.isMyAgent) this.getPosterImgs()
+		this.$apply()
+	}
+	onShow () {
+		setTimeout(() => {
+			this.hiddenXML = false
+			this.$apply()
+		}, 1000)
+	}
+	async onLoad(option) {
+		console.log('详情页所带参数', option)
+		this.userInfo = wepy.$instance.globalData.myUserInfo
+		let id
+		if (option.proNo) {
+			id = option.proNo
+			this.isProNo = true
+		}
+		if (option.id) {
+			id = option.id
+		}
+		if (!this.userInfo) {
+			console.log('首页数据还未加载完成')
+			wx.showLoading({title: '加载中'})
+			setTimeout(() => {
+				wx.hideLoading()
+				this.userInfo = wepy.$instance.globalData.myUserInfo
+				this.refresh(id)
+			}, 1000)
+		} else {
+			this.refresh(id)
+		}
+		wx.showShareMenu()
+		this.$apply()
+	}
+	getPosterImgs() {
+		return new Promise(async resolve => {
+			// 获取海报所需HTTPS图片
+			const {data} = await wepy.request({
+				url: 'https://api.hd.xiaoyu.com/wxapp/fnzf/agent/createPoster',
+				data: {
+					headimg: this.currentHouse.headimg,
+					propertyNo: this.currentHouse.propertyNo,
+					agentId: this.currentHouse.agentId
+				}
+			})
+			this.currentHouse.posterImgs = data
+			resolve()
+		})
+	}
+	methods = {
+		setPoster () {
+			this.showPosterModal = true
+			this.$apply()
+		},
+	}
+}
+</script>

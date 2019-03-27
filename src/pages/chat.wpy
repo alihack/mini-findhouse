@@ -1,0 +1,438 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	.reverse {flex-direction: row-reverse}
+	.chat {
+		padding:10rpx 30rpx 130rpx 30rpx;
+		width: 100%;
+		box-sizing: border-box;
+		&-item {
+			margin:40rpx 0;
+			.time {
+				width: 220rpx;
+				height: 40rpx;
+				line-height: 40rpx;
+				background: #CECECE;
+				color: #ffffff;
+				font-size: 24rpx;
+				margin: 20rpx auto;
+				text-align: center;
+				border-radius:5rpx;
+			}
+			.main {
+				display: flex;
+				align-items: flex-start;
+				margin-top: 20rpx;
+				.avatar {
+					width: 80rpx;
+					height: 80rpx;
+					border-radius: 80rpx;
+				}
+				.card {
+					width: 450rpx;
+					height: 460rpx;
+					border-radius: 10rpx;
+					background: #ffffff;
+					margin:0 20rpx;
+					image {
+						border-top-right-radius:10rpx;
+						border-top-left-radius:10rpx;
+						width: 100%;
+						height: 240rpx;
+					}
+					.title {
+						font-size: 32rpx;
+						font-weight: bold;
+						padding: 10rpx 20rpx;
+						box-sizing: border-box;
+						width: 100%;
+						height: 104rpx;
+						overflow: hidden;
+					}
+					.detail {
+						font-size: 24rpx;
+						color: @gray;
+						padding: 0rpx 20rpx;
+					}
+					.price {
+						font-size: 30rpx;
+						color: @gold;
+						padding: 0rpx 20rpx;
+						margin-top:10rpx;
+					}
+				}
+				.photo {
+					width: 450rpx;
+					height: 450rpx;
+					border-radius: 10rpx;
+					margin:0 20rpx;
+				}
+				.content {
+					background: #fff;
+					max-width: 400rpx;
+					padding: 20rpx 30rpx;
+					border-radius: 10rpx;
+					margin:0 20rpx;
+				}
+				.audio {
+					height: 60rpx;
+					background: #7ED321;
+					border-radius: 5rpx;
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 10rpx 15rpx;
+					width:192rpx;
+					transition: width 1s linear;
+					margin:0 20rpx;
+					&-sound {
+						width: 30rpx;
+						height: 30rpx;
+					}
+					&-second {
+						color: #FFFFFF;
+						letter-spacing: 0.42px;
+					}
+				}
+				.audio:hover, .audio:active {
+					background:#add49d;
+				}
+			}
+		}
+	}
+	#bottom {
+		width: 100%;
+		height: 2rpx;
+	}
+}
+</style>
+<template>
+	<view class="container">
+		<scroll-view class='chat' id="chat" style="height:{{scrollHeight}}px" scroll-y scroll-top='{{scrollInto}}'>
+			<block  wx:for="{{msgList}}" wx:for-item="msg" wx:key="index" >
+				<view class="chat-item">
+					<view class='time'>{{msg.time}}</view>
+					<view wx:for="{{msg.data}}" class="main {{item.isSelfSend ? 'reverse' : ''}}"  wx:key="index">
+						<image class="avatar" src="{{item.isSelfSend ? myAvatar: friendAvatar}}" lazy-load="{{true}}"></image>
+						<!-- 房屋卡片 -->
+						<view wx:if="{{item.houseCard}}" @tap="houseDetail({{item.houseCard.houseId}})">
+							<view class="card">
+								<image mode= "scaleToFill" src="{{item.houseCard.img}}" lazy-load="{{true}}"></image>
+								<view class="title">{{item.houseCard.title}}</view>
+								<view class="detail">{{item.houseCard.detail}}</view>
+								<view class="price">{{item.houseCard.price}}</view>
+							</view>
+						</view>
+						<!-- 图片 -->
+						<image wx:if="{{item.img}}" src="{{item.img}}" class="photo" @tap="previewImg({{item.img}})" lazy-load="{{true}}"/>
+						<!-- 语音 -->
+						<view wx:if="{{item.audio && item.isSelfSend}}" class="audio" @tap="playAudio({{item.audio}})">
+							<view class="audio-second"> "</view>
+							<image class="audio-sound" src="../images/chat-sound-right.png"/>
+						</view>
+						<view wx:if="{{item.audio && !item.isSelfSend}}" class="audio" @tap="playAudio({{item.audio}})">
+							<image class="audio-sound" src="../images/chat-sound-left.png"/>
+							<view class="audio-second"> "</view>
+						</view>
+						<!-- 文字 -->
+						<view wx:if="{{item.html}}" class="content">{{item.html}}</view>
+					</view>
+				</view>
+			</block>
+			<view id="bottom"></view>
+		</scroll-view>
+		<chatBar :friendId.sync="friendId"></chatBar>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import webim from '../utils/webim_wx'
+import chatBar from '../components/bar_chat'
+import {convertTime, convertCustomMsgToHtml, sendMessage, sendMsgsToServer, getMsgsFromServer, getC2CHistoryMsgs} from '../utils/util'
+export default class Chat extends wepy.page {
+	config = {
+		navigationBarTitleText: '对话',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+		chatBar
+	}
+
+	data = {
+		houseCard: {
+			img: '',
+			title: '',
+			detail: '',
+			price: '',
+			houseId: ''
+		},
+		friendAvatar: '',
+		friendId: '',
+		friendName: '',
+		myAvatar: '',
+		myUid: '',
+		scrollInto: 999999,
+		scrollHeight: '',
+		msgList: [],
+		msgLength: 1,
+		page: 1,
+		innerAudio: wepy.createInnerAudioContext(), // 播放语音实例
+		onLoading: false,
+		lastContent: '', // 最后一条消息记录,
+		intervalId: '',
+		toSaveMsgList: [] // 需要保存到后端的数据，离开页面时保存
+	}
+
+	computed = {
+	}
+
+	watch = {
+		msgLength() {
+			// 自动滚动到底部,只要srcollInto的值大于窗口，就能到底部
+			this.scrollInto = 60 + this.msgLength * 500
+			this.$apply()
+		}
+	}
+
+	events = {
+		async addMessage(value, type, time) {
+			await this.msgController(value, true, type, time)
+		}
+	}
+	newMsgController (newMsgList) {
+		newMsgList.forEach(async ele => {
+			if (ele.fromAccount == this.friendId || ele.fromAccount == this.myUid) {
+				const value = await convertCustomMsgToHtml(ele)
+				console.log('value', value)
+				var type
+				if (!value.houseCard) {
+					if (value.indexOf('qimg.fangzi.xiaoyu.com/img') != -1) {
+						type = 'img'
+						this.lastContent = '[图片信息]'
+					} else if (value.indexOf('qimg.fangzi.xiaoyu.com/audio') != -1) {
+						type = 'audio'
+						this.lastContent = '[语音信息]'
+					}
+					await this.msgController(value, false, type, ele.time)
+				} else {
+					this.lastContent = '[房源信息]'
+					const time = new Date().getTime() / 1000
+					await this.msgController(value.houseCard, false, 'houseCard', time)
+				}
+			}
+		})
+	}
+	async onShow () {
+		wepy.$instance.globalData.newMsgs = []
+		this.intervalId = setInterval(() => {
+			const newMsgList = wepy.$instance.globalData.newMsgs
+			if (newMsgList.length != 0) {
+				this.newMsgController(newMsgList)
+				wepy.$instance.globalData.newMsgs = []
+			}
+		}, 1000)
+		if (!this.onLoading) {
+			// 在聊天页面退出并重新进的时候，等待IM登录完成后执行
+			setTimeout(async () => {
+				await getC2CHistoryMsgs(this.friendId, true)
+				const {data} = await getMsgsFromServer(this.friendId)
+				this.msgList = data
+				this.msgLength = data.length
+				this.$apply()
+			}, 3000)
+		}
+	}
+	async onLoad({fId, fAvatar, fName, fromBudget}) {
+		this.onLoading = true
+		wx.showLoading({title: '加载中'})
+		if (!fAvatar) {
+			this.friendAvatar = wx.getStorageSync('fAvatar')
+		} else {
+			this.friendAvatar = fAvatar
+		}
+		this.friendId = fId
+		this.friendName = fName
+		this.myAvatar = wepy.$instance.globalData.myUserInfo.headimg
+		this.myUid = wepy.$instance.globalData.myUserInfo.uid
+		wx.setNavigationBarTitle({title: fName})
+		this.scrollHeight = wx.getSystemInfoSync().windowHeight
+		// 获取历史记录,如有未读消息，需先保存新消息到后端服务器
+		const controller = () => {
+			return new Promise(async resolve => {
+				const sessionStorage = wx.getStorageSync('sessionStorage')
+				if (sessionStorage) {
+					// 设置未读为0
+					const currentObj = sessionStorage.filter(ele => ele.id == fId)[0]
+					if (currentObj.unread != 0) {
+						await getC2CHistoryMsgs(this.friendId, true)
+						resolve()
+						var sessMap = webim.MsgStore.sessMap()
+						webim.setAutoRead(sessMap['C2C' + fId], true, true)
+					} else {
+						resolve()
+					}
+				} else {
+					resolve()
+					// 下次进入聊天列表页需要重新登录IM
+					wx.setStorageSync('reSessStorage', true)
+				}
+			})
+		}
+		await controller()
+		const {data} = await getMsgsFromServer(this.friendId)
+		if (data) {
+			this.msgList = data
+			this.msgLength = data.length
+		}
+		// 向经纪人发送房源信息
+		const pages = getCurrentPages()
+		const prevPage = pages[pages.length - 2]
+		const currentHouse = prevPage.data.currentHouse
+		if (currentHouse) {
+			console.log('从咨询来的')
+			this.houseCard.img = currentHouse.photoUrl[0]
+			this.houseCard.title = currentHouse.title
+			this.houseCard.houseId = currentHouse.propertyUuid
+			const houseType = currentHouse.countF + '室' + currentHouse.countT + '厅' + currentHouse.countW + '卫'
+			const houseSquare = currentHouse.square + 'm²'
+			const direction = currentHouse.direction
+			this.houseCard.price = currentHouse.sellPrice + '万'
+			this.houseCard.detail = houseType + ' | ' + houseSquare + ' | ' + direction
+			const time = await sendMessage(JSON.stringify({houseCard: this.houseCard}), this.friendId, true)
+			if (time != 'fail') await this.msgController(this.houseCard, true, 'houseCard', time)
+			// 时间秒数与房卡一样的话数据会丢失
+			setTimeout(async () => {
+				if (fromBudget) {
+					const res = await sendMessage('你好，这套房首付要多少呢？', this.friendId)
+					if (res != 'fail') {
+						await this.msgController('你好，这套房首付要多少呢？', true, 'text', res)
+					}
+				}
+			}, 1000)
+		}
+		this.onLoading = false
+		wx.hideLoading()
+		this.$apply()
+	}
+	async onHide () {
+		console.log('聊天页面隐藏')
+		this.lastContent = ''
+		// 发送暂存的新消息到后端
+		if (this.toSaveMsgList.length) {
+			this.toSaveMsgList.forEach(ele => {
+				ele.data = JSON.stringify(ele.data)
+			})
+			await sendMsgsToServer(this.friendId, this.toSaveMsgList)
+			this.toSaveMsgList = []
+		}
+		this.$apply()
+	}
+	onUnload () {
+		console.log('页面离开')
+		// 更新sessionStorage缓存
+		const sessionStorage = wx.getStorageSync('sessionStorage')
+		if (sessionStorage) {
+			sessionStorage.forEach((ele, index) => {
+				if (ele.id == this.friendId) {
+					ele.unread = 0
+					if (this.lastContent) {
+						ele.time = '刚刚'
+						ele.content = this.lastContent
+						sessionStorage.splice(index, 1)
+						sessionStorage.unshift(ele)
+					}
+					wx.setStorageSync('sessionStorage', sessionStorage)
+				}
+			})
+		}
+		// 发送暂存的新消息到后端
+		if (this.toSaveMsgList.length) {
+			this.toSaveMsgList.forEach(ele => {
+				ele.data = JSON.stringify(ele.data)
+			})
+			sendMsgsToServer(this.friendId, this.toSaveMsgList)
+		}
+		this.innerAudio.stop()
+		clearInterval(this.intervalId)
+	}
+	msgController(value, isSelfSend, type, time) {
+		return new Promise(async resolve => {
+			// 向窗口添加一条消息
+			const nowTime = await convertTime(time * 1000)
+			const item = {}
+			if (type == 'img') {
+				item.img = 'http://' + value
+				this.lastContent = '[图片信息]'
+			} else if (type == 'audio') {
+				item.audio = 'http://' + value
+				this.lastContent = '[语音信息]'
+			} else if (type == 'houseCard') {
+				item.houseCard = value
+				var isHouseCard = true
+			} else {
+				item.html = value
+				this.lastContent = value
+			}
+			item.isSelfSend = isSelfSend
+			// 如果当前时间跟最后一条时间分一样，并入最后一数组
+			let delSecTime = nowTime.length < 17 ? nowTime : nowTime.substring(0, nowTime.length - 3)
+			item.time = delSecTime
+			if (this.msgList.length != 0) {
+				if (this.msgList[this.msgList.length - 1].time == delSecTime) {
+					this.msgList[this.msgList.length - 1].data.push(item)
+				} else {
+					this.msgList.push({time: delSecTime, data: [item]})
+				}
+			} else {
+				this.msgList.push({time: delSecTime, data: [item]})
+			}
+			this.msgLength ++
+			resolve()
+			// 如果是卡片的话，单独一条发送，不然后端保存会有问题
+			if (isHouseCard) {
+				sendMsgsToServer(this.friendId, [{time: nowTime, data: JSON.stringify([item])}])
+				this.$apply()
+				return
+			}
+			// 不是卡片的暂存新消息，离开时一起发送
+			item.time = nowTime
+			if (this.toSaveMsgList.length != 0 && !isHouseCard) {
+				if (this.toSaveMsgList[this.toSaveMsgList.length - 1].time.substring(0, nowTime.length - 3) == delSecTime) {
+					this.toSaveMsgList[this.toSaveMsgList.length - 1].data.push(item)
+				} else {
+					this.toSaveMsgList.push({time: nowTime, data: [item]})
+				}
+			} else {
+				this.toSaveMsgList.push({time: nowTime, data: [item]})
+			}
+			this.$apply()
+		})
+	}
+	methods = {
+		toMessage() {
+			wepy.navigateTo({url: 'agent_message'})
+		},
+		toHome() {
+			wepy.navigateTo({url: 'agent_home'})
+		},
+		quit () {
+			wepy.navigateTo({url: 'login_wx'})
+		},
+		playAudio(audioURL) {
+			console.log('inner', this.innerAudio)
+			this.innerAudio.src = audioURL
+			this.innerAudio.play()
+		},
+		houseDetail(id) {
+			wepy.navigateTo({url: `detail?id=${id}`})
+		},
+		previewImg(item) {
+			wx.previewImage({
+				current: item, // 当前显示图片的http链接
+				urls: [item], // 需要预览的图片http链接列表
+			})
+		},
+	}
+}
+</script>

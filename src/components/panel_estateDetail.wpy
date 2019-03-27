@@ -1,0 +1,80 @@
+<style lang="less">
+@import '../styles/base.less';
+.panel-estate {
+	background: #fff;
+	margin-top: 15rpx;
+	.panel {
+		width: 100%;
+		height: 310rpx;
+		padding: 40rpx 30rpx;
+		box-sizing: border-box;
+		&-main {
+			width: 690rpx;
+			margin-top:30rpx;
+			.flex;
+			image {
+				width: 220rpx;
+				height: 165rpx;
+				margin-right: 30rpx;
+			}
+			.detail {
+				.title {
+					.flex;
+					font-size: 32rpx;
+					&-left {
+					}
+					&-right {
+						color:@gold;
+					}
+				}
+				&-text {
+					color: @gray;
+				}
+			}
+		}
+	}
+}
+</style>
+<template>
+	<view class="panel-estate">
+		<view class="panel" @tap="estateDetail({{estate.estate_uuid}})">
+			<view class="panel-head">
+				<view class="panel-head-left">{{estate.estate_name}}</view>
+				<view class="panel-head-right">
+					<text>小区详情</text>
+					<image class="next-icon" src="../images/next.png"/>
+				</view>
+			</view>
+			<view class="panel-main">
+				<image src="{{estate.photo_url}}"></image>
+				<view class="detail">
+					<!-- <view class="title">
+						<view class="title-left">参考均价：</view>
+						<view class="title-right" wx:if="{{estate.estate_price != '暂无'}}">{{estate.estate_price}}元/m²</view>
+						<view class="title-right" wx:else>暂无</view>
+					</view> -->
+					<view class="detail-text">建筑年代：{{estate.estate_age}}</view>
+					<view class="detail-text">产权年数：{{estate.own_year}}</view>
+					<view class="detail-text">房屋总数：{{estate.total_house}}</view>
+					<view class="detail-text">物业公司：{{estate.management_company}}</view>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class panelEstateDetail extends wepy.component {
+	props = {
+		estate: Object
+	}
+
+	data = {
+	}
+	methods = {
+		estateDetail (id) {
+			wepy.navigateTo({url: `detail_estate?id=${id}`})
+		},
+	}
+}
+</script>

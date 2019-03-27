@@ -1,0 +1,184 @@
+<style lang="less">
+@import '../styles/base.less';
+.container {
+	.cells {
+		margin:20rpx 0 50rpx 0;
+		width:100%;
+		.cell {
+			.flex;
+			justify-content: space-between;
+			width: 100%;
+			height: 160rpx;
+			padding:30rpx;
+			box-sizing: border-box;
+			background: #fff;
+			color: #101d37;
+			margin-top:2rpx;
+			&-left {
+				.flex;
+				.main {
+					margin-left:30rpx;
+					.name {font-size: 32rpx;}
+					.content {
+						color:#b7b9bb;
+						margin-top:10rpx;
+						width: 430rpx;
+						.ellipsis
+					}
+				}
+			}
+			image {
+				width: 100rpx;
+				height: 100rpx;
+				border-radius: 100rpx;
+			}
+			&-right {
+				.flex;
+				flex-direction: column;
+				width: 110rpx;
+				.time {color:#b7b9bb}
+				.unread-wrap {
+					width: 35rpx;
+					height: 35rpx;
+					.unread {
+						width: 35rpx;
+						height: 35rpx;
+						line-height: 35rpx;
+						border-radius: 35rpx;
+						background: red;
+						color:#fff;
+						text-align: center;
+						margin-top:10rpx;
+						font-size: 25rpx;
+					}
+				}
+			}
+		}
+		.cell:active{
+			background: #DCDCDC;
+		}
+	}
+}
+.nochat {
+	.flex;
+	flex-direction: column;
+	background: #fff;
+	width: 100%;
+	height: 100%;
+	image {
+		width: 260rpx;
+		height: 200rpx;
+		padding-top:85rpx;
+	}
+	.text {
+		color:@gray;
+		padding-top:30rpx;
+	}
+	.button {
+		margin-top: 70rpx;
+	}
+}
+</style>
+<template>
+	<view class="container" style="{{isNoData ? 'height:100%': ''}}">
+		<view class="cells" wx:if="{{!isNoData}}">
+			<view class="cell" 
+				@tap="toChat" 
+				wx:for="{{sessionList}}" wx:key="index" 
+				data-id="{{item.id}}" data-avatar="{{item.avatar}}" data-name="{{item.name}}" data-index="{{index}}">
+				<view class="cell-left">
+					<image src="{{item.avatar}}"></image>
+					<view class="main">
+						<view class="name">{{item.name}}</view>
+						<view class="content">{{item.content}}</view>
+					</view>
+				</view>
+				<view class="cell-right">
+					<view class="time">{{item.time}}</view>
+					<view class="unread-wrap"><view class="unread" wx:if="{{item.unread}}">{{item.unread}}</view></view>
+				</view>
+			</view>
+		</view>
+		<view wx:else class="nochat">
+			<image src="../images/no-chat.jpg"></image>
+			<view class="text">暂无聊天记录，您可在线寻找心仪房源</view>
+			<form bindsubmit="submit" report-submit="true" class="form">
+				<button class="button" form-type="submit" @tap="toIndex">查找真房源</button>
+			</form>
+		</view>
+	</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import api from '../utils/api'
+import webim from '../utils/webim_wx'
+import {getAllUnread, myInitIM} from '../utils/util'
+export default class Message extends wepy.page {
+	config = {
+		navigationBarTitleText: '我的消息',
+		navigationBarBackgroundColor: '#f5f5f5'
+	}
+	components = {
+	}
+
+	data = {
+		sessionList: [],
+		isNoData: true,
+		toSaveMsgList: [], // 需要保存到后端的数据，点击对应列表时保存
+		isToChating: false // 防止连续点击聊天对象
+	}
+
+	computed = {
+	}
+
+	events = {
+	}
+	async onShow() {
+		// 用户初次登录无聊天列表缓存后发送信息，得重新获取聊天列表
+		const reSessStorage = wx.getStorageSync('reSessStorage')
+		if (reSessStorage) {
+			await myInitIM()
+			wx.removeStorageSync('reSessStorage')
+		}
+		// 判断是否登录IM
+		if (!webim.checkLogin()) wx.showLoading({title: '加载中'})
+		this.sessionList = wx.getStorageSync('sessionStorage')
+		if (this.sessionList) this.isNoData = false
+		getAllUnread(this.sessionList)
+		// 持续监听
+		setInterval(() => {
+			this.sessionList = wx.getStorageSync('sessionStorage')
+			if (this.sessionList) this.isNoData = false
+			this.$apply()
+		}, 500)
+		this.$apply()
+	}
+	methods = {
+		async toChat({currentTarget: {dataset}}) {
+			// 防止连续点击
+			if (this.isToChating) return
+			this.isToChating = true
+			// 头像路径过长，存入缓存带参
+			wx.setStorageSync('fAvatar', dataset.avatar)
+			wepy.navigateTo({url: `chat?fId=${dataset.id}&fName=${dataset.name}`})
+			this.isToChating = false
+			this.$apply()
+		},
+		async submit({detail}) {
+			console.log('detail', detail)
+			await wepy.request({
+				url: api['user/saveFromId'],
+				method: 'POST',
+				data: {
+					uid: wepy.$instance.globalData.myUserInfo.uid,
+					form_id: detail.formId
+				}
+			})
+		},
+		toIndex() {
+			wx.switchTab({url: 'index'})
+		}
+	}
+}
+</script>

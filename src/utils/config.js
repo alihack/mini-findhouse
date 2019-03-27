@@ -1,91 +1,124 @@
-// 户型
-const houseTypeArry = [
-	['1室', '2室', '3室', '4室', '5室', '6室', '7室', '8室', '9室'],
-	['0厅', '1厅', '2厅', '3厅', '4厅', '5厅', '6厅', '7厅', '8厅'],
-	['0卫', '1卫', '2卫', '3卫', '4卫', '5卫', '6卫', '7卫', '8卫'],
-]
+// 地图周边配套
+const supportArry = [{
+		title: '餐饮',
+		isSelected: false,
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-dinner.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-dinner.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-dinner.png'
+	},
+	{
+		title: '学校',
+		isSelected: false,
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-school.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-school.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-school.png'
+	},
+	{
+		title: '地铁',
+		isSelected: false,
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-subway.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-subway.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-subway.png'
+	},
+	{
+		title: '公交',
+		isSelected: false,
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-bus.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-bus.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-bus.png'
+	},
+	{
+		title: '娱乐',
+		isSelected: false,
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-game.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-game.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-game.png'
+	},
+	{
+		title: '医院',
+		isSelected: false,
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-hospital.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-hospital.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-hospital.png'
+	},
+	{
+		title: '银行',
+		isSelected: false,
+		whiteIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/white-bank.png',
+		blueIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/blue-bank.png',
+		markerIcon: 'http://qimg.fangzi.xiaoyu.com/fangniu/marker-bank.png'
+	}]
 
-// 朝向
-const orientationArry = ['东', '南', '西', '北', '东南', '西南', '东北', '西北', '南北', '东西']
+// 排序工具栏
+const sortData = [{
+			title: '区域',
+			isSelected: false,
+			kinds: [
+				{value: '湖里区', isKindSelected: false},
+				{value: '思明区', isKindSelected: false},
+				{value: '集美区', isKindSelected: false},
+				{value: '海沧区', isKindSelected: false},
+				{value: '翔安区', isKindSelected: false},
+				{value: '同安区', isKindSelected: false},
+			]
+		},
+		{
+			title: '总价',
+			isSelected: false,
+			kinds: [
+				{value: '100万以下', isKindSelected: false},
+				{value: '100-200万', isKindSelected: false},
+				{value: '200-300万', isKindSelected: false},
+				{value: '300-400万', isKindSelected: false},
+				{value: '400-500万', isKindSelected: false},
+				{value: '500-800万', isKindSelected: false},
+				{value: '800万以上', isKindSelected: false},
+			]
+		},
+		{
+			title: '户型',
+			isSelected: false,
+			kinds: [
+				{value: '一室', isKindSelected: false},
+				{value: '二室', isKindSelected: false},
+				{value: '三室', isKindSelected: false},
+				{value: '四室', isKindSelected: false},
+				{value: '五室', isKindSelected: false},
+				{value: '五室以上', isKindSelected: false},
+			]
+		},
+		{
+			title: '更多',
+			isSelected: false,
+			type: [
+				{
+					title: '面积',
+					kinds: [
+						{value: '50平以下', isKindSelected: false},
+						{value: '50-70平', isKindSelected: false},
+						{value: '70-90平', isKindSelected: false},
+						{value: '90-110平', isKindSelected: false},
+						{value: '110-130平', isKindSelected: false},
+						{value: '130-150平', isKindSelected: false},
+						{value: '150-200平', isKindSelected: false},
+						{value: '200平以上', isKindSelected: false}
+					]
+				},
+					{
+						title: '朝向',
+						kinds: [
+							{value: '朝东', isKindSelected: false},
+							{value: '朝南', isKindSelected: false},
+							{value: '朝西', isKindSelected: false},
+							{value: '朝北', isKindSelected: false},
+							{value: '南北', isKindSelected: false}
+						]
+				}
+			]
+		}
+	]
 
-// 建筑类型
-const buildingTypeArry = ['板楼', '塔楼', '板塔结合', '平房']
-
-// 装修类型
-const decoratioTypeArry = ['豪华装修', '精装', '简装', '毛培']
-
-// 额外面积
-const extraAreaArry = ['有', '无', '不清楚']
-
-// 楼层
-const storeyNum = []
-const storeyAll = []
-for (let i = 1; i <= 60; i++) {
-	storeyNum.push(`${i}层`)
-	storeyAll.push(`共${i}层`)
-}
-const storeyArry = [storeyNum, storeyAll]
-
-// 城市列表
-const hotCityArry = [
-	{
-		name: '厦门',
-		code: '350200'
-	},
-	{
-		name: '漳州',
-		code: '350600'
-	},
-	{
-		name: '泉州',
-		code: '350500'
-	},
-]
-const allCityArry = [
-	{
-		name: '福州',
-		code: '350100'
-	},
-	{
-		name: '厦门',
-		code: '350200'
-	},
-	{
-		name: '泉州',
-		code: '350500'
-	},
-	{
-		name: '莆田',
-		code: '350300'
-	},
-	{
-		name: '漳州',
-		code: '350600'
-	},
-	{
-		name: '三明',
-		code: '350400'
-	},
-	{
-		name: '南平',
-		code: '350700'
-	},
-	{
-		name: '龙岩',
-		code: '350800'
-	},
-	{
-		name: '宁德',
-		code: '350900'
-	},
-]
 module.exports = {
-	houseTypeArry,
-	orientationArry,
-	storeyArry,
-	buildingTypeArry,
-	decoratioTypeArry,
-	extraAreaArry,
-	allCityArry,
-	hotCityArry,
+	supportArry,
+	sortData
 }

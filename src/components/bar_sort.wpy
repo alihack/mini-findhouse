@@ -1,0 +1,498 @@
+<style lang="less">
+@import '../styles/base.less';
+// 排序工具栏
+.sort-bar {
+	width: 100%;
+	background: #fff;
+	min-height: 90rpx;
+	.wrap {
+		width: 100%;
+		background: #fff;
+		z-index: 200;
+	}
+	&-drop {
+		height: 90rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-around;
+		.item {
+			width: 90rpx;
+			height: 40rpx;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-size: 28rpx;
+			margin-right: 5rpx;
+			text {
+				width: 80rpx;
+				.ellipsis
+			}
+			image {
+				width: 20rpx;
+				height: 20rpx;
+				display: inline-block;
+				margin-left:10rpx;
+			}
+		}
+	}
+	&-kinds {
+		padding:0 30rpx;
+		box-sizing: border-box;
+		.box-wrap {
+			.flex;
+			flex-wrap: wrap;
+			width: 720rpx;
+			margin-top: 10rpx;
+			.box {
+				.label-auto(156rpx, 70rpx);
+				background: #f8f8f9;
+				margin-right: 23rpx;
+				margin-top:25rpx;
+			}
+			.kindSelected {
+				.label-auto(156rpx, 70rpx);
+				background: #f8f8f9;
+				margin-right: 23rpx;
+				margin-top:25rpx;
+				color: @blue;
+				background: #ecf5ff;
+				box-sizing: border-box;
+				line-height: 70rpx;
+			}
+		}
+		.button-wrap {
+			margin-top: 30rpx;
+			padding: 20rpx;
+			width: 100%;
+			display: flex;
+			justify-content: space-around;
+			border-top:2rpx solid #f5f5f5;
+			.btn {
+				width: 40%;
+				height: 90rpx;
+				border-radius: 90rpx;
+				font-size: 18px;
+				text-align: center;
+				line-height: 90rpx;
+			}
+			.btn1 {
+				.btn;
+				background: #f8f8f8;
+				color:#000;
+			}
+			.btn1:active {
+				background: #f1f1f1;
+			}
+			.btn2 {
+				.btn;
+				background: #5dacff;
+				color:#fff;
+			}
+			.btn2:active {
+				background: #2d8cf0;
+			}
+		}
+		.title {
+			font-size: 36rpx;
+			font-weight: bold;
+			margin-top:40rpx;
+		}
+		.input {
+			.flex;
+			justify-content: space-between;
+			width: 690rpx;
+			margin-top:30rpx;
+			input {
+				width: 320rpx;
+				height: 70rpx;
+				border: 2rpx solid #f5f5f5;
+				display: inline-block;
+				text-align: center;
+			}
+		}
+	}
+}
+.shade {
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: #000;
+	opacity: 0.2;
+	overflow: hidden;
+	z-index: 100;
+	color: #fff;
+}
+.bar-fixed {
+	position: fixed;
+	left:0;
+	top:0;
+	box-shadow: 0 0 15rpx #999;
+}
+</style>
+<template>
+<view class="sort-bar">
+	<view class="wrap {{isTabFixed? 'bar-fixed': ''}}">
+		<view class="sort-bar-drop">
+			<view class="item" wx:for="{{sortData}}" wx:key="index" @tap="sortBy({{index}})">
+				<text style="color:{{item.isConfirmed? '#2d8cf0': ''}}">{{item.title}}</text>
+				<image src="{{item.isConfirmed?'../images/blue-triangle.png':'../images/gray-triangle.png'}}"></image>
+			</view>
+		</view>
+		<view class="sort-bar-kinds" wx:if="{{showSortBarPanel}}">
+			<view wx:for="{{sortData}}" wx:key="index" wx:for-index="index" wx:for-item="item">
+				<!-- 区域、总价、户型 -->
+				<block wx:if="{{item.isSelected && index != 3}}">
+					<block wx:if="{{index == 1}}">
+						<view class="title">价格区间（万）</view>
+						<view class="input">
+							<input placeholder="最低价格" type="number" @input="onInputMin" @focus="onFocus" value="{{minPrice}}"/>
+							<input placeholder="最高价格" type="number" @input="onInputMax"  @focus="onFocus" value="{{maxPrice}}"/>
+						</view>
+					</block>
+					<view class="box-wrap">
+						<view wx:for="{{item.kinds}}" wx:key="kindIdx" wx:for-index="kindIdx" wx:for-item="kind"
+							class="{{kind.isKindSelected? 'kindSelected':'box'}}"  @tap="selectKind({{index}},{{kindIdx}})">
+							{{kind.value}}
+						</view>
+					</view>
+					<view class="button-wrap">
+						<view class="btn1"  @tap="confirm({{index}},{{1}})">不限条件</view>
+						<view class="btn2"  @tap="confirm({{index}},{{0}})">确认</view>
+					</view>
+				</block>
+				<!-- 更多下拉 -->
+				<block wx:if="{{item.isSelected && index == 3}}">
+					<view class="type" wx:for="{{sortData[3].type}}" wx:for-index="typeIndex" wx:for-item="type" wx:key="typeIndex">
+						<view class="title">{{type.title}}</view>
+						<view class="box-wrap">
+							<view
+								wx:for="{{sortData[3].type[typeIndex].kinds}}" 
+								wx:for-item="kind" 
+								wx:for-index="kindIndex" 
+								wx:key="kindIndex"
+								class="{{kind.isKindSelected? 'kindSelected':'box'}}"
+								data-kindindex="{{kindIndex}}" data-typeindex="{{typeIndex}}"
+								@tap="selectMore"
+								>
+								{{kind.value}}
+							</view>
+						</view>
+					</view>
+					<view class="button-wrap">
+						<view class="btn1"  @tap="confirm({{index}},{{1}})">不限条件</view>
+						<view class="btn2"  @tap="confirm({{index}},{{0}})">确认</view>
+					</view>
+				</block>
+			</view>
+		</view>
+	</view>
+	<view class="shade" wx:if="{{showSortBarPanel}}" @tap="hideSortBarPanel"></view>
+</view>
+</template>
+<script>
+import wepy from 'wepy'
+import {sortData} from '../utils/config'
+export default class barSort extends wepy.component {
+	props = {
+		scrollTop: Number
+	}
+
+	data = {
+		sortData,
+		preSortData: sortData,
+		sortBarTop: 0,
+		timer: '',
+		showSortBarPanel: false,
+		isTabFixed: false,
+		minPrice: '',
+		maxPrice: '',
+		resultObj: {
+			districtName: '',
+			sellPrice: '',
+			countF: '',
+			square: '',
+			direction: ''
+		},
+		typeArry: ['区域', '总价', '户型', '更多'],
+		keyArry: ['districtName', 'sellPrice', 'countF', 'square', 'direction']
+	}
+
+	watch = {
+		scrollTop () {
+			// 节流函数
+			if (this.timer) return
+			this.timer = setTimeout(() => {
+				this.timer = ''
+				if (this.scrollTop > this.sortBarTop) {
+					this.isTabFixed = true
+				} else {
+					if (!this.showSortBarPanel) this.isTabFixed = false
+				}
+				this.$apply()
+			}, 250)
+		}
+	}
+	onLoad() {
+		this.getTop()
+	}
+	clearResult () {
+		console.log('重置搜索栏')
+		this.resultObj = {}
+		// 重置数据，深拷贝
+		this.sortData = []
+		const preSortData = this.preSortData
+		this.sortData = JSON.parse(JSON.stringify(preSortData))
+		this.$apply()
+	}
+	getTop () {
+		return new Promise(resolve => {
+			// 获取排序栏高度
+			const query = wx.createSelectorQuery()
+			query.select('.sort-bar').boundingClientRect()
+			query.selectViewport().scrollOffset()
+			query.exec(res => {
+				if (res[0]) {
+					this.sortBarTop = res[0].top
+				}
+				resolve()
+				this.$apply()
+			})
+		})
+	}
+	methods = {
+		async sortBy (index) {
+			this.sortData.forEach(ele => {
+				ele.isSelected = false
+			})
+			this.sortData[index].isSelected = true
+			this.showSortBarPanel = true
+			if (this.sortBarTop == 0) {
+				await this.getTop()
+			}
+			if (!this.isTabFixed) {
+				wepy.pageScrollTo({
+					scrollTop: this.sortBarTop,
+					duration: 300
+				})
+			}
+			this.isTabFixed = true
+			this.$apply()
+		},
+		hideSortBarPanel() {
+			this.showSortBarPanel = false
+			this.isTabFixed = false
+			this.$apply()
+		},
+		selectKind(index, kindIdx) {
+			console.log('index', index)
+			console.log('kindIndex', kindIdx)
+			// 重置
+			this.sortData[index].kinds.forEach(ele => {
+				ele.isKindSelected = false
+			})
+			const currentItem = this.sortData[index].kinds[kindIdx]
+			this.sortData[index].kinds[kindIdx].isKindSelected = true
+			// 结果赋值
+			this.resultObj[this.keyArry[index]] = currentItem.value
+			// 如果是选择了价格子选项，把输入框清空
+			if (index == 1) {
+				this.minPrice = ''
+				this.maxPrice = ''
+			}
+			this.$apply()
+		},
+		selectMore({currentTarget: {dataset}}) {
+			const kindIndex = dataset.kindindex
+			const typeIndex = dataset.typeindex
+			const value = this.sortData[3].type[typeIndex].kinds[kindIndex].value
+			if (typeIndex == 0) {
+				this.resultObj.square = value
+				this.sortData[3].type[0].kinds.forEach(kind => {
+					kind.isKindSelected = false
+				})
+			} else {
+				this.resultObj.direction = value
+				this.sortData[3].type[1].kinds.forEach(kind => {
+					kind.isKindSelected = false
+				})
+			}
+			this.sortData[3].type[typeIndex].kinds[kindIndex].isKindSelected = true
+			this.$apply()
+		},
+		onFocus() {
+			// 将价格子选项清空
+			this.sortData[1].kinds.forEach(ele => {
+				ele.isKindSelected = false
+			})
+			this.$apply()
+		},
+		onInputMin({detail: {value}}) {
+			this.minPrice = value
+			this.$apply()
+		},
+		onInputMax({detail: {value}}) {
+			this.maxPrice = value
+			this.$apply()
+		},
+		confirm (index, isUnLimit) {
+			if (isUnLimit) {
+				// 点击不限
+				this.sortData[index].title = this.typeArry[index]
+				this.sortData[index].isConfirmed = false
+				// 如果是价格，将输入框清空
+				if (index == 1) {
+					this.minPrice = ''
+					this.maxPrice = ''
+				}
+				// 将子选项清空
+				if (index == 3) {
+					this.sortData[index].type.forEach(ele1 => {
+						ele1.kinds.forEach(ele2 => {
+							ele2.isKindSelected = false
+						})
+					})
+					this.resultObj.square = ''
+					this.resultObj.direction = ''
+				} else {
+					this.sortData[index].kinds.forEach(ele => {
+						ele.isKindSelected = false
+					})
+					this.resultObj[this.keyArry[index]] = ''
+				}
+			} else {
+				// 点击确定
+				switch (index) {
+					// 区域
+					case 0:
+						if (this.resultObj.districtName) {
+							this.resultObj.districtName = this.resultObj.districtName.slice(0, 2) // 将区字去掉
+							// 设置title
+							this.sortData[index].title = this.resultObj.districtName
+							this.sortData[index].isConfirmed = true
+						}
+						break
+					// 价格
+					case 1:
+						// 输入框为空，且子选项无选择时
+						let allUnSelected = true
+						this.sortData[1].kinds.forEach(ele => {
+							if (ele.isKindSelected) allUnSelected = false
+						})
+						if (!this.minPrice && !this.maxPrice && allUnSelected) {
+							this.sortData[1].title = '价格'
+							this.resultObj.sellPrice = ''
+							this.sortData[index].isConfirmed = false
+							break
+						}
+						// 价格范围输入
+						if (this.minPrice || this.maxPrice) {
+							if (this.minPrice && !this.maxPrice) {
+								// 只有最低价格
+								this.resultObj.sellPrice = this.minPrice
+								this.sortData[index].title = this.resultObj.sellPrice + '以上'
+							} else if (!this.minPrice && this.maxPrice) {
+								// 只有最高价格
+								this.resultObj.sellPrice = '0' + '-' + this.maxPrice
+								this.sortData[index].title = this.resultObj.sellPrice
+							} else {
+								// 两者都有
+								if (Number(this.minPrice) > Number(this.maxPrice)) {
+									wx.showToast({title: '最低价不高于最高价!', icon: 'none'})
+									return
+								} else {
+									this.resultObj.sellPrice = this.minPrice + '-' + this.maxPrice
+									this.sortData[index].title = this.resultObj.sellPrice
+								}
+							}
+							this.sortData[index].isConfirmed = true
+							break
+						}
+						// 价格子选项被选择时
+						if (this.resultObj.sellPrice) {
+							const sellPrice = this.resultObj.sellPrice
+							// 设置title
+							this.sortData[index].title = this.resultObj.sellPrice
+							this.sortData[index].isConfirmed = true
+							// 设置内容
+							if (sellPrice == '100万以下') {
+								this.resultObj.sellPrice = '0 - 100'
+							}
+							if (sellPrice == '800万以上') {
+								this.resultObj.sellPrice = '800'
+							}
+						}
+						break
+					// 户型
+					case 2:
+						if (this.resultObj.countF) {
+							const countF = this.resultObj.countF
+							// 设置title
+							this.sortData[index].title = countF
+							this.sortData[index].isConfirmed = true
+							switch (countF) {
+								case '一室':
+								this.resultObj.countF = 1
+								break
+								case '二室':
+								this.resultObj.countF = 2
+								break
+								case '三室':
+								this.resultObj.countF = 3
+								break
+								case '四室':
+								this.resultObj.countF = 4
+								break
+								case '五室':
+								this.resultObj.countF = 5
+								break
+								case '五室以上':
+								this.resultObj.countF = 6
+								break
+								default:
+								this.resultObj.countF = ''
+								break
+							}
+						}
+						break
+					default:
+						// 更多
+						if (this.resultObj.square) {
+							const square = this.resultObj.square
+							if (square == '50平以下') {
+								this.resultObj.square = '0 - 50'
+							} else if (square == '200平以上') {
+								this.resultObj.square = '300'
+								this.sortData[index].isConfirmed = true
+							} else {
+								this.resultObj.square = square.slice(0, square.length - 1)
+								this.sortData[index].isConfirmed = true
+							}
+						}
+						if (this.resultObj.direction) {
+							this.sortData[index].isConfirmed = true
+							this.resultObj.direction = this.resultObj.direction.slice(1)
+						}
+						break
+				}
+			}
+			this.showSortBarPanel = false
+			this.isTabFixed = false
+			for (let i in this.resultObj) {
+				if (this.resultObj[i] == '') {
+					delete this.resultObj[i]
+				}
+			}
+			this.$emit('sortHouses', this.resultObj)
+			setTimeout(() => {
+				wx.pageScrollTo({
+					scrollTop: this.sortBarTop,
+					duration: 300
+				})
+			}, 500)
+			this.$apply()
+		}
+	}
+}
+</script>
